@@ -11,10 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install PlantUML
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y plantuml graphviz
       - name: Validate PlantUML diagrams
-        uses: plantuml/plantuml-github-action@v1
-        with:
-          args: -checkonly docs/specs/*.md
+        run: plantuml -checkonly docs/specs/*.md
 
   backend:
     runs-on: ubuntu-latest
