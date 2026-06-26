@@ -12,7 +12,7 @@
 
 ## Figma UI Specification
 
-Figma file: [SA62 Wellness Android UI Spec](https://www.figma.com/design/C8xBLWCbQfWMD7dIiVaf8c)
+Figma file: [SA62 Wellness Android UI Spec](https://www.figma.com/design/C8xBLWCbQfWMD7dIiVaf8c/SA62-Wellness-Android-UI-Spec?t=re8jTqWW4UALHDKv-0)
 
 The Figma file is the visual handoff for Android XML implementation. It contains:
 
