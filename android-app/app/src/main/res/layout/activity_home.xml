@@ -2,59 +2,27 @@
     android:id="@+id/rootContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface"
+    android:background="@color/bg_app"
     android:orientation="vertical">
 
     <TextView
         android:id="@+id/titleText"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:layout_height="64dp"
+        android:background="@color/bg_surface"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:text="Wellness"
         android:textColor="@color/text_primary"
         android:textSize="22sp"
         android:textStyle="bold" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp">
-
-        <Button
-            android:id="@+id/recordsButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Records" />
-
-        <Button
-            android:id="@+id/chatButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Chat" />
-
-        <Button
-            android:id="@+id/recommendationsButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Tips" />
-
-        <Button
-            android:id="@+id/profileButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Profile" />
-    </LinearLayout>
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:fillViewport="false">
 
         <LinearLayout
             android:id="@+id/contentContainer"
@@ -63,4 +31,62 @@
             android:orientation="vertical"
             android:padding="16dp" />
     </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:background="@color/bg_surface"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <Button
+            android:id="@+id/recordsButton"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_button_secondary"
+            android:text="Records"
+            android:textAllCaps="false"
+            android:textColor="@color/primary"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/chatButton"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:background="@color/bg_surface"
+            android:text="Chat"
+            android:textAllCaps="false"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/recommendationsButton"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:background="@color/bg_surface"
+            android:text="Tips"
+            android:textAllCaps="false"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/profileButton"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:background="@color/bg_surface"
+            android:text="Profile"
+            android:textAllCaps="false"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
 </LinearLayout>

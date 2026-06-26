@@ -2,6 +2,7 @@ package sg.edu.nus.iss.wellness
 
 import android.app.Activity
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -38,21 +39,31 @@ class RegisterActivity : Activity() {
             val confirmPassword = confirmPasswordInput.text.toString()
 
             if (displayName.isBlank() || email.isBlank() || password.length < 8) {
+                statusText.visibility = View.VISIBLE
+                statusText.setBackgroundResource(R.drawable.bg_status_error)
                 statusText.text = "Name, valid email, and 8 character password are required."
                 return@setOnClickListener
             }
             if (password != confirmPassword) {
+                statusText.visibility = View.VISIBLE
+                statusText.setBackgroundResource(R.drawable.bg_status_error)
                 statusText.text = "Passwords do not match."
                 return@setOnClickListener
             }
 
             scope.launch {
                 runCatching {
+                    statusText.visibility = View.VISIBLE
+                    statusText.setBackgroundResource(R.drawable.bg_status_success)
                     statusText.text = "Creating account..."
                     ApiClient.create(tokenStore).register(RegisterRequest(displayName, email, password))
                 }.onSuccess {
+                    statusText.visibility = View.VISIBLE
+                    statusText.setBackgroundResource(R.drawable.bg_status_success)
                     statusText.text = "Account created. Return to login."
                 }.onFailure {
+                    statusText.visibility = View.VISIBLE
+                    statusText.setBackgroundResource(R.drawable.bg_status_error)
                     statusText.text = "Registration failed. Try a different email."
                 }
             }

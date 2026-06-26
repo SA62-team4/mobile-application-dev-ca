@@ -16,6 +16,7 @@ Checklist:
 - Requirement IDs are defined.
 - Clarification log has defaults for open questions.
 - Architecture, ERD, API, Android UI, RAG, agent, Docker, and test specs exist.
+- Android UI spec links to the Figma design handoff when visual screens are available.
 - Traceability matrix maps every requirement to evidence and verification.
 - Implementation tasks reference requirement IDs.
 
@@ -31,6 +32,8 @@ Checklist:
 
 - PR lists affected task IDs and requirement IDs.
 - PR updates specs if behavior changed.
+- Android UI PRs compare XML screens against the Figma UI spec where applicable.
+- Android UI PRs verify there are no overlapping labels, fields, cards, buttons, or navigation controls on compact `360dp` portrait layouts.
 - Tests match the changed subsystem.
 - No paid/cloud LLM dependency is introduced.
 - No direct Android-to-MySQL or Android-to-Python path is introduced.
@@ -47,8 +50,10 @@ Run when backend, Android, Python AI, and Docker work are joined.
 Checklist:
 
 - Android can register, log in, and log out.
+- Android login and register screens match the Figma layout and show inline validation without overlapping content.
 - JWT protects all non-auth APIs.
 - Wellness CRUD works from Android to MySQL.
+- Records, add/edit record, chat, recommendations, and profile screens match the Figma layout at compact portrait width.
 - Chatbot works through Spring Boot and Python RAG service.
 - RAG responses include source snippets.
 - Python agent retrieves recent records, analyses trends, and saves recommendations.
@@ -65,6 +70,7 @@ Run before video recording and submission.
 Checklist:
 
 - Demo script fits 15 minutes.
+- Figma UI spec is available as visual evidence for Android design intent.
 - Seed data exists and shows meaningful trends.
 - Ollama models are pulled before demo.
 - PlantUML diagrams render or exported images are available.
@@ -86,4 +92,3 @@ Before final submission, prepare a short report with:
 - Tests run.
 - Known limitations.
 - Optional features included or skipped.
-
