@@ -39,8 +39,8 @@ docker compose up --build
 
 Android remains outside Docker and should point to the Spring Boot backend:
 
-- Emulator: `http://10.0.2.2:8080`
-- Physical device: `http://<host-lan-ip>:8080`
+- Emulator default: `http://10.0.2.2:8080/`
+- Physical device over USB: run `tools/scripts/android-phone-demo.sh`, which uses `adb reverse` and `http://127.0.0.1:8080/`
 
 ## Validation
 

@@ -87,8 +87,9 @@ docker compose up --build
 
 Android developers should configure the backend base URL based on emulator/device networking:
 
-- Android emulator to host machine: `http://10.0.2.2:<backend-port>`
-- Physical device: host machine LAN IP and matching backend port
+- Android emulator to host machine: `http://10.0.2.2:<backend-port>/`
+- Physical device primary demo path: USB debugging with `adb reverse tcp:<backend-port> tcp:<backend-port>` and Android URL `http://127.0.0.1:<backend-port>/`
+- The Android build may override the default URL with `WELLNESS_API_BASE_URL` as a Gradle property or environment variable; local IP addresses must not be committed.
 
 ## GitHub Workflow
 

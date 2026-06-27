@@ -80,7 +80,8 @@ Manual QA should cover:
 - Empty states.
 - Network error states.
 - Expired token flow.
-- Full demo flow on emulator or device.
+- Full demo flow on emulator or physical device.
+- Physical device demo uses USB debugging, `adb reverse tcp:8080 tcp:8080`, and `WELLNESS_API_BASE_URL=http://127.0.0.1:8080/` rather than a committed LAN IP.
 
 ## Docker Smoke Tests
 
@@ -94,6 +95,7 @@ Minimum smoke checks:
 - Spring Boot can connect to MySQL.
 - Spring Boot can reach Python AI service.
 - Python AI service can reach Ollama.
+- Android physical-device debug build can be installed through `tools/scripts/android-phone-demo.sh`.
 
 ## Demo Data
 
