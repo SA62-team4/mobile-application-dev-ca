@@ -70,8 +70,20 @@ adb devices
 Default backend URL:
 
 - Emulator: `http://10.0.2.2:8080/`
+- Physical device over USB: `http://127.0.0.1:8080/` with `adb reverse tcp:8080 tcp:8080`
 
-For a physical device, update `API_BASE_URL` in `android-app/app/build.gradle` to your computer's LAN address.
+For repeatable phone demo/testing, keep the tracked Gradle default unchanged and run:
+
+```bash
+tools/scripts/android-phone-demo.sh
+```
+
+The script installs a debug build with `WELLNESS_API_BASE_URL=http://127.0.0.1:8080/`. For manual runs, pass either a Gradle property or an environment variable:
+
+```bash
+adb reverse tcp:8080 tcp:8080
+WELLNESS_API_BASE_URL=http://127.0.0.1:8080/ gradle --gradle-user-home .gradle-cache -p android-app :app:installDebug
+```
 
 ## Validation
 

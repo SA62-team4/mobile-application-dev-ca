@@ -3,6 +3,19 @@ plugins {
     id "org.jetbrains.kotlin.android"
 }
 
+def defaultApiBaseUrl = "http://10.0.2.2:8080/"
+def apiBaseUrl = providers.gradleProperty("WELLNESS_API_BASE_URL")
+        .orElse(providers.environmentVariable("WELLNESS_API_BASE_URL"))
+        .orElse(defaultApiBaseUrl)
+
+def apiBaseUrlForBuildConfig = {
+    def value = apiBaseUrl.get()
+    if (!value.endsWith("/")) {
+        throw new GradleException("WELLNESS_API_BASE_URL must end with '/' for Retrofit baseUrl compatibility.")
+    }
+    return value.replace("\\", "\\\\").replace("\"", "\\\"")
+}
+
 android {
     namespace "sg.edu.nus.iss.wellness"
     compileSdk 35
@@ -13,7 +26,7 @@ android {
         targetSdk 35
         versionCode 1
         versionName "1.0"
-        buildConfigField "String", "API_BASE_URL", "\"http://10.0.2.2:8080/\""
+        buildConfigField "String", "API_BASE_URL", "\"${apiBaseUrlForBuildConfig()}\""
     }
 
     buildFeatures {
