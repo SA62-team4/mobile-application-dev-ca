@@ -20,6 +20,7 @@ Dockerise:
 
 - MySQL
 - Spring Boot backend
+- Optional `.NET Backup API` cold-standby backend
 - Python FastAPI AI service
 - Ollama
 - Chroma/vector persistence, either embedded in Python process with a persistent volume or separate service if chosen later
@@ -35,6 +36,7 @@ Do not Dockerise:
 | --- | --- | --- |
 | `mysql` | Transactional database | Named volume for persistent data |
 | `spring-backend` | REST API and business logic | Depends on MySQL and Python AI service |
+| `dotnet-backend` | Optional cold-standby REST API mirror | Backup profile/service on host port `8082`; Spring remains canonical |
 | `python-ai-service` | RAG and agentic AI | Depends on Ollama and vector volume |
 | `ollama` | Local model runtime | Named volume for models |
 | `adminer` | Optional DB inspection | Demo/debug convenience only |
@@ -64,6 +66,8 @@ JWT_EXPIRY_SECONDS=86400
 AI_SERVICE_URL=http://python-ai-service:8000
 AI_SERVICE_HOST_PORT=8000
 INTERNAL_SERVICE_TOKEN=replace_with_internal_token
+DOTNET_BACKEND_HOST_PORT=8082
+DOTNET_CONNECTION_STRING=Server=mysql;Port=3306;Database=wellness_app;User=wellness_user;Password=change_me;TreatTinyAsBoolean=true;
 OLLAMA_BASE_URL=http://ollama:11434
 OLLAMA_HOST_PORT=11434
 OLLAMA_GENERATION_MODEL=llama3.2:3b
@@ -73,6 +77,27 @@ ADMINER_HOST_PORT=8081
 ```
 
 Host-facing ports must be configurable so local tools such as Homebrew MySQL do not block Docker Compose. The default MySQL host port is `3307`, while container-to-container traffic continues to use `mysql:3306`.
+
+## Optional .NET Backup Mode
+
+The normal demo command must continue to run Spring Boot on host port `8080`:
+
+```text
+docker compose up --build
+```
+
+Backup rehearsal may use an additional Compose override:
+
+```text
+docker compose -f docker-compose.yml -f docker-compose.dotnet-backup.yml up --build dotnet-backend python-ai-service mysql ollama
+```
+
+Backup mode rules:
+
+- `dotnet-backend` exposes the same API contract on `${DOTNET_BACKEND_HOST_PORT:-8082}`.
+- The Python service uses `BACKEND_BASE_URL=http://dotnet-backend:8080` when backup mode is selected.
+- Android can rehearse backup by switching its backend base URL to `http://10.0.2.2:8082/` on emulator or `http://127.0.0.1:8082/` with matching `adb reverse` on a physical device.
+- Do not add an automatic gateway or failover service unless a later spec revision accepts the complexity.
 
 ## Local Setup Contract
 
@@ -115,9 +140,11 @@ Jobs:
 
 - Android build and unit tests.
 - Spring Boot tests.
+- Optional .NET backup backend tests when `dotnet-backend/` exists.
 - Python tests.
 - Docker image build smoke check.
 - Compose smoke test for MySQL, Spring Boot, and Python AI service.
+- Optional backup Compose override config check when `docker-compose.dotnet-backup.yml` exists.
 
 Do not run heavyweight Ollama generation in CI by default. Use mocks or a lightweight health-check path so CI stays fast and reliable.
 

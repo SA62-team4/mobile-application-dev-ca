@@ -42,10 +42,37 @@ Android remains outside Docker and should point to the Spring Boot backend:
 - Emulator default: `http://10.0.2.2:8080/`
 - Physical device over USB: run `tools/scripts/android-phone-demo.sh`, which uses `adb reverse` and `http://127.0.0.1:8080/`
 
+Android backend selection:
+
+```bash
+# Spring backend, emulator
+WELLNESS_API_BASE_URL=http://10.0.2.2:8080/ ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:installDebug
+
+# Spring backend, physical phone
+WELLNESS_API_BASE_URL=http://127.0.0.1:8080/ tools/scripts/android-phone-demo.sh
+
+# Optional .NET backup backend, emulator
+WELLNESS_API_BASE_URL=http://10.0.2.2:8082/ ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:installDebug
+
+# Optional .NET backup backend, physical phone
+WELLNESS_API_BASE_URL=http://127.0.0.1:8082/ tools/scripts/android-phone-demo.sh
+```
+
+Optional cold-standby .NET backend rehearsal:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dotnet-backup.yml up --build dotnet-backend python-ai-service mysql ollama adminer
+BASE_URL=http://localhost:8082 tools/scripts/backend-contract-smoke.sh
+```
+
+Spring Boot remains the canonical CA backend. The .NET backend listens on `8082` only for backup rehearsal.
+
 ## Validation
 
 ```bash
 plantuml -checkonly docs/specs/*.md
 cd spring-backend && mvn test
 cd python-ai-service && python3 -m compileall app
+dotnet test dotnet-backend/tests/Wellness.Backup.Api.Tests/Wellness.Backup.Api.Tests.csproj
+BASE_URL=http://localhost:8080 tools/scripts/backend-contract-smoke.sh
 ```

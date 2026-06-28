@@ -5,6 +5,7 @@
 - Docker Desktop
 - Java 17
 - Maven
+- .NET 10 SDK for optional backup backend work
 - Android Studio
 - Gradle CLI
 - Android platform tools (`adb`)
@@ -30,6 +31,7 @@ docker compose up --build
 Useful URLs:
 
 - Spring Boot API: `http://localhost:8080`
+- Optional .NET backup API: `http://localhost:8082`
 - Python AI service: `http://localhost:8000/health`
 - Ollama: `http://localhost:11434`
 - Adminer: `http://localhost:8081`
@@ -39,9 +41,33 @@ Default host ports are configurable in `.env`. MySQL uses host port `3307` by de
 ```text
 MYSQL_HOST_PORT=3307
 SPRING_HOST_PORT=8080
+DOTNET_BACKEND_HOST_PORT=8082
 AI_SERVICE_HOST_PORT=8000
 OLLAMA_HOST_PORT=11434
 ADMINER_HOST_PORT=8081
+```
+
+## Optional .NET Backup Backend
+
+The Java Spring Boot backend remains the required and canonical backend for the CA. The .NET backend is a cold-standby mirror for backup rehearsal only.
+
+Run backup mode with the Compose override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dotnet-backup.yml up --build dotnet-backend python-ai-service mysql ollama
+```
+
+Smoke-test either backend with the same contract script:
+
+```bash
+BASE_URL=http://localhost:8080 tools/scripts/backend-contract-smoke.sh
+BASE_URL=http://localhost:8082 tools/scripts/backend-contract-smoke.sh
+```
+
+For Android backup rehearsal, point the app to `http://10.0.2.2:8082/` on emulator. For a physical device, reverse the backup port first:
+
+```bash
+adb reverse tcp:8082 tcp:8082
 ```
 
 Adminer login for the Docker database:
@@ -62,28 +88,75 @@ For CLI builds, use JDK 17 explicitly. Homebrew Gradle may launch with a newer J
 
 ```bash
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
-gradle --gradle-user-home .gradle-cache -p android-app :app:assembleDebug
-gradle --gradle-user-home .gradle-cache -p android-app :app:testDebugUnitTest
+./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:assembleDebug
+./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:testDebugUnitTest
 adb devices
 ```
 
-Default backend URL:
+### Choose Android Backend
 
-- Emulator: `http://10.0.2.2:8080/`
-- Physical device over USB: `http://127.0.0.1:8080/` with `adb reverse tcp:8080 tcp:8080`
+The Android app reads its backend URL from `WELLNESS_API_BASE_URL` at build/install time. The value must end with `/` because Retrofit requires a trailing slash.
 
-For repeatable phone demo/testing, keep the tracked Gradle default unchanged and run:
+Use Spring Boot for the required CA demo:
+
+| Device type | Android backend URL | Backend command |
+| --- | --- | --- |
+| Emulator | `http://10.0.2.2:8080/` | `docker compose up --build` |
+| Physical phone | `http://127.0.0.1:8080/` | `docker compose up --build` plus `adb reverse tcp:8080 tcp:8080` |
+
+Use optional .NET backup only for backup rehearsal:
+
+| Device type | Android backend URL | Backend command |
+| --- | --- | --- |
+| Emulator | `http://10.0.2.2:8082/` | `docker compose -f docker-compose.yml -f docker-compose.dotnet-backup.yml up --build dotnet-backend python-ai-service mysql ollama adminer` |
+| Physical phone | `http://127.0.0.1:8082/` | Same backup command plus `adb reverse tcp:8082 tcp:8082` |
+
+Spring Boot remains the canonical backend for assignment evidence. The .NET backend mirrors the same API on port `8082` for cold-standby testing.
+
+### Emulator Install Examples
+
+Spring backend on `8080`:
 
 ```bash
-tools/scripts/android-phone-demo.sh
+WELLNESS_API_BASE_URL=http://10.0.2.2:8080/ ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:installDebug
 ```
 
-The script installs a debug build with `WELLNESS_API_BASE_URL=http://127.0.0.1:8080/`. For manual runs, pass either a Gradle property or an environment variable:
+.NET backup backend on `8082`:
+
+```bash
+WELLNESS_API_BASE_URL=http://10.0.2.2:8082/ ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:installDebug
+```
+
+### Physical Phone Install Examples
+
+For repeatable phone demo/testing, run `tools/scripts/android-phone-demo.sh`. It installs a debug build and automatically runs `adb reverse` for the port in `WELLNESS_API_BASE_URL`.
+
+Spring backend on `8080`:
+
+```bash
+WELLNESS_API_BASE_URL=http://127.0.0.1:8080/ tools/scripts/android-phone-demo.sh
+```
+
+.NET backup backend on `8082`:
+
+```bash
+WELLNESS_API_BASE_URL=http://127.0.0.1:8082/ tools/scripts/android-phone-demo.sh
+```
+
+Manual physical-phone commands are also valid:
 
 ```bash
 adb reverse tcp:8080 tcp:8080
-WELLNESS_API_BASE_URL=http://127.0.0.1:8080/ gradle --gradle-user-home .gradle-cache -p android-app :app:installDebug
+WELLNESS_API_BASE_URL=http://127.0.0.1:8080/ ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:installDebug
+
+adb reverse tcp:8082 tcp:8082
+WELLNESS_API_BASE_URL=http://127.0.0.1:8082/ ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:installDebug
 ```
+
+Default backend URL if no override is provided:
+
+- Emulator: `http://10.0.2.2:8080/`
+- Physical device over USB: `http://127.0.0.1:8080/` with `adb reverse tcp:8080 tcp:8080`
 
 ## Validation
 
@@ -91,7 +164,8 @@ WELLNESS_API_BASE_URL=http://127.0.0.1:8080/ gradle --gradle-user-home .gradle-c
 plantuml -checkonly docs/specs/*.md
 cd spring-backend && mvn test
 cd python-ai-service && python3 -m compileall app
-JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home gradle --gradle-user-home .gradle-cache -p android-app :app:assembleDebug
-JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home gradle --gradle-user-home .gradle-cache -p android-app :app:testDebugUnitTest
+dotnet test dotnet-backend/tests/Wellness.Backup.Api.Tests/Wellness.Backup.Api.Tests.csproj
+JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:assembleDebug
+JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:testDebugUnitTest
 docker compose config
 ```

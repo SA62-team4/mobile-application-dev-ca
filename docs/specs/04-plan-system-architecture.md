@@ -18,6 +18,7 @@ left to right direction
 
 rectangle "Android App\nKotlin + XML Layouts" as Android
 rectangle "Spring Boot API\nAuth, Records, Chat,\nRecommendations" as Backend
+rectangle ".NET Backup API\nCold Standby\nSame REST Contracts" as DotNet
 database "MySQL\nTransactional Data" as MySQL
 rectangle "Python FastAPI AI Service\nRAG + Agentic AI" as AI
 database "Chroma Vector Store\nPersisted Embeddings" as Chroma
@@ -25,14 +26,20 @@ folder "Curated Wellness Knowledge Base\nMarkdown or JSON" as KB
 rectangle "Ollama Local LLM\nllama3.2:3b\nnomic-embed-text" as Ollama
 
 Android --> Backend : HTTPS REST + JWT
+Android ..> DotNet : Optional backup base URL\nsame REST + JWT
 Backend --> MySQL : JPA / JDBC
+DotNet --> MySQL : MySQL client\nsame schema
 Backend --> AI : HTTP internal API
+DotNet --> AI : HTTP internal API\nbackup mode
 AI --> Chroma
 AI --> KB
 AI --> Ollama
-AI --> Backend : service token\ninternal operations
+AI --> Backend : service token\nprimary internal operations
+AI ..> DotNet : service token\nbackup internal operations
 @enduml
 ```
+
+The Java Spring Boot backend remains the primary and canonical backend because `REQ-08` requires Spring Boot. The `.NET Backup API` is optional cold-standby evidence only. It must mirror the Spring Boot wire contracts and MySQL schema, but it must not replace Spring Boot as the required CA backend.
 
 ## Responsibility Boundaries
 
@@ -40,6 +47,7 @@ AI --> Backend : service token\ninternal operations
 | --- | --- | --- |
 | Android app | UI, form validation, token storage, REST calls to backend | Direct database access, direct Python AI calls |
 | Spring Boot backend | Auth, JWT, authorization, business rules, MySQL persistence, AI service orchestration | Local embedding/vector logic |
+| .NET backup backend | Optional cold-standby REST mirror of Spring contracts for backup rehearsal | Replace Spring as the required backend, change API contracts independently |
 | MySQL | Durable transactional data | Store vector embeddings unless specs change |
 | Python AI service | RAG indexing/retrieval, Ollama calls, recommendation generation | Own user authentication or bypass backend authorization |
 | Chroma | Local vector index persistence | Replace MySQL transactional storage |
@@ -56,6 +64,7 @@ node "Developer Machine" as Dev {
   node "Docker Compose" as Compose {
     database "mysql container" as MySQL
     rectangle "spring-backend container" as Spring
+    rectangle "dotnet-backend container\noptional cold standby" as DotNet
     rectangle "python-ai-service container" as Python
     rectangle "ollama container" as Ollama
     database "mysql-data volume" as MySQLVolume
@@ -65,14 +74,19 @@ node "Developer Machine" as Dev {
 }
 
 AndroidStudio --> Spring : base URL from dev config
+AndroidStudio ..> DotNet : optional backup base URL\nhost port 8082
 Spring --> MySQL
+DotNet --> MySQL
 Spring --> Python
+DotNet --> Python
 Python --> Ollama
 Python --> VectorVolume
 MySQL --> MySQLVolume
 Ollama --> OllamaVolume
 @enduml
 ```
+
+Local demo default remains `spring-backend` on port `8080`. Backup rehearsal may run `dotnet-backend` on port `8082` and point Android or Python service callbacks to it explicitly. Do not place a gateway or automatic failover in the main demo path unless a later spec revision accepts the added complexity.
 
 ## Optional AWS Hybrid Staging
 

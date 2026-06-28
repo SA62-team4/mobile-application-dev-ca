@@ -45,6 +45,15 @@ Recommendations:
 - Saved recommendation belongs to authenticated user.
 - List recommendations returns newest first.
 
+Optional `.NET Backup API`:
+
+- Status and health endpoints match Spring response shapes.
+- JWT generation and validation use the same secret, expiry, and claims as Spring.
+- BCrypt password hashes created by Spring or .NET can be verified by the other backend.
+- User-owned record, chat, and recommendation queries filter by authenticated user id.
+- Internal APIs reject missing or invalid `X-Internal-Service-Token`.
+- CI runs `.NET` backup backend tests without heavyweight Ollama generation.
+
 ## Python AI Tests
 
 RAG:
@@ -96,6 +105,7 @@ Minimum smoke checks:
 - Spring Boot can reach Python AI service.
 - Python AI service can reach Ollama.
 - Android physical-device debug build can be installed through `tools/scripts/android-phone-demo.sh`.
+- Optional backup stack exposes `.NET Backup API` on `http://localhost:8082` and can be smoke-tested with the same contract script by setting `BASE_URL`.
 
 ## Demo Data
 
@@ -140,6 +150,10 @@ Suggested timing:
 | 12:00-13:30 | Docker and local AI | Show Compose services and Ollama models |
 | 13:30-14:30 | GitHub collaboration and CI | PR workflow, Actions summary |
 | 14:30-15:00 | Wrap up | Requirements mapping and team contributions |
+
+Optional backup demo note:
+
+- If time permits, briefly show `.NET Backup API` health on port `8082` as cold-standby evidence. Do not spend core demo time on backup routing unless the mandatory Spring, Android, MySQL, RAG, and Python agent flows are already complete.
 
 ## Submission Checklist
 
