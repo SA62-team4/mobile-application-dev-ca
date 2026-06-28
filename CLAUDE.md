@@ -28,3 +28,8 @@ This repository is in active implementation using specs as the contract. Read an
 - RAG uses a curated wellness knowledge base and a local vector store.
 - Python agentic AI retrieves user wellness records, analyses trends, generates recommendations, and saves them through the backend.
 - Docker is used for backend/runtime services where practical; Android remains outside Docker.
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
