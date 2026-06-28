@@ -1,0 +1,36 @@
+# .dockerignore for the Python AI service build context.
+
+# Python cache files — generated at runtime, not source files.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Test artefacts.
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments — dependencies are installed via requirements.txt inside
+# the container. The local venv must never be copied in.
+.venv/
+venv/
+env/
+
+# ChromaDB local data — persisted data lives in a Docker named volume,
+# not in the build context.
+chroma-data/
+
+# Git and IDE metadata.
+.git/
+.github/
+.vscode/
+.DS_Store
+
+# Documentation.
+*.md
+
+# Local environment files — NEVER copy secrets into images.
+.env
+.env.*
