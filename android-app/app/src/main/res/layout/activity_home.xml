@@ -48,7 +48,7 @@
             android:layout_height="64dp"
             android:layout_weight="1"
             android:background="@drawable/bg_button_secondary"
-            android:text="Records"
+            android:text="Dashboard"
             android:textAllCaps="false"
             android:textColor="@color/primary"
             android:textSize="12sp" />
