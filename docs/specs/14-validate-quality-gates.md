@@ -38,6 +38,7 @@ Checklist:
 - No paid/cloud LLM dependency is introduced.
 - No direct Android-to-MySQL or Android-to-Python path is introduced.
 - No secrets are committed.
+- Optional `.NET Backup API` changes state that Spring Boot remains canonical for `REQ-08`.
 
 Pass condition:
 
@@ -58,6 +59,7 @@ Checklist:
 - RAG responses include source snippets.
 - Python agent retrieves recent records, analyses trends, and saves recommendations.
 - Docker Compose starts required backend/runtime services.
+- Optional backup validation: `.NET Backup API` health/status endpoints match Spring and backup mode uses the same MySQL schema and internal service token header.
 
 Pass condition:
 
@@ -78,6 +80,7 @@ Checklist:
 - API docs match implemented endpoints.
 - Author comments are present in classes or key methods.
 - Final zip contains one integrated solution and video demo.
+- Optional `.NET Backup API` is mentioned only as backup evidence and does not replace the Spring Boot demo path.
 
 Pass condition:
 
@@ -92,3 +95,4 @@ Before final submission, prepare a short report with:
 - Tests run.
 - Known limitations.
 - Optional features included or skipped.
+- Optional backup backend evidence, if included, with Spring parity checks and known limitations.

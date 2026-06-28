@@ -13,11 +13,23 @@
 ## API Principles
 
 - Android calls only the Spring Boot API.
+- Java Spring Boot is the canonical backend API for assignment evidence. The optional `.NET Backup API` may expose the same routes for cold-standby rehearsal, but it must not define divergent behavior.
 - All non-auth endpoints require `Authorization: Bearer <jwt>`.
 - Public status endpoints may be exposed for local browser and health checks.
 - Backend derives the current user from JWT claims, not from client-provided user ids.
 - JSON is the request and response format.
 - Error responses use one consistent shape.
+
+## Optional .NET Backup Parity
+
+If the `.NET Backup API` is implemented, it must preserve Spring Boot parity:
+
+- Same route paths, HTTP methods, request fields, response fields, status codes, and camelCase JSON names.
+- Same MySQL table and column ownership rules defined in `05-plan-backend-data-model-erd.md`.
+- Same JWT secret, expiry setting, HS256 signing, bearer-token rules, and claims: `sub`, `uid`, `name`, `iat`, `exp`.
+- BCrypt password hashes must be compatible with Spring Security so either backend can authenticate users stored by the other.
+- Internal Python callbacks must use `X-Internal-Service-Token` and the same internal endpoint request/response shapes.
+- Spring remains the source of truth when a contract ambiguity appears.
 
 ## Public Status Endpoints
 

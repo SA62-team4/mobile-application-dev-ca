@@ -3,6 +3,8 @@
 *.log
 build/
 target/
+bin/
+obj/
 .gradle/
 .gradle-cache/
 .idea/

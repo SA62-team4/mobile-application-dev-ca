@@ -36,8 +36,14 @@ if [[ "$WELLNESS_API_BASE_URL" != */ ]]; then
   exit 1
 fi
 
-adb reverse tcp:8080 tcp:8080
+if [[ "$WELLNESS_API_BASE_URL" =~ :([0-9]+)/?$ ]]; then
+  BACKEND_PORT="${BASH_REMATCH[1]}"
+else
+  BACKEND_PORT="${BACKEND_PORT:-8080}"
+fi
+
+adb reverse "tcp:$BACKEND_PORT" "tcp:$BACKEND_PORT"
 "$GRADLE_CMD" --gradle-user-home "$GRADLE_USER_HOME" -p "$ANDROID_DIR" :app:installDebug
 
 echo "Installed debug app with API base URL: $WELLNESS_API_BASE_URL"
-echo "Keep Docker backend running on the laptop at http://localhost:8080/"
+echo "Keep the selected Docker backend running on the laptop at http://localhost:$BACKEND_PORT/"

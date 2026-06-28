@@ -75,6 +75,17 @@ Do not execute these tasks until the implementation phase is explicitly requeste
 | T-603 | REQ-17, REQ-20 | Prepare repeatable demo seed data and script | Member 7 | T-303, T-405, T-504 | Demo data can be reset/reseeded and rehearsal fits 15 minutes |
 | T-604 | REQ-18, REQ-19 | Final submission checklist | Whole team | T-603 | Zip/video/docs ready |
 
+## Optional Phase 7: .NET Backup Backend
+
+These tasks are optional backup evidence and do not replace `REQ-08`, which is still satisfied by the Java Spring Boot backend.
+
+| Task ID | Requirement IDs | Task | Owner | Depends On | Done When |
+| --- | --- | --- | --- | --- | --- |
+| T-701 | REQ-08, REQ-09, REQ-14, NFR-03 | Document `.NET Backup API` cold-standby design in architecture, API, Docker, traceability, and validation specs | Member 7 | T-201, T-601 | Specs state Spring is canonical and .NET is optional backup |
+| T-702 | REQ-09, REQ-14, NFR-01 | Scaffold `dotnet-backend/` with status endpoints, config, MySQL schema compatibility, JWT helpers, and author comments | Member 7 | T-701 | `.NET` project builds and health endpoint contract is available |
+| T-703 | REQ-02 through REQ-07, REQ-10, REQ-13, NFR-01, NFR-02 | Mirror Spring public and internal API routes in the `.NET Backup API` | Member 7 | T-702, T-301, T-404, T-501 | Backup routes match Spring request/response contracts |
+| T-704 | REQ-14, REQ-16, NFR-03, NFR-05 | Add backup Compose override, CI checks, and contract smoke checks parameterized by `BASE_URL` | Member 7 | T-702 | Spring path remains unchanged, `.NET` tests run in CI, and backup can be rehearsed on port `8082` |
+
 ## Implementation Rule
 
 Every future implementation PR should list:

@@ -82,6 +82,7 @@ Implementation may begin when:
 - Android screen flow is clear enough for UI work.
 - RAG and agent specs are clear enough for AI work.
 - Docker and CI expectations are clear enough for integration work.
+- Optional cold-standby `.NET Backup API` work, when included, is documented as backup evidence and not as a replacement for Spring Boot.
 - Task IDs in `12-tasks-implementation-backlog.md` are accepted by the team.
 - Validation gates in `14-validate-quality-gates.md` are accepted by the team.
 

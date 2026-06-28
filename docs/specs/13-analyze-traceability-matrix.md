@@ -15,13 +15,13 @@ This matrix links each requirement to the specs, implementation evidence, and te
 | REQ-05 | User can retrieve current and historical wellness records | `05-plan-backend-data-model-erd.md`, `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md` | List/detail API, records screen, Figma records frame | Backend test, demo record list |
 | REQ-06 | User can update wellness records | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md` | Update API, edit screen, Figma add/edit frame | Backend test, demo edit |
 | REQ-07 | User can delete wellness records | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md` | Delete API, delete confirmation, Figma destructive action pattern | Backend test, demo delete |
-| REQ-08 | Backend uses Java Spring Boot | `04-plan-system-architecture.md`, `10-plan-docker-devops.md` | `spring-backend/` project | Backend build and health check |
+| REQ-08 | Backend uses Java Spring Boot | `04-plan-system-architecture.md`, `10-plan-docker-devops.md` | `spring-backend/` project; optional `.NET Backup API` documented only as cold standby | Spring backend build and health check |
 | REQ-09 | Data is stored and retrieved from MySQL through backend services | `05-plan-backend-data-model-erd.md`, `06-plan-api-contracts.md` | JPA entities/repositories, MySQL container | Persistence tests, DB inspection |
 | REQ-10 | Chatbot accepts questions from Android through backend | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md`, `08-plan-rag-ai-design.md` | Chat endpoint and Android chat screen, Figma chatbot frame and AI waiting/error states | Integration test, demo question |
 | REQ-11 | Chatbot uses basic local RAG | `08-plan-rag-ai-design.md` | KB files, Chroma index, retrieval code | RAG smoke test, source snippets |
 | REQ-12 | LLM is free/local only | `08-plan-rag-ai-design.md`, `10-plan-docker-devops.md` | Ollama configuration, no paid API client | Config review, demo Ollama models |
 | REQ-13 | Python agentic AI retrieves data, analyses trends, generates and saves recommendations | `09-plan-agentic-ai-workflow.md`, `07-plan-android-ui-flows.md` | Python agent workflow, backend internal APIs, Figma recommendation and local AI waiting frames | Agent tests, demo recommendation |
-| REQ-14 | Dockerise backend/runtime services where practical | `10-plan-docker-devops.md` | Compose services and volumes | Docker smoke test |
+| REQ-14 | Dockerise backend/runtime services where practical | `10-plan-docker-devops.md` | Compose services and volumes; optional backup Compose override for `.NET Backup API` | Docker smoke test; optional backup health check on port `8082` |
 | REQ-15 | ERD documents backend data model | `05-plan-backend-data-model-erd.md` | PlantUML ERD and optional rendered export | Review against implemented schema |
 | REQ-16 | GitHub collaboration and CI are defined | `10-plan-docker-devops.md`, `11-plan-implementation-roadmap.md` | Branch rules, PR template, workflows | Actions pass, PR review |
 | REQ-17 | Video demo fits assignment expectations | `15-validate-test-and-demo-plan.md` | Demo script and recording | Rehearsed 15-minute flow |
@@ -58,3 +58,5 @@ Verification:
 - [ ] Docker smoke check
 - [ ] Demo script still valid
 ```
+
+Optional `.NET Backup API` PRs should also list task IDs `T-701` through `T-704` as applicable and state that Spring Boot remains the canonical `REQ-08` backend.
