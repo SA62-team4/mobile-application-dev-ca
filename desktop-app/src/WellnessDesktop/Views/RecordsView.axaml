@@ -1,0 +1,111 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:WellnessDesktop.ViewModels"
+             xmlns:m="clr-namespace:WellnessDesktop.Models"
+             x:Class="WellnessDesktop.Views.RecordsView"
+             x:DataType="vm:RecordsViewModel">
+
+  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="8">
+
+    <!-- Toolbar -->
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+      <TextBlock Grid.Column="0" Text="Wellness records" FontSize="18" FontWeight="Bold"
+                 VerticalAlignment="Center" />
+      <Button Grid.Column="1" Content="Refresh" Command="{Binding LoadCommand}" Margin="0,0,8,0" />
+      <Button Grid.Column="2" Content="Add record" Command="{Binding NewCommand}" Classes="accent" />
+    </Grid>
+
+    <!-- Error banner (own row, never overlaps content) -->
+    <Border Grid.Row="1" Margin="0,0,0,8" Padding="10,8" CornerRadius="6"
+            Background="#FDECEA" BorderBrush="#F5C6CB" BorderThickness="1"
+            IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B" TextWrapping="Wrap" />
+    </Border>
+
+    <ProgressBar Grid.Row="2" IsIndeterminate="True" Height="4" Margin="0,0,0,8"
+                 IsVisible="{Binding IsLoading}" />
+
+    <!-- States + list -->
+    <Panel Grid.Row="3">
+      <TextBlock Text="No records yet. Add your first wellness record."
+                 HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#777"
+                 IsVisible="{Binding IsEmpty}" />
+
+      <ScrollViewer>
+        <ItemsControl ItemsSource="{Binding Records}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="m:WellnessRecordDto">
+              <Border Margin="0,0,0,8" Padding="12" CornerRadius="8"
+                      BorderBrush="#E0E0E0" BorderThickness="1">
+                <Grid ColumnDefinitions="*,Auto">
+                  <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Text="{Binding RecordDate}" FontWeight="Bold" />
+                    <TextBlock Foreground="#555">
+                      <Run Text="Sleep:" />
+                      <Run Text="{Binding SleepHours}" />
+                      <Run Text="h  •  " />
+                      <Run Text="{Binding ExerciseType}" />
+                      <Run Text="(" /><Run Text="{Binding ExerciseMinutes}" /><Run Text=" min)  •  Mood " />
+                      <Run Text="{Binding MoodScore}" /><Run Text="/5" />
+                    </TextBlock>
+                    <TextBlock Text="{Binding Notes}" Foreground="#777" TextWrapping="Wrap"
+                               IsVisible="{Binding Notes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                              VerticalAlignment="Center">
+                    <Button Content="Edit"
+                            Command="{Binding $parent[ItemsControl].DataContext.EditCommand}"
+                            CommandParameter="{Binding}" />
+                    <Button Content="Delete"
+                            Command="{Binding $parent[ItemsControl].DataContext.DeleteCommand}"
+                            CommandParameter="{Binding}" />
+                  </StackPanel>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Panel>
+
+    <!-- Editor panel -->
+    <Border Grid.Row="4" IsVisible="{Binding IsEditorOpen}" Margin="0,8,0,0"
+            Padding="12" CornerRadius="8" Background="#F4F8F6" BorderBrush="#CFE3D9" BorderThickness="1">
+      <StackPanel Spacing="6">
+        <TextBlock Text="{Binding EditorTitle}" FontWeight="Bold" />
+        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto">
+          <StackPanel Grid.Row="0" Grid.Column="0">
+            <TextBlock Text="Date (yyyy-MM-dd)" />
+            <TextBox Text="{Binding EditRecordDate}" />
+          </StackPanel>
+          <StackPanel Grid.Row="0" Grid.Column="1">
+            <TextBlock Text="Sleep hours" />
+            <TextBox Text="{Binding EditSleepHours}" />
+          </StackPanel>
+          <StackPanel Grid.Row="1" Grid.Column="0">
+            <TextBlock Text="Exercise type" />
+            <TextBox Text="{Binding EditExerciseType}" />
+          </StackPanel>
+          <StackPanel Grid.Row="1" Grid.Column="1">
+            <TextBlock Text="Exercise minutes" />
+            <TextBox Text="{Binding EditExerciseMinutes}" />
+          </StackPanel>
+          <StackPanel Grid.Row="2" Grid.Column="0">
+            <TextBlock Text="Mood score (1-5)" />
+            <TextBox Text="{Binding EditMoodScore}" />
+          </StackPanel>
+          <StackPanel Grid.Row="2" Grid.Column="1">
+            <TextBlock Text="Notes" />
+            <TextBox Text="{Binding EditNotes}" AcceptsReturn="True" />
+          </StackPanel>
+        </Grid>
+        <TextBlock Text="{Binding EditorError}" Foreground="#C0392B" TextWrapping="Wrap"
+                   IsVisible="{Binding EditorError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+          <Button Content="Cancel" Command="{Binding CancelEditCommand}" />
+          <Button Content="Save" Command="{Binding SaveCommand}" Classes="accent" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

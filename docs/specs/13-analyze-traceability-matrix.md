@@ -28,6 +28,7 @@ This matrix links each requirement to the specs, implementation evidence, and te
 | REQ-18 | Author is indicated in classes or key methods | `02-specify-project-requirements.md`, `15-validate-test-and-demo-plan.md` | Author comments during implementation | Submission checklist review |
 | REQ-19 | Single integrated zipped submission | `02-specify-project-requirements.md`, `15-validate-test-and-demo-plan.md` | Final zip named with team name | Submission checklist review |
 | REQ-20 | Mock data can be populated into MySQL for demo rehearsal | `02-specify-project-requirements.md`, `15-validate-test-and-demo-plan.md`, `12-tasks-implementation-backlog.md` | Backend seed profile or documented API seed script | Demo data reset/reseed check |
+| REQ-21 | Optional .NET (Avalonia) desktop client consumes the Spring Boot REST API (bonus) | `02-specify-project-requirements.md`, `04-plan-system-architecture.md`, `06-plan-api-contracts.md` | `desktop-app/` Avalonia client, shared REST contracts, in-memory JWT | `dotnet build`/`dotnet test`, manual desktop demo of auth→CRUD→chat→recommendation |
 
 ## Cross-Cutting Non-Functional Requirements
 

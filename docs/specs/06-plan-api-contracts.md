@@ -12,7 +12,7 @@
 
 ## API Principles
 
-- Android calls only the Spring Boot API.
+- REST clients (Android, and the optional .NET desktop client) call only the Spring Boot API.
 - Java Spring Boot is the canonical backend API for assignment evidence. The optional `.NET Backup API` may expose the same routes for cold-standby rehearsal, but it must not define divergent behavior.
 - All non-auth endpoints require `Authorization: Bearer <jwt>`.
 - Public status endpoints may be exposed for local browser and health checks.

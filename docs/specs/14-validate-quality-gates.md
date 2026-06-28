@@ -60,6 +60,7 @@ Checklist:
 - Python agent retrieves recent records, analyses trends, and saves recommendations.
 - Docker Compose starts required backend/runtime services.
 - Optional backup validation: `.NET Backup API` health/status endpoints match Spring and backup mode uses the same MySQL schema and internal service token header.
+- Optional desktop validation (`REQ-21`): the .NET Avalonia desktop client completes auth, wellness CRUD, chatbot, and recommendation flows against the same running Spring Boot backend, with loading/empty/success/error states and friendly error messages.
 
 Pass condition:
 
@@ -81,6 +82,7 @@ Checklist:
 - Author comments are present in classes or key methods.
 - Final zip contains one integrated solution and video demo.
 - Optional `.NET Backup API` is mentioned only as backup evidence and does not replace the Spring Boot demo path.
+- Optional .NET desktop client, if shown, is presented as a bonus additional client and does not replace the Android demo path.
 
 Pass condition:
 

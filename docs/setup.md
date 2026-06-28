@@ -5,7 +5,7 @@
 - Docker Desktop
 - Java 17
 - Maven
-- .NET 10 SDK for optional backup backend work
+- .NET 10 SDK for optional backup backend and optional desktop client work
 - Android Studio
 - Gradle CLI
 - Android platform tools (`adb`)
@@ -79,6 +79,24 @@ Username: wellness_user
 Password: value of MYSQL_PASSWORD
 Database: wellness_app
 ```
+
+## Optional .NET Desktop Client
+
+An optional cross-platform .NET (Avalonia) desktop client in `desktop-app/` is bonus evidence (`REQ-21`). It is an additional REST client only and calls the same Spring Boot API as Android.
+
+Run it against a running Spring Boot backend on port `8080`:
+
+```bash
+cd desktop-app
+dotnet run --project src/WellnessDesktop
+```
+
+Configuration:
+
+- Backend base URL defaults to `http://localhost:8080/`.
+- Override via `desktop-app/src/WellnessDesktop/appsettings.json` (`BackendBaseUrl`) or the `WELLNESS_API_BASE_URL` environment variable (e.g. `http://localhost:8082/` to target the .NET backup backend).
+
+The desktop client stores the JWT in memory only; it is cleared on logout and never written to disk.
 
 ## Android
 
@@ -165,6 +183,7 @@ plantuml -checkonly docs/specs/*.md
 cd spring-backend && mvn test
 cd python-ai-service && python3 -m compileall app
 dotnet test dotnet-backend/tests/Wellness.Backup.Api.Tests/Wellness.Backup.Api.Tests.csproj
+dotnet test desktop-app/tests/WellnessDesktop.Tests/WellnessDesktop.Tests.csproj
 JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:assembleDebug
 JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:testDebugUnitTest
 docker compose config

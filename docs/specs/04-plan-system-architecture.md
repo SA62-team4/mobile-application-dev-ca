@@ -17,6 +17,7 @@
 left to right direction
 
 rectangle "Android App\nKotlin + XML Layouts" as Android
+rectangle "Desktop App (optional)\n.NET Avalonia (C#)" as Desktop
 rectangle "Spring Boot API\nAuth, Records, Chat,\nRecommendations" as Backend
 rectangle ".NET Backup API\nCold Standby\nSame REST Contracts" as DotNet
 database "MySQL\nTransactional Data" as MySQL
@@ -26,6 +27,7 @@ folder "Curated Wellness Knowledge Base\nMarkdown or JSON" as KB
 rectangle "Ollama Local LLM\nllama3.2:3b\nnomic-embed-text" as Ollama
 
 Android --> Backend : HTTPS REST + JWT
+Desktop --> Backend : HTTPS REST + JWT\noptional client
 Android ..> DotNet : Optional backup base URL\nsame REST + JWT
 Backend --> MySQL : JPA / JDBC
 DotNet --> MySQL : MySQL client\nsame schema
@@ -46,6 +48,7 @@ The Java Spring Boot backend remains the primary and canonical backend because `
 | Component | Responsibilities | Must Not Do |
 | --- | --- | --- |
 | Android app | UI, form validation, token storage, REST calls to backend | Direct database access, direct Python AI calls |
+| Desktop app (optional) | UI, form validation, in-memory token storage, REST calls to backend (parity with Android) | Direct database access, direct Python AI calls, persisting JWT to disk |
 | Spring Boot backend | Auth, JWT, authorization, business rules, MySQL persistence, AI service orchestration | Local embedding/vector logic |
 | .NET backup backend | Optional cold-standby REST mirror of Spring contracts for backup rehearsal | Replace Spring as the required backend, change API contracts independently |
 | MySQL | Durable transactional data | Store vector embeddings unless specs change |
