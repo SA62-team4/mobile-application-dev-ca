@@ -72,6 +72,13 @@ Optional enhancements:
 - Adminer or phpMyAdmin for database inspection during demo.
 - Scheduled agent recommendation generation.
 - Rendered PNG/PDF exports of PlantUML diagrams for presentation slides.
+- Optional `.NET (Avalonia) desktop client` that consumes the same Spring Boot REST API as Android, for cross-platform bonus evidence.
+
+Optional bonus requirement:
+
+| ID | Requirement |
+| --- | --- |
+| REQ-21 | Optional .NET (Avalonia) desktop client consumes the Spring Boot REST API for auth, wellness CRUD, chatbot, and recommendations. It is an additional client only and must not replace Android, the backend, or any mandatory requirement. |
 
 ## Mock Data Requirement
 
@@ -115,7 +122,7 @@ The project assumes a 7-person team.
 | Code quality | Layered packages, DTOs, services, repositories, tests, author comments |
 | UI and UX | Clear XML screens, bottom navigation, loading and error states |
 | System design | Architecture diagrams, ERD, API spec, Docker plan |
-| Bonus or advanced features | Basic local RAG, Dockerisation, optional AWS staging, agentic recommendations |
+| Bonus or advanced features | Basic local RAG, Dockerisation, optional AWS staging, agentic recommendations, optional .NET desktop client (REQ-21) |
 
 ## Definition Of Done
 

@@ -86,6 +86,19 @@ These tasks are optional backup evidence and do not replace `REQ-08`, which is s
 | T-703 | REQ-02 through REQ-07, REQ-10, REQ-13, NFR-01, NFR-02 | Mirror Spring public and internal API routes in the `.NET Backup API` | Member 7 | T-702, T-301, T-404, T-501 | Backup routes match Spring request/response contracts |
 | T-704 | REQ-14, REQ-16, NFR-03, NFR-05 | Add backup Compose override, CI checks, and contract smoke checks parameterized by `BASE_URL` | Member 7 | T-702 | Spring path remains unchanged, `.NET` tests run in CI, and backup can be rehearsed on port `8082` |
 
+## Optional Phase 8: .NET Desktop Client
+
+These tasks are optional bonus evidence (`REQ-21`). The desktop client is an additional REST client only; it does not replace Android or any mandatory requirement, and it consumes the same Spring Boot contracts from `06-plan-api-contracts.md`.
+
+| Task ID | Requirement IDs | Task | Owner | Depends On | Done When |
+| --- | --- | --- | --- | --- | --- |
+| T-801 | REQ-21 | Scaffold `desktop-app/` Avalonia solution, `ApiClient`, `SessionStore`, DTOs, and config (`BackendBaseUrl`) with author comments | Bonus owner | T-203 | Solution builds and `dotnet build` passes |
+| T-802 | REQ-21, REQ-02, REQ-03, NFR-01, NFR-02 | Implement login/register/logout screens with in-memory JWT storage | Bonus owner | T-801, T-203 | Auth works from desktop against Spring |
+| T-803 | REQ-21, REQ-04 through REQ-07, NFR-02, NFR-04 | Implement wellness CRUD screens with loading/empty/success/error states | Bonus owner | T-802, T-301 | CRUD works end to end from desktop |
+| T-804 | REQ-21, REQ-10 | Implement chatbot screen with answer and source snippets | Bonus owner | T-803, T-404 | Chat works from desktop |
+| T-805 | REQ-21, REQ-13 | Implement recommendations screen (generate and list) | Bonus owner | T-803, T-503 | Recommendation visible in desktop |
+| T-806 | REQ-21, REQ-16, NFR-05 | Add `dotnet build`/`dotnet test` CI job and DTO/ApiClient unit tests | Bonus owner | T-801 | Desktop job passes in CI without LLM dependency |
+
 ## Implementation Rule
 
 Every future implementation PR should list:

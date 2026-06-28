@@ -54,6 +54,14 @@ Optional `.NET Backup API`:
 - Internal APIs reject missing or invalid `X-Internal-Service-Token`.
 - CI runs `.NET` backup backend tests without heavyweight Ollama generation.
 
+Optional .NET desktop client (`REQ-21`):
+
+- `ApiClient` builds the documented routes and attaches `Authorization: Bearer <jwt>` on non-auth calls.
+- DTOs (de)serialize the documented JSON shapes for auth, records, chat, and recommendations.
+- Error responses are parsed into the standard error shape and surfaced as user-friendly messages.
+- `dotnet build`/`dotnet test` run in CI without any LLM dependency.
+- Distributable Windows/macOS executables are produced with `desktop-app/build-desktop.sh` (self-contained, single-file); cross-compiles from any host. See `desktop-app/README.md`.
+
 ## Python AI Tests
 
 RAG:
@@ -154,6 +162,10 @@ Suggested timing:
 Optional backup demo note:
 
 - If time permits, briefly show `.NET Backup API` health on port `8082` as cold-standby evidence. Do not spend core demo time on backup routing unless the mandatory Spring, Android, MySQL, RAG, and Python agent flows are already complete.
+
+Optional desktop demo note:
+
+- If time permits, briefly show the .NET Avalonia desktop client logging in and reading the same wellness records as Android against the same Spring Boot backend, as cross-platform bonus evidence (`REQ-21`). Do not let it displace the mandatory Android flow.
 
 ## Submission Checklist
 

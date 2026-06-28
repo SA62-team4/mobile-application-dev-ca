@@ -68,6 +68,19 @@ jobs:
         working-directory: python-ai-service
         run: python -m compileall app
 
+  desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build and test .NET desktop client
+        working-directory: desktop-app
+        run: |
+          dotnet build WellnessDesktop.sln
+          dotnet test WellnessDesktop.sln --no-build
+
   docker:
     runs-on: ubuntu-latest
     steps:
