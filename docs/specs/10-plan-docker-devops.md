@@ -235,13 +235,17 @@ get valid HTTPS. DNS lives at DuckDNS, so Terraform does not manage it
 
 1. At [duckdns.org](https://www.duckdns.org) sign in and create a subdomain, e.g.
    `sa62wellness` → `sa62wellness.duckdns.org`.
-2. `terraform apply`, then read the IP: `terraform output reserved_ip`.
-3. In the DuckDNS dashboard set that subdomain's IP to the reserved IP and save.
+2. `terraform apply`, then read the reserved IP from the workflow output or run:
+   `terraform output reserved_ip`.
+3. In the DuckDNS dashboard set that subdomain's IP to the **reserved IP** and
+   save. Do not use the Droplet's temporary IPv4 if it differs from
+   `reserved_ip`.
 4. Set GitHub config: Variable `MANAGE_DNS=false` and
    `API_DOMAIN=sa62wellness.duckdns.org`; leave `DOMAIN`/`SUBDOMAIN` unused.
-5. Deploy. Caddy issues the cert over port 80 once the name resolves — make sure
-   the DuckDNS IP is set before the deploy runs.
-6. Android base URL: `https://sa62wellness.duckdns.org/`.
+5. Verify DNS before deploy:
+   `dig +short sa62wellness.duckdns.org` must print the reserved IP.
+6. Deploy. Caddy issues the cert over port 80 once the name resolves.
+7. Android base URL: `https://sa62wellness.duckdns.org/`.
 
 For a purchased domain instead, set `MANAGE_DNS=true`, `DOMAIN`, `SUBDOMAIN`, and
 `API_DOMAIN=SUBDOMAIN.DOMAIN`, and point the domain's nameservers at DigitalOcean.

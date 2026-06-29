@@ -115,10 +115,10 @@ jobs:
         env:
           API_DOMAIN: ${{ vars.API_DOMAIN }}
         run: |
-          for i in $(seq 1 20); do
-            if curl -fsS "https://$API_DOMAIN/actuator/health" | grep -q '"status":"UP"'; then
+          for i in $(seq 1 8); do
+            if curl -fsS --connect-timeout 5 --max-time 8 "https://$API_DOMAIN/actuator/health" | grep -q '"status":"UP"'; then
               echo "Healthy"; exit 0
             fi
-            echo "Waiting for health ($i)..."; sleep 15
+            echo "Waiting for health ($i/8)..."; sleep 10
           done
           echo "Service did not become healthy in time"; exit 1

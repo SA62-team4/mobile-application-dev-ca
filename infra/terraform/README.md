@@ -55,12 +55,21 @@ DO does not give out domains. For a free hostname with valid TLS:
 
 1. Create a subdomain at [duckdns.org](https://www.duckdns.org), e.g.
    `sa62wellness` → `sa62wellness.duckdns.org`.
-2. `terraform apply`, then point that DuckDNS subdomain at `terraform output
-   reserved_ip`.
-3. Set `manage_dns = false` (leave `domain`/`subdomain` unused) and the GitHub
+2. `terraform apply`, then read the reserved IP from the workflow output or run
+   `terraform output reserved_ip`.
+3. Point that DuckDNS subdomain at the **reserved IP** and save. Do not use the
+   Droplet's temporary IPv4 if it differs from `reserved_ip`.
+4. Verify DNS before deploying:
+
+   ```bash
+   dig +short sa62wellness.duckdns.org
+   ```
+
+   The command must print the reserved IP.
+5. Set `manage_dns = false` (leave `domain`/`subdomain` unused) and the GitHub
    Variable `API_DOMAIN = sa62wellness.duckdns.org`.
 
-Caddy issues the cert once the name resolves — set the DuckDNS IP before deploying.
+Caddy issues the cert once the name resolves.
 
 ## DO Space for remote state (recommended config)
 
