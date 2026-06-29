@@ -15,7 +15,8 @@ resource "digitalocean_droplet" "wellness" {
   monitoring = true
   tags       = ["wellness", "prod"]
 
-  # Installs Docker, creates 'deploy' user, prepares /opt/wellness. No secrets.
+  # Minimal bootstrap: creates 'deploy' user + installs Python so Ansible can
+  # take over Docker install and app config. No secrets.
   user_data = templatefile("${path.module}/cloud-init.yaml", {
     ssh_public_key = data.digitalocean_ssh_key.deploy.public_key
   })

@@ -1,0 +1,94 @@
+---
+# Application deployment: ship config, render secrets, run the prod stack,
+# ensure models, prebuild the RAG index, and verify health.
+
+- name: Log in to GHCR
+  community.docker.docker_login:
+    registry: ghcr.io
+    username: "{{ ghcr_user }}"
+    password: "{{ ghcr_pat }}"
+  no_log: true
+
+- name: Ship compose and Caddy files
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/{{ item }}"
+    dest: "{{ app_dir }}/{{ item }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+  loop: "{{ app_compose_assets }}"
+
+- name: Sync RAG knowledge base
+  ansible.posix.synchronize:
+    src: "{{ repo_root }}/rag-knowledge-base/"
+    dest: "{{ app_dir }}/rag-knowledge-base/"
+    delete: true
+    recursive: true
+
+- name: Render .env from secrets
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ app_dir }}/.env"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"
+  no_log: true
+
+- name: Pull images and start the prod stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ app_dir }}"
+    files: "{{ app_compose_files }}"
+    state: present
+    pull: always
+    remove_orphans: true
+
+- name: Wait for Ollama to accept commands
+  ansible.builtin.command:
+    cmd: docker compose {{ app_compose_file_flags }} exec -T ollama ollama list
+    chdir: "{{ app_dir }}"
+  register: app_ollama_list
+  retries: 6
+  delay: 5
+  until: app_ollama_list.rc == 0
+  changed_when: false
+
+- name: Ensure Ollama models are present
+  ansible.builtin.command:
+    cmd: >-
+      docker compose {{ app_compose_file_flags }} exec -T ollama
+      sh -c 'ollama list | grep -q "{{ item }}" || ollama pull "{{ item }}"'
+    chdir: "{{ app_dir }}"
+  loop: "{{ app_ollama_models }}"
+  register: app_ollama_pull
+  changed_when: "'pulling' in app_ollama_pull.stdout"
+
+# Prebuild the RAG vector index so the first mobile AI request does not have to
+# embed the whole knowledge base. The endpoint is internal-only, so call it
+# from inside the python container.
+- name: Prebuild the RAG vector index
+  ansible.builtin.command:
+    cmd: >-
+      docker compose {{ app_compose_file_flags }} exec -T python-ai-service
+      python -c "import urllib.request;
+      r = urllib.request.Request('http://localhost:8000/rag/reindex', method='POST');
+      print(urllib.request.urlopen(r, timeout=180).read().decode())"
+    chdir: "{{ app_dir }}"
+  changed_when: true
+
+- name: Log out of GHCR
+  community.docker.docker_login:
+    registry: ghcr.io
+    state: absent
+  no_log: true
+
+- name: Wait for the API to report healthy over HTTPS
+  ansible.builtin.uri:
+    url: "https://{{ api_domain }}/actuator/health"
+    return_content: true
+  register: app_health
+  retries: 8
+  delay: 10
+  until: app_health.status == 200 and '"status":"UP"' in app_health.content
+  changed_when: false
+  delegate_to: localhost
+  become: false

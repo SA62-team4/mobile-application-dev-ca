@@ -14,7 +14,7 @@ Define the build order for the future implementation phase so the team can work 
 | 3 | Wellness CRUD | Backend CRUD and Android CRUD screens work end to end |
 | 4 | Local RAG | Python service indexes KB, retrieves chunks, calls Ollama, backend stores chat |
 | 5 | Agentic AI | Agent analyses records, saves recommendations, Android displays output |
-| 6 | Docker, CI, deployment, and security review | Compose stack, GitHub Actions CI + deploy/infra workflows, Terraform infra, DigitalOcean deployment, Codex Security scan guidance, smoke checks, setup docs stable |
+| 6 | Docker, CI, deployment, and security review | Compose stack, GitHub Actions CI (incl. Ansible lint) + deploy/infra workflows, Terraform infra, Ansible config + deploy, DigitalOcean deployment, Codex Security scan guidance, smoke checks, setup docs stable |
 | 7 | Demo hardening | Seed data, video script, final testing, zipped submission checklist complete |
 | Optional 8 | .NET backup rehearsal | Cold-standby `.NET Backup API` mirrors Spring contracts on port `8082` without replacing Spring |
 

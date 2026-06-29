@@ -132,8 +132,9 @@ Recommended AWS usage:
 The chosen production topology: a single DigitalOcean Droplet runs the full Docker
 Compose stack with Ollama on-server. Caddy is the only public service and
 terminates TLS for `api.<domain>`. Infrastructure is provisioned with Terraform;
-images are built and deployed by GitHub Actions; secrets live in GitHub Actions
-secrets. See `10-plan-docker-devops.md` for the operational detail.
+images are built by GitHub Actions and the host is configured and deployed with
+Ansible (`infra/ansible/`); secrets live in GitHub Actions secrets. See
+`10-plan-docker-devops.md` for the operational detail.
 
 ```plantuml
 @startuml
@@ -143,7 +144,7 @@ actor "Android App" as Android
 
 cloud "GitHub" as GH {
   rectangle "Actions: infra.yml\nTerraform" as Infra
-  rectangle "Actions: deploy.yml\nbuild + SSH deploy" as Deploy
+  rectangle "Actions: deploy.yml\nbuild + Ansible deploy" as Deploy
   rectangle "GHCR\ncontainer images" as GHCR
 }
 
@@ -161,11 +162,11 @@ cloud "DigitalOcean" as DO {
 }
 
 Infra --> Spaces : state
-Infra --> Droplet : provision\n(cloud-init installs Docker)
+Infra --> Droplet : provision\n(cloud-init: deploy user)
 Infra --> FW
 Infra --> DNS
 Deploy --> GHCR : push images
-Deploy --> Droplet : SSH: write .env,\ncompose up
+Deploy --> Droplet : Ansible: write .env,\ncompose up
 Droplet --> GHCR : pull images
 Android --> DNS
 DNS --> Caddy : HTTPS + JWT
@@ -181,7 +182,8 @@ Deployment rules:
 - Only Caddy (80/443) and SSH (22) are reachable; MySQL, Ollama, Python AI, and
   Spring Boot stay on the internal Docker network.
 - No secrets are committed, stored in Terraform state, or placed in cloud-init —
-  the deploy job renders `.env` on the Droplet from GitHub Actions secrets.
+  the Ansible deploy renders `.env` on the Droplet from GitHub Actions secrets
+  (read from the environment, never the process argv).
 - Ollama remains local to the Droplet, satisfying the free/local LLM constraint
   without any paid cloud inference.
 

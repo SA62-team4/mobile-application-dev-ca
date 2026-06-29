@@ -99,9 +99,11 @@ Checklist:
 
 - `terraform apply` provisions the Droplet, reserved IP, firewall, and DNS cleanly.
 - Cloud firewall exposes only inbound 22/80/443; data/AI services are not public.
-- `deploy.yml` builds/pushes images and deploys behind the `production` environment approval.
+- `deploy.yml` builds/pushes images then runs `ansible-playbook` behind the `production` environment approval.
+- The Ansible play is idempotent: a second run reports no changes for unchanged config.
+- `ansible-playbook --syntax-check` and `ansible-lint` pass in CI (the `ansible` job).
 - `https://api.<domain>/actuator/health` returns `UP` with a valid certificate.
-- No secrets are committed to the repo, Terraform state, or cloud-init; all live in GitHub Actions secrets.
+- No secrets are committed to the repo, Terraform state, cloud-init, or the playbooks; all live in GitHub Actions secrets and are passed to Ansible via the environment.
 - Full Android flow works against the HTTPS domain; Droplet reboot restores the stack with models persisted.
 
 Pass condition:

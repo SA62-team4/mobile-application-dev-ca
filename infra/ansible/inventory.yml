@@ -1,0 +1,8 @@
+# Single droplet. The address comes from the DROPLET_HOST env var so no IP is
+# committed; the deploy workflow exports it from the production secret.
+all:
+  hosts:
+    wellness:
+      ansible_host: "{{ lookup('env', 'DROPLET_HOST') }}"
+      ansible_user: deploy
+      ansible_python_interpreter: /usr/bin/python3

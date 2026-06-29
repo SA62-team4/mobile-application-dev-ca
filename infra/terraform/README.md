@@ -96,6 +96,7 @@ terraform apply
 terraform output            # reserved_ip, fqdn
 ```
 
-cloud-init installs Docker and prepares `/opt/wellness`. After apply, the deploy
-workflow rsyncs app files, writes `.env` from GitHub secrets, and starts the prod
+cloud-init only creates the `deploy` user and installs Python. After apply, the
+deploy workflow runs the Ansible playbooks in `infra/ansible/`, which install
+Docker, ship app files, write `.env` from GitHub secrets, and start the prod
 stack. `terraform destroy` tears it all down.

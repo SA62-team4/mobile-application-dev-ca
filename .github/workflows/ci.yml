@@ -89,3 +89,21 @@ jobs:
         run: docker compose config
       - name: Validate .NET backup Compose override
         run: docker compose -f docker-compose.yml -f docker-compose.dotnet-backup.yml config
+
+  ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Ansible
+        run: pip install ansible ansible-lint
+      - name: Install collections
+        run: ansible-galaxy collection install -r infra/ansible/requirements.yml
+      - name: Syntax check
+        working-directory: infra/ansible
+        run: ansible-playbook site.yml --syntax-check
+      - name: Lint playbooks
+        working-directory: infra/ansible
+        run: ansible-lint

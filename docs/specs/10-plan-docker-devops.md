@@ -8,7 +8,7 @@
 | Controls | REQ-14, REQ-16, NFR-03, NFR-05 |
 | Primary audience | Integration owner, backend owner, Python AI owner |
 | Upstream specs | `04-plan-system-architecture.md`, `06-plan-api-contracts.md`, `08-plan-rag-ai-design.md` |
-| Downstream specs | Docker Compose, GitHub Actions, setup docs |
+| Downstream specs | Docker Compose, GitHub Actions, Ansible playbooks (`infra/ansible/`), setup docs |
 
 ## Goal
 
@@ -164,8 +164,9 @@ Do not run heavyweight Ollama generation in CI by default. Use mocks or a lightw
 ## DigitalOcean Deployment (Production)
 
 The chosen cloud target is a single DigitalOcean Droplet running the Compose
-stack. Infrastructure is managed with Terraform; application deployment runs
-through GitHub Actions; secrets live in GitHub Actions secrets.
+stack. Infrastructure is provisioned with Terraform; server configuration and
+application deployment are handled by Ansible (`infra/ansible/`), invoked from
+GitHub Actions; secrets live in GitHub Actions secrets.
 
 Topology and sizing:
 
@@ -182,11 +183,25 @@ Topology and sizing:
 
 Infrastructure (`infra/terraform/`):
 
-- Resources: Droplet (cloud-init installs Docker + prepares `/opt/wellness`),
-  reserved IP, cloud firewall (inbound 22/80/443 only), DNS A record (optional via
-  `manage_dns`), project grouping.
+- Resources: Droplet (cloud-init only creates the `deploy` user and installs
+  Python so Ansible can take over), reserved IP, cloud firewall (inbound
+  22/80/443 only), DNS A record (optional via `manage_dns`), project grouping.
 - Remote state in a DO Space (S3-compatible); see `infra/terraform/README.md` for
   the recommended Space configuration.
+
+Configuration and deployment (`infra/ansible/`):
+
+- Ansible owns everything past provisioning. The `bootstrap` role installs
+  Docker Engine + the compose plugin, adds `deploy` to the `docker` group, and
+  ensures `/opt/wellness`. The `app` role logs in to GHCR, ships
+  compose/Caddy/knowledge-base files, templates `.env` (mode `0600`) from
+  secrets, pulls images and runs the prod overlay, ensures the Ollama models are
+  present, prebuilds the Python RAG vector index, and verifies the HTTPS health
+  endpoint. The playbook is idempotent: a second run reports no changes for
+  unchanged config.
+- Secrets are read from the environment via `lookup('env', ...)` (not CLI
+  extra-vars) so they never appear in the process argv; non-sensitive config
+  (image tag/prefix, API domain) is passed as extra-vars.
 
 Deployment (`.github/workflows/`):
 
@@ -194,12 +209,13 @@ Deployment (`.github/workflows/`):
 - `deploy.yml` builds `spring-backend` and `python-ai-service` images only when a
   push to `main` changes deploy-relevant paths (`spring-backend/`,
   `python-ai-service/`, `rag-knowledge-base/`, Compose/Caddy files, or
-  `deploy.yml` itself), or when manually dispatched. It pushes to GHCR, then over
-  SSH ensures `/opt/wellness` exists and is owned by the `deploy` user, ships
-  compose/Caddy/knowledge-base files, writes `.env` from secrets, pulls images,
-  runs the prod overlay, ensures the Ollama models are present, and prebuilds the
-  Python RAG vector index before the mobile demo path uses AI.
-- Both use a `production` GitHub Environment for an approval gate.
+  `deploy.yml` itself), or when manually dispatched. It pushes the images to
+  GHCR, then runs `ansible-playbook infra/ansible/site.yml` against the droplet
+  to configure the host and deploy the stack.
+- `ci.yml` runs `ansible-playbook --syntax-check` and `ansible-lint` on PRs so
+  playbook regressions are caught without touching a real droplet.
+- `deploy.yml`/`infra.yml` use a `production` GitHub Environment for an approval
+  gate.
 
 Secrets and variables (GitHub → Settings → Secrets and variables → Actions).
 Store all secrets as **Environment secrets** on the `production` Environment (not
@@ -300,5 +316,6 @@ AWS should not be used for:
 - CI jobs are defined at behavior level.
 - `SECURITY.md` defines Codex Security diff, scoped, and repository scan expectations.
 - AWS is clearly optional hybrid staging.
-- DigitalOcean is the chosen production path: Terraform infra, Actions deploy,
-  Caddy TLS, secrets in GitHub, firewall limited to 22/80/443.
+- DigitalOcean is the chosen production path: Terraform infra, Ansible config +
+  deploy from Actions, Caddy TLS, secrets in GitHub, firewall limited to
+  22/80/443.
