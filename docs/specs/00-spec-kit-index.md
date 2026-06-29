@@ -24,7 +24,7 @@ The workflow image also includes Analyze. In this project, Analyze is treated as
 | Specify | `02-specify-project-requirements.md` | Requirement IDs, acceptance criteria, team ownership |
 | Clarify | `03-clarify-decisions-and-edge-cases.md` | Resolved decisions, open questions, edge cases |
 | Plan | `04-plan-system-architecture.md` through `11-plan-implementation-roadmap.md` | Architecture, data, API, UI, AI, Docker, roadmap |
-| Tasks | `12-tasks-implementation-backlog.md` | Implementation-ready task units |
+| Tasks | `12-tasks-implementation-backlog.md`, `16-kanban-sprint-board.md` | Implementation-ready task units and the sprint/Kanban board view |
 | Analyze | `13-analyze-traceability-matrix.md`, `14-validate-quality-gates.md` | Gap analysis before implementation |
 | Implement | Future code and tests | AI-assisted implementation against specs |
 | Validate | `15-validate-test-and-demo-plan.md`, `14-validate-quality-gates.md` | Evidence that output matches spec |
@@ -48,6 +48,7 @@ The workflow image also includes Analyze. In this project, Analyze is treated as
 | 13 | `13-analyze-traceability-matrix.md` | Requirement-to-spec-to-test mapping |
 | 14 | `14-validate-quality-gates.md` | Spec conformance gates |
 | 15 | `15-validate-test-and-demo-plan.md` | Verification strategy and 15-minute demo plan |
+| 16 | `16-kanban-sprint-board.md` | Sprint plan and Kanban board view over the task backlog |
 
 ## Spec Status
 
