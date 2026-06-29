@@ -92,7 +92,8 @@ Generate --> Answer
   - `snippet`
 - Generate embeddings locally through Ollama.
 - Use Ollama's current `POST /api/embed` endpoint with `nomic-embed-text` for
-  embeddings.
+  embeddings, with compatibility fallback to the older `POST /api/embeddings`
+  endpoint when the runtime does not expose `/api/embed`.
 - Persist the Chroma index in a Docker volume.
 - Provide a development-only reindex endpoint.
 
