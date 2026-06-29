@@ -3,6 +3,8 @@
 *.log
 build/
 target/
+bin/
+obj/
 .gradle/
 .gradle-cache/
 .idea/
@@ -16,3 +18,13 @@ venv/
 chroma-data/
 mysql-data/
 ollama-data/
+
+# Terraform (infra/terraform/) — never commit state or local var files.
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+terraform.tfvars
+*.auto.tfvars
+backend.hcl

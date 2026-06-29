@@ -45,6 +45,23 @@ Recommendations:
 - Saved recommendation belongs to authenticated user.
 - List recommendations returns newest first.
 
+Optional `.NET Backup API`:
+
+- Status and health endpoints match Spring response shapes.
+- JWT generation and validation use the same secret, expiry, and claims as Spring.
+- BCrypt password hashes created by Spring or .NET can be verified by the other backend.
+- User-owned record, chat, and recommendation queries filter by authenticated user id.
+- Internal APIs reject missing or invalid `X-Internal-Service-Token`.
+- CI runs `.NET` backup backend tests without heavyweight Ollama generation.
+
+Optional .NET desktop client (`REQ-21`):
+
+- `ApiClient` builds the documented routes and attaches `Authorization: Bearer <jwt>` on non-auth calls.
+- DTOs (de)serialize the documented JSON shapes for auth, records, chat, and recommendations.
+- Error responses are parsed into the standard error shape and surfaced as user-friendly messages.
+- `dotnet build`/`dotnet test` run in CI without any LLM dependency.
+- Distributable Windows/macOS executables are produced with `desktop-app/build-desktop.sh` (self-contained, single-file); cross-compiles from any host. See `desktop-app/README.md`.
+
 ## Python AI Tests
 
 RAG:
@@ -96,6 +113,18 @@ Minimum smoke checks:
 - Spring Boot can reach Python AI service.
 - Python AI service can reach Ollama.
 - Android physical-device debug build can be installed through `tools/scripts/android-phone-demo.sh`.
+- Optional backup stack exposes `.NET Backup API` on `http://localhost:8082` and can be smoke-tested with the same contract script by setting `BASE_URL`.
+
+## Codex Security Review
+
+Codex Security scans are review evidence, not a replacement for the functional tests above. Follow the workflow in `SECURITY.md`.
+
+Minimum security review evidence:
+
+- Codex Security diff scan for PRs that change auth, authorization, user data ownership, secret handling, Docker/runtime configuration, Android token storage, Python callbacks, or optional backup/desktop API parity.
+- Codex Security repository or scoped-path scan before final submission, covering changed runtime components.
+- Valid high or critical findings fixed before merge/submission, or explicitly deferred with rationale that does not compromise required demo data, secrets, or cross-user access.
+- PR or submission notes include scan type, scope, date, finding summary, fix summary, report path if available, and accepted suppressions.
 
 ## Demo Data
 
@@ -141,6 +170,14 @@ Suggested timing:
 | 13:30-14:30 | GitHub collaboration and CI | PR workflow, Actions summary |
 | 14:30-15:00 | Wrap up | Requirements mapping and team contributions |
 
+Optional backup demo note:
+
+- If time permits, briefly show `.NET Backup API` health on port `8082` as cold-standby evidence. Do not spend core demo time on backup routing unless the mandatory Spring, Android, MySQL, RAG, and Python agent flows are already complete.
+
+Optional desktop demo note:
+
+- If time permits, briefly show the .NET Avalonia desktop client logging in and reading the same wellness records as Android against the same Spring Boot backend, as cross-platform bonus evidence (`REQ-21`). Do not let it displace the mandatory Android flow.
+
 ## Submission Checklist
 
 - Integrated solution code included.
@@ -149,6 +186,7 @@ Suggested timing:
 - Author comments added to classes or key methods.
 - `.env.example` included but real `.env` excluded.
 - README/setup instructions included.
+- Codex Security final scan evidence included or referenced.
 - One zipped file named with team name.
 
 ## Acceptance Criteria
@@ -156,4 +194,5 @@ Suggested timing:
 - Test plan covers mandatory CA features.
 - Demo script fits within 15 minutes.
 - Demo explicitly shows Android, backend, MySQL, RAG chatbot, JWT, Python agent, and Dockerisation.
+- Security review evidence shows Codex Security scans were run for security-sensitive changes and final runtime components.
 - Optional AWS is mentioned only if it exists and is stable.

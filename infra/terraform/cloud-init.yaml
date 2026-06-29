@@ -1,0 +1,38 @@
+#cloud-config
+# Installs Docker, creates 'deploy' user, prepares /opt/wellness. No secrets.
+# Rendered by Terraform templatefile(); ssh_public_key is a template variable.
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - git
+  - curl
+  - ca-certificates
+
+users:
+  - default
+  - name: deploy
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+
+write_files:
+  - path: /etc/wellness.note
+    permissions: '0644'
+    content: |
+      Wellness App droplet.
+      App stack lives in /opt/wellness and runs via docker compose.
+      Secrets are written to /opt/wellness/.env by the GitHub Actions deploy job.
+      Never store secrets in this image or in cloud-init.
+
+runcmd:
+  # Docker Engine + Compose plugin.
+  - [sh, -c, "curl -fsSL https://get.docker.com -o /tmp/get-docker.sh && sh /tmp/get-docker.sh"]
+  - systemctl enable --now docker
+  - usermod -aG docker deploy
+  # App files are shipped by the deploy workflow (rsync), not cloned here.
+  - install -d -o deploy -g deploy /opt/wellness
+  - touch /opt/wellness/.cloud-init-complete

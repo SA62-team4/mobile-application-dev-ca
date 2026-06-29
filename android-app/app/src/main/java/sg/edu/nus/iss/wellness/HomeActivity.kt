@@ -2,6 +2,7 @@ package sg.edu.nus.iss.wellness
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
@@ -15,6 +16,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -26,11 +28,21 @@ import sg.edu.nus.iss.wellness.api.ChatResponse
 import sg.edu.nus.iss.wellness.api.RecommendationResponse
 import sg.edu.nus.iss.wellness.api.WellnessRecordRequest
 import sg.edu.nus.iss.wellness.api.WellnessRecordResponse
+import sg.edu.nus.iss.wellness.dashboard.DailySnapshot
+import sg.edu.nus.iss.wellness.dashboard.DashboardDataHelper
+import sg.edu.nus.iss.wellness.dashboard.DateRangeFilter
+import sg.edu.nus.iss.wellness.dashboard.InsightTeaser
+import sg.edu.nus.iss.wellness.dashboard.MetricBadge
+import sg.edu.nus.iss.wellness.dashboard.MetricType
+import sg.edu.nus.iss.wellness.dashboard.SparklineDataSeries
+import sg.edu.nus.iss.wellness.dashboard.SparklineView
+import sg.edu.nus.iss.wellness.dashboard.WeeklyMetricSummary
 import java.io.IOException
 import java.time.LocalDate
+import java.util.Calendar
 
 /**
- * Authenticated app shell for records, chatbot, recommendations, and profile.
+ * Authenticated app shell with a wellness dashboard, chatbot, recommendations, and profile.
  *
  * @author SA62 Team
  */
@@ -44,6 +56,11 @@ class HomeActivity : Activity() {
     private lateinit var chatButton: Button
     private lateinit var recommendationsButton: Button
     private lateinit var profileButton: Button
+
+    private var activeFilter: DateRangeFilter? = null
+    private var cachedRecords: List<WellnessRecordResponse> = emptyList()
+    private var cachedRecommendations: List<RecommendationResponse> = emptyList()
+    private var recordsSection: LinearLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,53 +80,319 @@ class HomeActivity : Activity() {
         recommendationsButton = findViewById(R.id.recommendationsButton)
         profileButton = findViewById(R.id.profileButton)
 
-        recordsButton.setOnClickListener { showRecords() }
+        recordsButton.setOnClickListener { showDashboard() }
         chatButton.setOnClickListener { showChat() }
         recommendationsButton.setOnClickListener { showRecommendations() }
         profileButton.setOnClickListener { showProfile() }
 
-        showRecords()
+        showDashboard()
     }
 
-    private fun showRecords() {
+    // Wellness Dashboard
+
+    private fun showDashboard() {
         selectTab(recordsButton)
-        titleText.text = "Wellness Records"
+        titleText.text = "Dashboard"
         reset()
-        addStateBlock("Loading records", "Fetching your latest wellness logs from the backend.", "...")
+        addStateBlock("Loading dashboard", "Fetching your latest wellness data.", "...")
         scope.launch {
-            runCatching { api.records() }
-                .onSuccess { records -> renderRecords(records) }
-                .onFailure { showError("Could not load records.", "Check that the backend is reachable from the emulator.") }
+            val records = runCatching { api.records() }.getOrElse { err ->
+                if (err is HttpException && err.code() in listOf(401, 403)) {
+                    tokenStore.clear()
+                    goToLogin()
+                } else {
+                    showError("Could not load dashboard.", "Check that the backend is reachable from the emulator.")
+                }
+                return@launch
+            }
+            val recommendations = runCatching { api.recommendations() }.getOrDefault(emptyList())
+            cachedRecords = records
+            cachedRecommendations = recommendations
+            renderDashboard(records, recommendations)
         }
     }
 
-    private fun renderRecords(records: List<WellnessRecordResponse>) {
+    private fun renderDashboard(
+        records: List<WellnessRecordResponse>,
+        recommendations: List<RecommendationResponse>
+    ) {
         reset()
-        addButton("Add record", ButtonStyle.PRIMARY) { openRecordDialog(null) }
-        if (records.isEmpty()) {
-            addStateBlock("No records yet", "Add your first wellness log to start seeing history and recommendations.", "+")
+        val aggregates = DashboardDataHelper.aggregateByDate(records)
+        val snapshot = DashboardDataHelper.buildDailySnapshot(aggregates)
+        val summary = DashboardDataHelper.computeWeeklySummary(aggregates)
+
+        // Today's snapshot tiles
+        renderSnapshotTiles(snapshot)
+
+        // Metric cards with trend sparklines and status badges
+        val primaryColor = getColor(R.color.secondary)
+        val greenColor = getColor(R.color.metric_green)
+        val amberColor = getColor(R.color.metric_amber)
+
+        val sleepSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.SLEEP, primaryColor)
+        val actSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.ACTIVITY, greenColor)
+        val moodSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.MOOD, amberColor)
+
+        content.addView(buildMetricCard("Sleep", "💤", summary, sleepSeries, summary.sleepBadge, MetricType.SLEEP))
+        content.addView(buildMetricCard("Activity", "🏃", summary, actSeries, summary.activityBadge, MetricType.ACTIVITY))
+        content.addView(buildMetricCard("Mood", "😊", summary, moodSeries, summary.moodBadge, MetricType.MOOD))
+
+        // AI insight teaser
+        val teaser = DashboardDataHelper.buildInsightTeaser(recommendations)
+        renderInsightCard(teaser) { selectTab(recommendationsButton); showRecommendations() }
+
+        // Records section with date-range filter
+        val section = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+        recordsSection = section
+        content.addView(section)
+        buildRecordsSection(section, records)
+    }
+
+    // Today's snapshot tiles showing the most recent day's values
+    private fun renderSnapshotTiles(snapshot: DailySnapshot?) {
+        if (snapshot == null) {
+            content.addView(infoCard("No records yet", "Add your first wellness log below to get started."))
             return
         }
 
-        val latest = records.first()
-        val metrics = horizontal()
-        metrics.addView(pill("Sleep ${latest.sleepHours}h"))
-        metrics.addView(pill("${latest.exerciseType ?: "Exercise"} ${latest.exerciseMinutes}m"))
-        metrics.addView(pill("Mood ${latest.moodScore}/5"))
-        content.addView(metrics)
+        val tilesRow = horizontal()
+        tilesRow.layoutParams = (tilesRow.layoutParams as LinearLayout.LayoutParams)
+            .apply { bottomMargin = dp(4) }
 
-        records.forEach { record ->
-            val card = card()
-            card.addView(title("${record.recordDate}", 16))
-            card.addView(accent("Sleep ${record.sleepHours}h | ${record.exerciseType ?: "No exercise"} ${record.exerciseMinutes}min | Mood ${record.moodScore}/5"))
-            card.addView(body(record.notes.orEmpty().ifBlank { "No notes added." }))
-            val actions = horizontal()
-            actions.addView(smallButton("Edit", ButtonStyle.SECONDARY) { openRecordDialog(record) })
-            actions.addView(smallButton("Delete", ButtonStyle.DESTRUCTIVE) { confirmDelete(record.id) })
-            card.addView(actions)
-            content.addView(card)
+        tilesRow.addView(snapshotTile("💤", "${snapshot.sleepHours}h", "Sleep"))
+        tilesRow.addView(snapshotTile("🏃", "${snapshot.exerciseMinutes}min", "Activity"))
+        tilesRow.addView(snapshotTile("😊", "${snapshot.moodScore}/5", "Mood"))
+        content.addView(tilesRow)
+
+        if (!snapshot.isToday) {
+            content.addView(caption("Showing ${snapshot.date}  ·  No entry today").centered()
+                .apply { setPadding(0, 0, 0, dp(12)) })
         }
     }
+
+    private fun snapshotTile(icon: String, value: String, label: String): LinearLayout =
+        LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(8), dp(14), dp(8), dp(14))
+            background = rounded(getColor(R.color.bg_surface), dp(12), getColor(R.color.border_default))
+            elevation = dp(1).toFloat()
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                .withEndMargin(dp(8))
+
+            addView(TextView(context).apply {
+                text = icon; textSize = 22f; gravity = Gravity.CENTER
+                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            })
+            addView(TextView(context).apply {
+                text = value; textSize = 18f; typeface = Typeface.DEFAULT_BOLD
+                setTextColor(getColor(R.color.text_primary)); gravity = Gravity.CENTER
+                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            })
+            addView(TextView(context).apply {
+                text = label; textSize = 11f
+                setTextColor(getColor(R.color.text_secondary)); gravity = Gravity.CENTER
+                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            })
+        }
+
+    // Metric card with sparkline trend and status badge
+    private fun buildMetricCard(
+        metricTitle: String,
+        icon: String,
+        summary: WeeklyMetricSummary,
+        series: SparklineDataSeries,
+        badge: MetricBadge,
+        metric: MetricType
+    ): LinearLayout {
+        val cardView = card()
+
+        // Header: icon + title (left) · badge (right)
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            ).withBottomMargin(dp(6))
+        }
+        header.addView(accent("$icon  $metricTitle").apply {
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        })
+        header.addView(badgePill(badge))
+        cardView.addView(header)
+
+        // Weekly summary text
+        cardView.addView(body(summaryLine(summary, metric)))
+
+        // Sparkline or no-data placeholder
+        if (series.points.isEmpty()) {
+            cardView.addView(body("No data yet for the past 7 days."))
+        } else {
+            cardView.addView(SparklineView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ).withBottomMargin(dp(4))
+                setData(series)
+            })
+        }
+
+        return cardView
+    }
+
+    private fun badgePill(badge: MetricBadge): TextView {
+        val bgColor = when (badge) {
+            MetricBadge.EXCELLENT -> getColor(R.color.badge_excellent)
+            MetricBadge.GOOD -> getColor(R.color.badge_good)
+            MetricBadge.FAIR -> getColor(R.color.badge_fair)
+            MetricBadge.BELOW_TARGET -> getColor(R.color.error)
+            MetricBadge.NO_DATA -> getColor(R.color.text_secondary)
+        }
+        return TextView(this).apply {
+            text = badge.displayText
+            textSize = 12f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(Color.WHITE)
+            setPadding(dp(10), dp(4), dp(10), dp(4))
+            background = rounded(bgColor, dp(12))
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+    }
+
+    private fun summaryLine(summary: WeeklyMetricSummary, metric: MetricType): String = when (metric) {
+        MetricType.SLEEP -> "Avg ${summary.averageSleepHours} h · ${summary.recordCount} days logged"
+        MetricType.ACTIVITY -> "${summary.exerciseDays} active days · ${summary.totalExerciseMinutes} min total"
+        MetricType.MOOD -> "Avg mood ${summary.averageMoodScore} / 5"
+    }
+
+    // AI wellness insight teaser card
+    private fun renderInsightCard(teaser: InsightTeaser?, onTap: () -> Unit) {
+        val cardView = card(fillColor = getColor(R.color.bg_subtle), stroke = getColor(R.color.bg_subtle))
+        cardView.setOnClickListener { onTap() }
+
+        if (teaser == null) {
+            cardView.addView(accent("💡 Insights"))
+            cardView.addView(body("No recommendations yet. Tap to generate →"))
+        } else {
+            cardView.addView(accent("💡 Latest Insight"))
+            cardView.addView(title(teaser.title, 15))
+            cardView.addView(body(teaser.excerpt))
+            teaser.createdAt?.let { cardView.addView(caption("Generated $it")) }
+            cardView.addView(caption("View details →"))
+        }
+        content.addView(cardView)
+    }
+
+    // Records section with date-range filter
+    private fun buildRecordsSection(section: LinearLayout, allRecords: List<WellnessRecordResponse>) {
+        section.removeAllViews()
+
+        // Header row: title · Filter · Add
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            ).withBottomMargin(dp(10))
+        }
+        header.addView(title("Recent Records", 16).apply {
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            setPadding(0, 0, 0, 0)
+        })
+        header.addView(headerIconButton("📅 Filter", ButtonStyle.SECONDARY) { showDateRangeFilterDialog() })
+        header.addView(headerIconButton("+ Add", ButtonStyle.PRIMARY) { openRecordDialog(null) })
+        section.addView(header)
+
+        // Active filter chip
+        activeFilter?.let { filter ->
+            val chip = TextView(this).apply {
+                text = "Filtered: ${filter.from} – ${filter.to}  ✕"
+                textSize = 13f
+                setTextColor(getColor(R.color.primary_dark))
+                setPadding(dp(12), dp(6), dp(12), dp(6))
+                background = rounded(getColor(R.color.bg_subtle), dp(16), getColor(R.color.primary))
+                setOnClickListener { clearFilter() }
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ).withBottomMargin(dp(10))
+            }
+            section.addView(chip)
+        }
+
+        // Record cards
+        val filtered = DashboardDataHelper.applyDateFilter(allRecords, activeFilter)
+        when {
+            allRecords.isEmpty() -> {
+                section.addView(infoCard("No records yet", "Add your first wellness log to start seeing history."))
+            }
+            filtered.isEmpty() -> {
+                section.addView(body("No records in this date range."))
+                section.addView(headerIconButton("Clear filter", ButtonStyle.SECONDARY) { clearFilter() }.apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, dp(44)
+                    ).withBottomMargin(dp(8))
+                })
+            }
+            else -> filtered.forEach { record ->
+                val recordCard = card()
+                recordCard.addView(title(record.recordDate, 16))
+                recordCard.addView(accent("Sleep ${record.sleepHours}h | ${record.exerciseType ?: "No exercise"} ${record.exerciseMinutes}min | Mood ${record.moodScore}/5"))
+                recordCard.addView(body(record.notes.orEmpty().ifBlank { "No notes added." }))
+                val actions = horizontal()
+                actions.addView(smallButton("Edit", ButtonStyle.SECONDARY) { openRecordDialog(record) })
+                actions.addView(smallButton("Delete", ButtonStyle.DESTRUCTIVE) { confirmDelete(record.id) })
+                recordCard.addView(actions)
+                section.addView(recordCard)
+            }
+        }
+    }
+
+    private fun showDateRangeFilterDialog() {
+        val today = LocalDate.now()
+        val startDefault = today.minusDays(7)
+        DatePickerDialog(
+            this,
+            { _, y1, m1, d1 ->
+                val startDate = LocalDate.of(y1, m1 + 1, d1)
+                val endCal = Calendar.getInstance()
+                DatePickerDialog(
+                    this,
+                    { _, y2, m2, d2 ->
+                        val endDate = LocalDate.of(y2, m2 + 1, d2)
+                        if (endDate.isBefore(startDate)) {
+                            Toast.makeText(this, "End date must be after start date", Toast.LENGTH_SHORT).show()
+                        } else {
+                            activeFilter = DateRangeFilter(startDate, endDate)
+                            refreshRecordsList()
+                        }
+                    },
+                    endCal.get(Calendar.YEAR),
+                    endCal.get(Calendar.MONTH),
+                    endCal.get(Calendar.DAY_OF_MONTH)
+                ).show()
+            },
+            startDefault.year,
+            startDefault.monthValue - 1,
+            startDefault.dayOfMonth
+        ).show()
+    }
+
+    private fun refreshRecordsList() {
+        val section = recordsSection ?: return
+        buildRecordsSection(section, cachedRecords)
+    }
+
+    private fun clearFilter() {
+        activeFilter = null
+        refreshRecordsList()
+    }
+
+    // Wellness Record Management (CRUD)
 
     private fun openRecordDialog(record: WellnessRecordResponse?) {
         val view = LinearLayout(this).apply {
@@ -149,7 +432,7 @@ class HomeActivity : Activity() {
             runCatching {
                 if (id == null) api.createRecord(request) else api.updateRecord(id, request)
             }.onSuccess {
-                showRecords()
+                showDashboard()
             }.onFailure {
                 showError("Could not save record.", "Check fields and backend connection.")
             }
@@ -170,10 +453,12 @@ class HomeActivity : Activity() {
         addStateBlock("Deleting record", "Removing the selected wellness log.", "...")
         scope.launch {
             runCatching { api.deleteRecord(id) }
-                .onSuccess { showRecords() }
+                .onSuccess { showDashboard() }
                 .onFailure { showError("Could not delete record.", "Please retry after checking the backend connection.") }
         }
     }
+
+    // RAG Chatbot
 
     private fun showChat() {
         selectTab(chatButton)
@@ -224,6 +509,8 @@ class HomeActivity : Activity() {
         }
     }
 
+    // Wellness Recommendations
+
     private fun showRecommendations() {
         selectTab(recommendationsButton)
         titleText.text = "Recommendations"
@@ -244,16 +531,16 @@ class HomeActivity : Activity() {
             return
         }
         recommendations.forEach { rec ->
-            val card = card(fillColor = getColor(R.color.bg_subtle), stroke = getColor(R.color.bg_subtle))
-            card.addView(title(rec.title, 16))
-            card.addView(accent(rec.trendSummary))
-            card.addView(body(rec.recommendationText))
+            val recCard = card(fillColor = getColor(R.color.bg_subtle), stroke = getColor(R.color.bg_subtle))
+            recCard.addView(title(rec.title, 16))
+            recCard.addView(accent(rec.trendSummary))
+            recCard.addView(body(rec.recommendationText))
             if (rec.actionItems.isNotEmpty()) {
-                card.addView(caption("Actions"))
-                rec.actionItems.forEach { card.addView(body("- $it")) }
+                recCard.addView(caption("Actions"))
+                rec.actionItems.forEach { recCard.addView(body("- $it")) }
             }
-            rec.createdAt?.let { card.addView(caption("Generated $it")) }
-            content.addView(card)
+            rec.createdAt?.let { recCard.addView(caption("Generated $it")) }
+            content.addView(recCard)
         }
     }
 
@@ -267,15 +554,17 @@ class HomeActivity : Activity() {
         }
     }
 
+    // User Profile
+
     private fun showProfile() {
         selectTab(profileButton)
         titleText.text = "Profile"
         reset()
-        val card = card()
-        card.addView(title(tokenStore.displayName().orEmpty().ifBlank { "Wellness user" }, 22))
-        card.addView(body(tokenStore.email().orEmpty().ifBlank { "No email stored" }))
-        card.addView(caption("SA62 Wellness App | Version 1.0"))
-        content.addView(card)
+        val profileCard = card()
+        profileCard.addView(title(tokenStore.displayName().orEmpty().ifBlank { "Wellness user" }, 22))
+        profileCard.addView(body(tokenStore.email().orEmpty().ifBlank { "No email stored" }))
+        profileCard.addView(caption("SA62 Wellness App | Version 1.0"))
+        content.addView(profileCard)
         addButton("Logout", ButtonStyle.DESTRUCTIVE) {
             scope.launch {
                 runCatching { api.logout() }
@@ -285,8 +574,11 @@ class HomeActivity : Activity() {
         }
     }
 
+    // UI Helpers
+
     private fun reset() {
         content.removeAllViews()
+        recordsSection = null
     }
 
     private fun showError(title: String, detail: String) {
@@ -315,6 +607,12 @@ class HomeActivity : Activity() {
         content.addView(block)
     }
 
+    private fun infoCard(heading: String, detail: String): LinearLayout =
+        card().apply {
+            addView(accent(heading))
+            addView(body(detail))
+        }
+
     private fun addButton(text: String, style: ButtonStyle, onClick: () -> Unit) {
         content.addView(styledButton(text, style, ViewGroup.LayoutParams.MATCH_PARENT, dp(56), onClick))
     }
@@ -322,6 +620,13 @@ class HomeActivity : Activity() {
     private fun smallButton(text: String, style: ButtonStyle, onClick: () -> Unit): Button =
         styledButton(text, style, 0, dp(48), onClick).apply {
             layoutParams = LinearLayout.LayoutParams(0, dp(48), 1f).withEndMargin(dp(8))
+        }
+
+    private fun headerIconButton(text: String, style: ButtonStyle, onClick: () -> Unit): Button =
+        styledButton(text, style, ViewGroup.LayoutParams.WRAP_CONTENT, dp(40), onClick).apply {
+            textSize = 12f
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(40))
+                .withEndMargin(dp(6))
         }
 
     private fun styledButton(text: String, style: ButtonStyle, width: Int, height: Int, onClick: () -> Unit): Button =
@@ -344,7 +649,7 @@ class HomeActivity : Activity() {
                     ButtonStyle.DESTRUCTIVE -> R.drawable.bg_button_destructive
                 }
             )
-            minHeight = dp(48)
+            minHeight = dp(40)
             setOnClickListener { onClick() }
             layoutParams = LinearLayout.LayoutParams(width, height).withBottomMargin(dp(12))
         }

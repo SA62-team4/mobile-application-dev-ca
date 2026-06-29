@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:WellnessDesktop.ViewModels"
+             x:Class="WellnessDesktop.Views.LoginView"
+             x:DataType="vm:LoginViewModel">
+
+  <Grid RowDefinitions="*,Auto,*" ColumnDefinitions="*,Auto,*">
+    <Border Grid.Row="1" Grid.Column="1"
+            Width="360" Padding="28" CornerRadius="12"
+            Background="#FFFFFF" BoxShadow="0 4 16 0 #22000000">
+      <StackPanel Spacing="12">
+        <TextBlock Text="Wellness Desktop" FontSize="22" FontWeight="Bold" />
+        <TextBlock Text="Sign in to your wellness account" Foreground="#666" />
+
+        <TextBlock Text="Display name" IsVisible="{Binding IsRegisterMode}" Margin="0,8,0,0" />
+        <TextBox Text="{Binding DisplayName}" Watermark="Your name"
+                 IsVisible="{Binding IsRegisterMode}" />
+
+        <TextBlock Text="Email" Margin="0,8,0,0" />
+        <TextBox Text="{Binding Email}" Watermark="you@example.com" />
+
+        <TextBlock Text="Password" Margin="0,8,0,0" />
+        <TextBox Text="{Binding Password}" PasswordChar="●" Watermark="Password" />
+
+        <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B"
+                   TextWrapping="Wrap" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+        <Button Content="{Binding SubmitLabel}" Command="{Binding SubmitCommand}"
+                IsEnabled="{Binding !IsBusy}"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                Margin="0,8,0,0" Classes="accent" />
+
+        <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" Height="4" />
+
+        <Button Content="{Binding ToggleLabel}" Command="{Binding ToggleModeCommand}"
+                Background="Transparent" HorizontalAlignment="Center" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

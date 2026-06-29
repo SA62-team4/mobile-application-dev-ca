@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:WellnessDesktop.ViewModels"
+             x:Class="WellnessDesktop.Views.ShellView"
+             x:DataType="vm:ShellViewModel">
+
+  <DockPanel>
+    <Border DockPanel.Dock="Top" Background="#2D6A4F" Padding="16,10">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding WelcomeText}"
+                   Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <Button Grid.Column="1" Content="Log out" Command="{Binding LogoutCommand}" />
+      </Grid>
+    </Border>
+
+    <TabControl SelectedIndex="{Binding SelectedIndex}" Padding="8">
+      <TabItem Header="Records">
+        <ContentControl Content="{Binding Records}" />
+      </TabItem>
+      <TabItem Header="Chatbot">
+        <ContentControl Content="{Binding Chat}" />
+      </TabItem>
+      <TabItem Header="Recommendations">
+        <ContentControl Content="{Binding Recommendations}" />
+      </TabItem>
+    </TabControl>
+  </DockPanel>
+</UserControl>

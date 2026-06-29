@@ -21,6 +21,7 @@ Use it whenever the team asks, "What did we decide?" or "Is this in scope?"
 | DEC-009 | AWS is optional hybrid staging, not main demo path. | Local Ollama demo is more reliable and lower risk. | DevOps, demo plan |
 | DEC-010 | Use PlantUML instead of Mermaid for diagrams. | Mermaid preview failed in local editor. | Docs, diagrams |
 | DEC-011 | Use PlantUML server mode in VS Code workspace settings. | User's preview extension required `plantuml.server`. | `.vscode/settings.json` |
+| DEC-012 | Production cloud target is a DigitalOcean Droplet running Docker Compose, with Ollama on-server, HTTPS via Caddy, Terraform-managed infra, GitHub Actions deploy, and secrets in GitHub Actions secrets. | DO Droplet + Compose is the simplest path that still hosts the local LLM; resolves the prior AWS-vs-other ambiguity. | `10-plan-docker-devops.md`, `infra/terraform/`, deploy workflows |
 
 ## Open Questions
 

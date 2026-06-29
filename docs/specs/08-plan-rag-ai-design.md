@@ -91,6 +91,9 @@ Generate --> Answer
   - `chunk_index`
   - `snippet`
 - Generate embeddings locally through Ollama.
+- Use Ollama's current `POST /api/embed` endpoint with `nomic-embed-text:latest`
+  for embeddings, with compatibility fallback to the older
+  `POST /api/embeddings` endpoint when the runtime does not expose `/api/embed`.
 - Persist the Chroma index in a Docker volume.
 - Provide a development-only reindex endpoint.
 
@@ -112,6 +115,8 @@ The generation prompt must instruct the model to:
 - Encourage professional medical help for serious or urgent symptoms.
 - Keep answers concise and practical.
 - Return source titles or snippets used.
+- Bound local generation length so CPU-only Ollama inference remains usable for
+  the Android demo path.
 
 ## Chat Response Contract
 

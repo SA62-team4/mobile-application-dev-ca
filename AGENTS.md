@@ -41,6 +41,8 @@ If a future implementation request conflicts with the CA brief, preserve the CA 
 - Before implementation, identify the affected requirement IDs from `13-analyze-traceability-matrix.md`.
 - During implementation, identify affected task IDs from `12-tasks-implementation-backlog.md`.
 - Update the relevant spec before changing behavior, endpoints, schemas, UI flows, AI logic, Docker services, or demo expectations.
+- Prefer extending an existing spec over creating a new one. Fold a new feature into the spec that already owns its lifecycle phase (for example, a new Android screen goes in `07-plan-android-ui-flows.md`, a new endpoint in `06-plan-api-contracts.md`). Only create a new spec file for a genuinely new lifecycle artifact that no existing spec covers.
+- Name spec files with the Spec Kit lifecycle convention `NN-<phase>-<topic>.md`, where `<phase>` is one of `constitution`, `specify`, `clarify`, `plan`, `tasks`, `analyze`, or `validate`. Do not add spec files without a lifecycle-phase prefix.
 - Keep PRs traceable by listing requirement IDs, spec files changed, and verification evidence.
 - Do not introduce implementation behavior that is not described in the specs.
 - Keep implementation changes traceable to requirement IDs and task IDs.

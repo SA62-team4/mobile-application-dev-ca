@@ -1,4 +1,7 @@
 services:
+
+  # ── MySQL 8.4 ──────────────────────────────────────────────────────────────
+  # The relational database. Spring Boot writes all user data here.
   mysql:
     image: mysql:8.4
     environment:
@@ -7,28 +10,61 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change_me}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change_me_root}
     ports:
+      # Host port 3307 avoids clashing with a local Homebrew MySQL on 3306.
+      # Inside the Docker network other services always reach mysql:3306.
       - "${MYSQL_HOST_PORT:-3307}:3306"
     volumes:
+      # Named volume keeps database files across container restarts and rebuilds.
       - mysql-data:/var/lib/mysql
+    networks:
+      - wellness-net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      # mysqladmin ping is the canonical way to check MySQL readiness.
+      # spring-backend will not start until this passes.
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
 
+  # ── Ollama ─────────────────────────────────────────────────────────────────
+  # Runs LLMs locally. The python-ai-service sends generation and embedding
+  # requests to Ollama. Models are stored in the ollama-data volume so they
+  # survive container restarts (each model can be several GB).
   ollama:
     image: ollama/ollama:latest
     ports:
       - "${OLLAMA_HOST_PORT:-11434}:11434"
     volumes:
       - ollama-data:/root/.ollama
+    networks:
+      - wellness-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          # Ollama needs significant RAM to load the LLM weights into memory.
+          # Adjust this limit based on which model you are running.
+          # llama3.2:3b needs roughly 2-3 GB.
+          memory: 6g
 
+  # ── Python AI Service ──────────────────────────────────────────────────────
+  # FastAPI service providing RAG chat and agentic recommendation endpoints.
+  # Depends on Ollama for embeddings and generation, and calls back to
+  # spring-backend to read/write wellness records.
   python-ai-service:
-    build: ./python-ai-service
+    build:
+      context: ./python-ai-service
+      # dockerfile is optional here since we follow the default name convention.
     environment:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       OLLAMA_GENERATION_MODEL: ${OLLAMA_GENERATION_MODEL:-llama3.2:3b}
-      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text:latest}
       CHROMA_PERSIST_DIR: ${CHROMA_PERSIST_DIR:-/data/chroma}
       KNOWLEDGE_BASE_DIR: /app/rag-knowledge-base
       BACKEND_BASE_URL: http://spring-backend:8080
@@ -36,13 +72,35 @@ services:
     ports:
       - "${AI_SERVICE_HOST_PORT:-8000}:8000"
     volumes:
+      # Read-only mount so the container can read knowledge base files but
+      # cannot accidentally modify them.
       - ./rag-knowledge-base:/app/rag-knowledge-base:ro
+      # ChromaDB vector index persists here across restarts.
       - chroma-data:/data/chroma
+    networks:
+      - wellness-net
     depends_on:
-      - ollama
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1g
 
+  # ── Spring Boot Backend ────────────────────────────────────────────────────
+  # The main REST API consumed by the Android app. Handles authentication,
+  # wellness records, and proxies AI requests to python-ai-service.
   spring-backend:
-    build: ./spring-backend
+    build:
+      context: ./spring-backend
     environment:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:mysql://mysql:3306/wellness_app}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-wellness_user}
@@ -53,19 +111,53 @@ services:
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-replace_with_internal_token}
     ports:
       - "${SPRING_HOST_PORT:-8080}:8080"
+    networks:
+      - wellness-net
     depends_on:
       mysql:
         condition: service_healthy
       python-ai-service:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent",
+             "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
 
+  # ── Adminer ────────────────────────────────────────────────────────────────
+  # Lightweight web UI for browsing and querying MySQL. Development/demo only.
+  # Navigate to http://localhost:8081 and log in with your MySQL credentials.
   adminer:
     image: adminer:latest
     ports:
       - "${ADMINER_HOST_PORT:-8081}:8080"
+    networks:
+      - wellness-net
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
 
+# ── Networks ──────────────────────────────────────────────────────────────────
+# An explicit bridge network gives all services a shared DNS namespace.
+# Services reach each other by their service name (e.g. "mysql", "ollama").
+# Without this declaration Docker Compose creates a default network, but naming
+# it explicitly makes the topology visible and lets you attach external tools.
+networks:
+  wellness-net:
+    driver: bridge
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+# Named volumes are managed by Docker and persist data even when containers are
+# stopped, removed, or recreated. Data is NOT lost on `docker compose down`
+# unless you add the --volumes flag.
 volumes:
   mysql-data:
   ollama-data:
