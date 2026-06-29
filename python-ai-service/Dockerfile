@@ -21,6 +21,12 @@ RUN apt-get update && \
 RUN groupadd --system appgroup && \
     useradd --system --gid appgroup --no-create-home --shell /usr/sbin/nologin appuser
 
+# ChromaDB persists its local vector index under /data/chroma in Compose. Create
+# the mount point before dropping privileges so Docker's empty named volume is
+# initialized with appuser ownership.
+RUN mkdir -p /data/chroma && \
+    chown -R appuser:appgroup /data
+
 # Copy and install Python dependencies before copying source code. This way
 # the pip install layer is cached and only invalidated when requirements.txt
 # changes, not on every source code change.

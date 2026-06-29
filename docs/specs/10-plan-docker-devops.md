@@ -177,6 +177,8 @@ Topology and sizing:
   Let's Encrypt for `api.<domain>`, reverse-proxying `spring-backend:8080`.
 - MySQL, Ollama, Python AI, and Spring Boot stay on the internal `wellness-net`;
   Adminer is disabled in production.
+- The Python AI image runs as a non-root user and pre-creates `/data/chroma`
+  with app-user ownership so the ChromaDB named volume can be written at startup.
 
 Infrastructure (`infra/terraform/`):
 
