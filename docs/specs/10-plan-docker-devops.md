@@ -190,8 +190,9 @@ Deployment (`.github/workflows/`):
 
 - `infra.yml` (manual) runs `terraform plan/apply/destroy`.
 - `deploy.yml` (on push to `main`) builds `spring-backend` and `python-ai-service`
-  images, pushes to GHCR, then over SSH ships compose/Caddy/knowledge-base files,
-  writes `.env` from secrets, pulls images, runs the prod overlay, and ensures the
+  images, pushes to GHCR, then over SSH ensures `/opt/wellness` exists and is
+  owned by the `deploy` user, ships compose/Caddy/knowledge-base files, writes
+  `.env` from secrets, pulls images, runs the prod overlay, and ensures the
   Ollama models are present.
 - Both use a `production` GitHub Environment for an approval gate.
 
@@ -213,7 +214,7 @@ Non-secret config goes in **Variables**.
 | `TF_STATE_BUCKET` | Variable | Terraform backend config | Name of the DO Space you created for state (e.g. `sa62-wellness-tfstate`) |
 | `TF_STATE_ENDPOINT` | Variable | Terraform backend config | `https://<region>.digitaloceanspaces.com` for your Space's region |
 | `DO_REGION` | Variable | Terraform tfvars | DO region slug, e.g. `sgp1` (`doctl compute region list`) |
-| `DROPLET_SIZE` | Variable | Terraform tfvars | DO size slug, e.g. `g-4vcpu-16gb` (`doctl compute size list`) |
+| `DROPLET_SIZE` | Variable | Terraform tfvars | DO size slug, e.g. `s-4vcpu-8gb` for the Regular 4 vCPU / 8 GB plan (`doctl compute size list`) |
 | `SSH_KEY_NAME` | Variable | Terraform tfvars | Name shown in DO → Settings → Security → SSH Keys |
 | `MANAGE_DNS` | Variable | DNS toggle | `true` if your domain is in DO DNS, else `false` |
 | `DOMAIN` | Variable | DNS + `.env` | Your registered domain (hosted in DO DNS when `MANAGE_DNS=true`) |

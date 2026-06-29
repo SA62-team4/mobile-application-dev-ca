@@ -82,6 +82,8 @@ jobs:
           HOST: ${{ secrets.DROPLET_HOST }}
           SSH_OPTS: -o StrictHostKeyChecking=accept-new
         run: |
+          ssh $SSH_OPTS "deploy@$HOST" \
+            "sudo install -d -o deploy -g deploy -m 0755 /opt/wellness"
           rsync -az -e "ssh $SSH_OPTS" \
             docker-compose.yml docker-compose.prod.yml Caddyfile \
             "deploy@$HOST:/opt/wellness/"
