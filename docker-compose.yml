@@ -51,6 +51,7 @@ services:
       JWT_EXPIRY_SECONDS: ${JWT_EXPIRY_SECONDS:-86400}
       AI_SERVICE_URL: ${AI_SERVICE_URL:-http://python-ai-service:8000}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-replace_with_internal_token}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     ports:
       - "${SPRING_HOST_PORT:-8080}:8080"
     depends_on:

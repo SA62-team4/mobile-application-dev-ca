@@ -13,6 +13,11 @@ import sg.edu.nus.iss.wellness.config.AppProperties;
 
 import java.util.List;
 
+/**
+ * Validates Google ID tokens received from the Android client for SSO login.
+ *
+ * @author Surya Kumaraguru
+ */
 @Service
 public class GoogleTokenVerifier {
 
