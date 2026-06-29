@@ -131,6 +131,37 @@ Use optional .NET backup only for backup rehearsal:
 
 Spring Boot remains the canonical backend for assignment evidence. The .NET backend mirrors the same API on port `8082` for cold-standby testing.
 
+### DigitalOcean Backend Install Examples
+
+Use these commands when the backend is deployed to the DigitalOcean Droplet and
+DuckDNS points to the reserved IP. No `adb reverse` is needed because the app
+connects over public HTTPS.
+
+Check the deployed backend first:
+
+```bash
+curl https://sa62wellness.duckdns.org/actuator/health
+```
+
+Install the Android app for either emulator or physical phone:
+
+```bash
+WELLNESS_API_BASE_URL=https://sa62wellness.duckdns.org/ ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:installDebug
+```
+
+If multiple Android devices are connected, pick one explicitly:
+
+```bash
+adb devices
+ANDROID_SERIAL=<device_serial> WELLNESS_API_BASE_URL=https://sa62wellness.duckdns.org/ ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:installDebug
+```
+
+Run the optional desktop client against the same deployed backend:
+
+```bash
+WELLNESS_API_BASE_URL=https://sa62wellness.duckdns.org/ dotnet run --project desktop-app/src/WellnessDesktop
+```
+
 ### Emulator Install Examples
 
 Spring backend on `8080`:

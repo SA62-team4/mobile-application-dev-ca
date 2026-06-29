@@ -259,7 +259,13 @@ Production run command (on the Droplet):
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
-Android points at `https://api.<domain>/` via `WELLNESS_API_BASE_URL`.
+Android and desktop clients point at the deployed HTTPS host through
+`WELLNESS_API_BASE_URL`, for example:
+
+```text
+WELLNESS_API_BASE_URL=https://sa62wellness.duckdns.org/ ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:installDebug
+WELLNESS_API_BASE_URL=https://sa62wellness.duckdns.org/ dotnet run --project desktop-app/src/WellnessDesktop
+```
 
 ## Optional AWS Hybrid Staging
 
