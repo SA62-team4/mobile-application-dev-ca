@@ -159,7 +159,8 @@ ANDROID_SERIAL=<device_serial> WELLNESS_API_BASE_URL=https://sa62wellness.duckdn
 Run the optional desktop client against the same deployed backend:
 
 ```bash
-WELLNESS_API_BASE_URL=https://sa62wellness.duckdns.org/ dotnet run --project desktop-app/src/WellnessDesktop
+cd desktop-app
+WELLNESS_API_BASE_URL=https://sa62wellness.duckdns.org/ dotnet run --project src/WellnessDesktop/WellnessDesktop.csproj
 ```
 
 ### Emulator Install Examples

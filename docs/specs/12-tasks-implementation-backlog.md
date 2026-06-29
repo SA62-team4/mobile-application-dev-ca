@@ -96,7 +96,7 @@ These tasks are optional bonus evidence (`REQ-21`). The desktop client is an add
 
 | Task ID | Requirement IDs | Task | Owner | Depends On | Done When |
 | --- | --- | --- | --- | --- | --- |
-| T-801 | REQ-21 | Scaffold `desktop-app/` Avalonia solution, `ApiClient`, `SessionStore`, DTOs, and config (`BackendBaseUrl`) with author comments | Bonus owner | T-203 | Solution builds and `dotnet build` passes |
+| T-801 | REQ-21 | Scaffold `desktop-app/` Avalonia solution, `ApiClient`, `SessionStore`, DTOs, config (`BackendBaseUrl` / `WELLNESS_API_BASE_URL`), and packaged build script support for stamping `BACKEND_BASE_URL` into distributable `appsettings.json` files | Bonus owner | T-203 | Solution builds, `dotnet build` passes, and packaged builds can target the DigitalOcean backend without a launch-time environment variable |
 | T-802 | REQ-21, REQ-02, REQ-03, NFR-01, NFR-02 | Implement login/register/logout screens with in-memory JWT storage | Bonus owner | T-801, T-203 | Auth works from desktop against Spring |
 | T-803 | REQ-21, REQ-04 through REQ-07, NFR-02, NFR-04 | Implement wellness CRUD screens with loading/empty/success/error states | Bonus owner | T-802, T-301 | CRUD works end to end from desktop |
 | T-804 | REQ-21, REQ-10 | Implement chatbot screen with answer and source snippets | Bonus owner | T-803, T-404 | Chat works from desktop |

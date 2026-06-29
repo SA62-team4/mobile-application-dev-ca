@@ -50,6 +50,9 @@ Examples:
 ```bash
 # Point at the optional .NET backup backend on 8082
 WELLNESS_API_BASE_URL=http://localhost:8082/ dotnet run --project src/WellnessDesktop
+
+# Point at the DigitalOcean production backend
+WELLNESS_API_BASE_URL=https://sa62wellness.duckdns.org/ dotnet run --project src/WellnessDesktop/WellnessDesktop.csproj
 ```
 
 For a published build, edit the `appsettings.json` that sits next to the binary.
@@ -71,7 +74,13 @@ installed. Cross-compiling works from any host (build the Windows `.exe` from a 
 ./build-desktop.sh                 # all targets: win-x64, osx-arm64, osx-x64
 ./build-desktop.sh win-x64         # one or more specific targets
 MAKE_APP=1 ./build-desktop.sh      # also wrap macOS builds into WellnessDesktop.app
+BACKEND_BASE_URL=https://sa62wellness.duckdns.org/ ./build-desktop.sh osx-arm64
 ```
+
+`BACKEND_BASE_URL` writes the deployed backend URL into each published
+`appsettings.json`, so the packaged app connects to DigitalOcean without requiring
+users to set `WELLNESS_API_BASE_URL` before launch. The value is normalised with a
+trailing slash.
 
 Output goes to `artifacts/<rid>/` (git-ignored):
 

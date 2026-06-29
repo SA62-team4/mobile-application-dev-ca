@@ -10,6 +10,7 @@
 #   ./build-desktop.sh                 # build all targets (win-x64, osx-arm64, osx-x64)
 #   ./build-desktop.sh win-x64         # build one or more specific targets
 #   MAKE_APP=1 ./build-desktop.sh      # also wrap macOS builds into .app bundles
+#   BACKEND_BASE_URL=https://sa62wellness.duckdns.org/ ./build-desktop.sh osx-arm64
 #
 # Output: artifacts/<rid>/
 
@@ -23,6 +24,25 @@ TARGETS=("$@")
 if [ ${#TARGETS[@]} -eq 0 ]; then
   TARGETS=("${DEFAULT_TARGETS[@]}")
 fi
+
+write_backend_config() {
+  local rid="$1"
+  local publish_dir="artifacts/${rid}"
+  local base_url="${BACKEND_BASE_URL:-}"
+
+  if [ -z "${base_url}" ]; then
+    return
+  fi
+
+  if [[ "${base_url}" != */ ]]; then
+    base_url="${base_url}/"
+  fi
+
+  local escaped="${base_url//\\/\\\\}"
+  escaped="${escaped//\"/\\\"}"
+  printf '{\n  "BackendBaseUrl": "%s"\n}\n' "${escaped}" > "${publish_dir}/appsettings.json"
+  echo "  Wrote BackendBaseUrl=${base_url} to ${publish_dir}/appsettings.json"
+}
 
 # Wrap a published macOS binary into a minimal double-clickable .app bundle.
 make_app_bundle() {
@@ -68,6 +88,8 @@ for rid in "${TARGETS[@]}"; do
     --self-contained true \
     -p:PublishSingleFile=true \
     -o "artifacts/${rid}"
+
+  write_backend_config "${rid}"
 
   case "${rid}" in
     osx-*)

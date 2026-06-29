@@ -61,6 +61,9 @@ Optional .NET desktop client (`REQ-21`):
 - Error responses are parsed into the standard error shape and surfaced as user-friendly messages.
 - `dotnet build`/`dotnet test` run in CI without any LLM dependency.
 - Distributable Windows/macOS executables are produced with `desktop-app/build-desktop.sh` (self-contained, single-file); cross-compiles from any host. See `desktop-app/README.md`.
+- Packaged desktop builds can set `BACKEND_BASE_URL=https://sa62wellness.duckdns.org/`
+  so the generated `appsettings.json` points at the DigitalOcean backend without
+  requiring a launch-time environment variable.
 
 ## Python AI Tests
 
