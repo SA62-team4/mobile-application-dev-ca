@@ -64,79 +64,28 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
-      - name: Render .env
+      - name: Install Ansible
+        run: |
+          pipx install --include-deps ansible
+          pipx inject ansible requests
+          ansible-galaxy collection install -r infra/ansible/requirements.yml
+
+      - name: Deploy with Ansible
+        working-directory: infra/ansible
+        # Secrets go through the environment (read via lookup('env') in the
+        # playbook) so they never land in the process argv. Non-sensitive config
+        # is passed as extra-vars.
         env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           INTERNAL_SERVICE_TOKEN: ${{ secrets.INTERNAL_SERVICE_TOKEN }}
-          API_DOMAIN: ${{ vars.API_DOMAIN }}
-          IMAGE_TAG: ${{ github.sha }}
         run: |
-          cat > deploy.env <<EOF
-          MYSQL_PASSWORD=$MYSQL_PASSWORD
-          MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
-          SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD
-          JWT_SECRET=$JWT_SECRET
-          INTERNAL_SERVICE_TOKEN=$INTERNAL_SERVICE_TOKEN
-          API_DOMAIN=$API_DOMAIN
-          SPRING_IMAGE=$IMAGE_PREFIX/wellness-spring-backend:$IMAGE_TAG
-          PYTHON_IMAGE=$IMAGE_PREFIX/wellness-python-ai-service:$IMAGE_TAG
-          EOF
-
-      - name: Ship files to droplet
-        env:
-          HOST: ${{ secrets.DROPLET_HOST }}
-          SSH_OPTS: -o StrictHostKeyChecking=accept-new
-        run: |
-          ssh $SSH_OPTS "deploy@$HOST" \
-            "sudo install -d -o deploy -g deploy -m 0755 /opt/wellness"
-          rsync -az -e "ssh $SSH_OPTS" \
-            docker-compose.yml docker-compose.prod.yml Caddyfile \
-            "deploy@$HOST:/opt/wellness/"
-          rsync -az --delete -e "ssh $SSH_OPTS" \
-            rag-knowledge-base "deploy@$HOST:/opt/wellness/"
-          rsync -az -e "ssh $SSH_OPTS" deploy.env "deploy@$HOST:/opt/wellness/.env"
-
-      - name: Deploy on droplet
-        env:
-          HOST: ${{ secrets.DROPLET_HOST }}
-          GHCR_USER: ${{ github.actor }}
-          GHCR_PAT: ${{ secrets.GHCR_PAT }}
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new "deploy@$HOST" bash -s <<EOF
-          set -euo pipefail
-          echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-          cd /opt/wellness
-          export COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
-          \$COMPOSE pull
-          \$COMPOSE up -d --remove-orphans
-          # Ensure Ollama models are present (first deploy pulls ~2.5 GB).
-          sleep 10
-          \$COMPOSE exec -T ollama sh -c 'ollama list | grep -q "llama3.2:3b" || ollama pull llama3.2:3b'
-          \$COMPOSE exec -T ollama sh -c 'ollama list | grep -q "nomic-embed-text:latest" || ollama pull nomic-embed-text:latest'
-          \$COMPOSE exec -T ollama ollama list
-          # Prebuild the RAG vector index after models are available so the first
-          # mobile AI request does not have to embed the whole knowledge base.
-          \$COMPOSE exec -T python-ai-service python - <<'PY'
-          import urllib.request
-
-          request = urllib.request.Request("http://localhost:8000/rag/reindex", method="POST")
-          with urllib.request.urlopen(request, timeout=180) as response:
-              print(response.read().decode())
-          PY
-          docker logout ghcr.io
-          EOF
-
-      - name: Health check
-        env:
-          API_DOMAIN: ${{ vars.API_DOMAIN }}
-        run: |
-          for i in $(seq 1 8); do
-            if curl -fsS --connect-timeout 5 --max-time 8 "https://$API_DOMAIN/actuator/health" | grep -q '"status":"UP"'; then
-              echo "Healthy"; exit 0
-            fi
-            echo "Waiting for health ($i/8)..."; sleep 10
-          done
-          echo "Service did not become healthy in time"; exit 1
+          ansible-playbook site.yml \
+            --extra-vars "app_image_prefix=${IMAGE_PREFIX}" \
+            --extra-vars "app_image_tag=${{ github.sha }}" \
+            --extra-vars "api_domain=${{ vars.API_DOMAIN }}"

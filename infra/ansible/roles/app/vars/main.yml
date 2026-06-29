@@ -1,0 +1,25 @@
+---
+# Image coordinates. app_image_tag is overridden per deploy (the commit SHA).
+app_image_prefix: ghcr.io/sa62-team4
+app_image_tag: latest
+app_spring_image: "{{ app_image_prefix }}/wellness-spring-backend:{{ app_image_tag }}"
+app_python_image: "{{ app_image_prefix }}/wellness-python-ai-service:{{ app_image_tag }}"
+
+# Compose overlays applied on the droplet (prod = internal-only + Caddy TLS).
+app_compose_files:
+  - docker-compose.yml
+  - docker-compose.prod.yml
+
+# Same overlays as CLI flags for the `docker compose ... exec` tasks.
+app_compose_file_flags: "-f docker-compose.yml -f docker-compose.prod.yml"
+
+# Models that must be present before the first mobile AI request.
+app_ollama_models:
+  - llama3.2:3b
+  - nomic-embed-text:latest
+
+# Files shipped from the repo checkout to the droplet.
+app_compose_assets:
+  - docker-compose.yml
+  - docker-compose.prod.yml
+  - Caddyfile
