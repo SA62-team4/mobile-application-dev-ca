@@ -12,6 +12,7 @@ public class AppProperties {
     private Jwt jwt = new Jwt();
     private String aiServiceUrl;
     private String internalServiceToken;
+    private Google google = new Google();
 
     public Jwt getJwt() {
         return jwt;
@@ -37,6 +38,14 @@ public class AppProperties {
         this.internalServiceToken = internalServiceToken;
     }
 
+    public Google getGoogle() {
+        return google;
+    }
+
+    public void setGoogle(Google google) {
+        this.google = google;
+    }
+
     public static class Jwt {
         private String secret;
         private long expirySeconds;
@@ -55,6 +64,18 @@ public class AppProperties {
 
         public void setExpirySeconds(long expirySeconds) {
             this.expirySeconds = expirySeconds;
+        }
+    }
+
+    public static class Google {
+        private String clientId;
+
+        public String getClientId() {
+            return clientId;
+        }
+
+        public void setClientId(String clientId) {
+            this.clientId = clientId;
         }
     }
 }

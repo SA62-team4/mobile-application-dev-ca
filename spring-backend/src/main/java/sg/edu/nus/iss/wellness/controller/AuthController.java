@@ -11,6 +11,7 @@ import sg.edu.nus.iss.wellness.model.AppUser;
 import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 import sg.edu.nus.iss.wellness.security.JwtService;
 import sg.edu.nus.iss.wellness.service.DtoMapper;
+import sg.edu.nus.iss.wellness.service.GoogleTokenVerifier;
 
 /**
  * Handles account registration and stateless JWT login/logout.
@@ -23,11 +24,14 @@ public class AuthController {
     private final AppUserRepository users;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final GoogleTokenVerifier googleTokenVerifier;
 
-    public AuthController(AppUserRepository users, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthController(AppUserRepository users, PasswordEncoder passwordEncoder,
+                          JwtService jwtService, GoogleTokenVerifier googleTokenVerifier) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.googleTokenVerifier = googleTokenVerifier;
     }
 
     @PostMapping("/register")
@@ -49,6 +53,33 @@ public class AuthController {
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        }
+        return new AuthDtos.LoginResponse(
+                jwtService.generateToken(user),
+                "Bearer",
+                jwtService.expirySeconds(),
+                DtoMapper.user(user)
+        );
+    }
+
+    @PostMapping("/google")
+    public AuthDtos.LoginResponse googleLogin(@Valid @RequestBody AuthDtos.GoogleAuthRequest request) {
+        GoogleTokenVerifier.GoogleUserInfo info;
+        try {
+            info = googleTokenVerifier.verify(request.idToken());
+        } catch (IllegalArgumentException e) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid Google token: " + e.getMessage());
+        }
+        String email = info.email().toLowerCase();
+        AppUser user = users.findByEmail(email).orElseGet(() -> {
+            AppUser newUser = new AppUser();
+            newUser.setEmail(email);
+            newUser.setDisplayName(info.name() != null && !info.name().isBlank()
+                    ? info.name().trim() : email);
+            return users.save(newUser);
+        });
+        if (!user.isEnabled()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Account is disabled");
         }
         return new AuthDtos.LoginResponse(
                 jwtService.generateToken(user),
