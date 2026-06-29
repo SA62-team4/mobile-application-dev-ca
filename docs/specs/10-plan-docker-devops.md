@@ -169,8 +169,10 @@ through GitHub Actions; secrets live in GitHub Actions secrets.
 
 Topology and sizing:
 
-- One Ubuntu 24.04 Droplet, **16 GB RAM / 4 vCPU** (Ollama runs on-server; CPU
-  inference is slow but functional).
+- One Ubuntu 24.04 Droplet. Default **8 GB / 4 vCPU** (`s-4vcpu-8gb`) with enforced
+  `mem_limit`s in the prod overlay so the stack fits; **16 GB** (`g-4vcpu-16gb`)
+  is roomier but restricted on new DO accounts (raise the tier via a ticket).
+  Ollama runs on-server; CPU inference is slow but functional.
 - Caddy is the only public service (80/443) and terminates TLS via automatic
   Let's Encrypt for `api.<domain>`, reverse-proxying `spring-backend:8080`.
 - MySQL, Ollama, Python AI, and Spring Boot stay on the internal `wellness-net`;

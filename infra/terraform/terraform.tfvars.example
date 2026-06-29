@@ -5,8 +5,10 @@
 ssh_key_name = "your-do-ssh-key-name" # name of an SSH key already in your DO account
 
 # ── Droplet (optional; defaults shown) ──
-region        = "sgp1"          # sgp1 | nyc3 | fra1 | ...
-droplet_size  = "g-4vcpu-16gb"  # >= 16 GB RAM to run Ollama on-server
+region = "sgp1" # sgp1 | nyc3 | fra1 | ...
+# s-4vcpu-8gb works with the prod mem_limits. g-4vcpu-16gb is roomier but is
+# restricted on new DO accounts (open a ticket to raise the tier).
+droplet_size  = "s-4vcpu-8gb"
 droplet_image = "ubuntu-24-04-x64"
 droplet_name  = "wellness-prod"
 project_name  = "Wellness App"

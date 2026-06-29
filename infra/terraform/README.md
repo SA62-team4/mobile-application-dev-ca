@@ -41,7 +41,7 @@ Set in `terraform.tfvars` (see `terraform.tfvars.example`).
 | --- | --- | --- | --- |
 | `ssh_key_name` | yes | — | Name of an SSH key already in your DO account |
 | `region` | no | `sgp1` | DO region slug |
-| `droplet_size` | no | `g-4vcpu-16gb` | Size slug; needs ≥ 16 GB for Ollama |
+| `droplet_size` | no | `s-4vcpu-8gb` | Size slug. 8 GB fits the prod mem_limits; `g-4vcpu-16gb` is roomier but tier-restricted on new accounts |
 | `droplet_image` | no | `ubuntu-24-04-x64` | Base image slug |
 | `droplet_name` | no | `wellness-prod` | Droplet hostname |
 | `project_name` | no | `Wellness App` | DO project that groups resources |

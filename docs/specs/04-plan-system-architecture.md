@@ -151,7 +151,7 @@ cloud "DigitalOcean" as DO {
   rectangle "Cloud Firewall\ninbound 22/80/443" as FW
   rectangle "Reserved IP + DNS\napi.DOMAIN" as DNS
   storage "Spaces\nTerraform remote state" as Spaces
-  node "Droplet 16 GB\nUbuntu + Docker Compose" as Droplet {
+  node "Droplet 8-16 GB\nUbuntu + Docker Compose" as Droplet {
     rectangle "caddy\nTLS 80/443" as Caddy
     rectangle "spring-backend" as Spring
     rectangle "python-ai-service" as Python

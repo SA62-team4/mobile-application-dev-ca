@@ -8,9 +8,9 @@ variable "region" {
 }
 
 variable "droplet_size" {
-  description = "Droplet size slug. Needs >= 16 GB RAM to host Ollama on-server."
+  description = "Droplet size slug. s-4vcpu-8gb fits the prod mem_limits; g-4vcpu-16gb (restricted on new accounts) gives more Ollama headroom."
   type        = string
-  default     = "g-4vcpu-16gb"
+  default     = "s-4vcpu-8gb"
 }
 
 variable "droplet_image" {
