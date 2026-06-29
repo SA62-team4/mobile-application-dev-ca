@@ -13,6 +13,15 @@ on:
       - "docker-compose.prod.yml"
       - "Caddyfile"
   workflow_dispatch:
+    inputs:
+      skip_build:
+        description: "Skip image build and deploy an existing tag (config-only redeploy)"
+        type: boolean
+        default: false
+      image_tag:
+        description: "Image tag to deploy when skip_build is true"
+        type: string
+        default: latest
 
 permissions:
   contents: read
@@ -23,6 +32,8 @@ env:
 
 jobs:
   build:
+    # Skipped on a manual config-only redeploy; always runs on push to main.
+    if: ${{ github.event_name == 'push' || !inputs.skip_build }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +66,8 @@ jobs:
 
   deploy:
     needs: build
+    # Run even when build was skipped (config-only redeploy); only block if build failed.
+    if: ${{ always() && needs.build.result != 'failure' && needs.build.result != 'cancelled' }}
     runs-on: ubuntu-latest
     environment: production # approval gate
     steps:
@@ -84,8 +97,12 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           INTERNAL_SERVICE_TOKEN: ${{ secrets.INTERNAL_SERVICE_TOKEN }}
+          # Context data goes through env vars (not the run: script) so untrusted
+          # input cannot be injected into the shell.
+          API_DOMAIN: ${{ vars.API_DOMAIN }}
+          APP_IMAGE_TAG: ${{ (github.event_name == 'workflow_dispatch' && inputs.skip_build) && inputs.image_tag || github.sha }}
         run: |
           ansible-playbook site.yml \
             --extra-vars "app_image_prefix=${IMAGE_PREFIX}" \
-            --extra-vars "app_image_tag=${{ github.sha }}" \
-            --extra-vars "api_domain=${{ vars.API_DOMAIN }}"
+            --extra-vars "app_image_tag=${APP_IMAGE_TAG}" \
+            --extra-vars "api_domain=${API_DOMAIN}"
