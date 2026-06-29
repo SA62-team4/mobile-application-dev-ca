@@ -1,0 +1,48 @@
+# Production overlay for the droplet. Apply on top of the base compose:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Changes: prebuilt GHCR images for spring/python, no public host ports except
+# Caddy (80/443), Adminer disabled (debug profile), Caddy TLS reverse proxy added.
+
+services:
+
+  mysql:
+    ports: !reset [] # internal only
+
+  ollama:
+    ports: !reset []
+
+  python-ai-service:
+    image: ${PYTHON_IMAGE:-ghcr.io/sa62-team4/wellness-python-ai-service:latest}
+    build: !reset null
+    ports: !reset []
+
+  spring-backend:
+    image: ${SPRING_IMAGE:-ghcr.io/sa62-team4/wellness-spring-backend:latest}
+    build: !reset null
+    ports: !reset []
+
+  adminer:
+    profiles: ["debug"] # not started in prod
+
+  # Public HTTPS edge; only internet-facing service.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data   # persist certs across restarts
+      - caddy-config:/config
+    networks:
+      - wellness-net
+    depends_on:
+      spring-backend:
+        condition: service_healthy
+
+volumes:
+  caddy-data:
+  caddy-config:

@@ -74,6 +74,10 @@ Do not execute these tasks until the implementation phase is explicitly requeste
 | T-602 | REQ-16 | Complete GitHub Actions workflows | Member 7 | T-601 | CI passes on PR |
 | T-603 | REQ-17, REQ-20 | Prepare repeatable demo seed data and script | Member 7 | T-303, T-405, T-504 | Demo data can be reset/reseeded and rehearsal fits 15 minutes |
 | T-604 | REQ-18, REQ-19 | Final submission checklist | Whole team | T-603 | Zip/video/docs ready |
+| T-605 | REQ-16, NFR-01, NFR-02, NFR-03 | Add `SECURITY.md` Codex Security scan workflow and collect scan evidence before merge/submission | Member 7 | T-602 | PR and final-submission docs state scan type, scope, findings, fixes, and accepted suppressions |
+| T-606 | REQ-16 | Author Terraform infra (`infra/terraform/`) for the DigitalOcean Droplet, reserved IP, firewall, DNS, and remote state | Member 7 | T-601 | `terraform apply` provisions the Droplet with Docker installed |
+| T-607 | REQ-16 | Add prod overlay (`docker-compose.prod.yml`) and `Caddyfile` for HTTPS + internal-only services | Member 7 | T-601 | Prod overlay validates and exposes only Caddy 80/443 |
+| T-608 | REQ-16 | Add `deploy.yml`/`infra.yml`, configure the `production` Environment and GitHub secrets | Member 7 | T-606, T-607 | Push to `main` deploys; HTTPS health check passes |
 
 ## Optional Phase 7: .NET Backup Backend
 
