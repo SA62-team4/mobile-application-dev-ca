@@ -17,7 +17,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"  # ensures .env and docker-compose.yml are found automatically
 
-COMPOSE="podman compose"
+# Compose command; override for other engines (droplet deploy sets docker compose).
+COMPOSE="${COMPOSE:-podman compose}"
 
 # ── terminal colours ──────────────────────────────────────────────────────────
 if [[ -t 1 ]]; then

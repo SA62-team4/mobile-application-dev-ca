@@ -23,7 +23,7 @@ This matrix links each requirement to the specs, implementation evidence, and te
 | REQ-13 | Python agentic AI retrieves data, analyses trends, generates and saves recommendations | `09-plan-agentic-ai-workflow.md`, `07-plan-android-ui-flows.md` | Python agent workflow, backend internal APIs, Figma recommendation and local AI waiting frames | Agent tests, demo recommendation |
 | REQ-14 | Dockerise backend/runtime services where practical | `10-plan-docker-devops.md` | Compose services and volumes; optional backup Compose override for `.NET Backup API` | Docker smoke test; optional backup health check on port `8082` |
 | REQ-15 | ERD documents backend data model | `05-plan-backend-data-model-erd.md` | PlantUML ERD and optional rendered export | Review against implemented schema |
-| REQ-16 | GitHub collaboration and CI are defined | `10-plan-docker-devops.md`, `11-plan-implementation-roadmap.md` | Branch rules, PR template, workflows | Actions pass, PR review |
+| REQ-16 | GitHub collaboration, CI, and deployment are defined | `10-plan-docker-devops.md`, `11-plan-implementation-roadmap.md`, `SECURITY.md` | Branch rules, PR template, CI workflows, deploy/infra workflows (`deploy.yml`, `infra.yml`), `docker-compose.prod.yml`, `Caddyfile`, `infra/terraform/`, Codex Security scan evidence | Actions pass, PR review, Terraform apply + Actions deploy with HTTPS health check, Codex Security scan summary |
 | REQ-17 | Video demo fits assignment expectations | `15-validate-test-and-demo-plan.md` | Demo script and recording | Rehearsed 15-minute flow |
 | REQ-18 | Author is indicated in classes or key methods | `02-specify-project-requirements.md`, `15-validate-test-and-demo-plan.md` | Author comments during implementation | Submission checklist review |
 | REQ-19 | Single integrated zipped submission | `02-specify-project-requirements.md`, `15-validate-test-and-demo-plan.md` | Final zip named with team name | Submission checklist review |
@@ -34,9 +34,9 @@ This matrix links each requirement to the specs, implementation evidence, and te
 
 | ID | Requirement | Controlled By | Verification |
 | --- | --- | --- | --- |
-| NFR-01 | App must prevent one user from accessing another user's data | `05-plan-backend-data-model-erd.md`, `06-plan-api-contracts.md` | Ownership tests for every user-owned API |
-| NFR-02 | Errors must be user-friendly and not expose stack traces | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md` | API error tests, Android manual QA, Figma error-state review |
-| NFR-03 | Demo must work without paid services | `08-plan-rag-ai-design.md`, `10-plan-docker-devops.md` | Offline/local model demo check |
+| NFR-01 | App must prevent one user from accessing another user's data | `05-plan-backend-data-model-erd.md`, `06-plan-api-contracts.md`, `SECURITY.md` | Ownership tests for every user-owned API, Codex Security scan of auth/ownership changes |
+| NFR-02 | Errors must be user-friendly and not expose stack traces | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md`, `SECURITY.md` | API error tests, Android manual QA, Figma error-state review, Codex Security review of error/log handling |
+| NFR-03 | Demo must work without paid services | `08-plan-rag-ai-design.md`, `10-plan-docker-devops.md`, `SECURITY.md` | Offline/local model demo check, Codex Security review for paid/cloud-only AI or scanner dependencies |
 | NFR-04 | Major screens must show loading, empty, success, and error states | `07-plan-android-ui-flows.md` | Android manual QA checklist, Figma state frames |
 | NFR-05 | CI should avoid heavyweight local LLM generation | `10-plan-docker-devops.md` | Workflow review and CI run |
 

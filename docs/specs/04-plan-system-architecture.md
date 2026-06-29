@@ -127,6 +127,64 @@ Recommended AWS usage:
 - Prefer a single EC2 instance running Docker Compose for low setup complexity.
 - Use RDS only if the team already has AWS Academy or free-tier confidence.
 
+## DigitalOcean Production Deployment
+
+The chosen production topology: a single DigitalOcean Droplet runs the full Docker
+Compose stack with Ollama on-server. Caddy is the only public service and
+terminates TLS for `api.<domain>`. Infrastructure is provisioned with Terraform;
+images are built and deployed by GitHub Actions; secrets live in GitHub Actions
+secrets. See `10-plan-docker-devops.md` for the operational detail.
+
+```plantuml
+@startuml
+top to bottom direction
+
+actor "Android App" as Android
+
+cloud "GitHub" as GH {
+  rectangle "Actions: infra.yml\nTerraform" as Infra
+  rectangle "Actions: deploy.yml\nbuild + SSH deploy" as Deploy
+  rectangle "GHCR\ncontainer images" as GHCR
+}
+
+cloud "DigitalOcean" as DO {
+  rectangle "Cloud Firewall\ninbound 22/80/443" as FW
+  rectangle "Reserved IP + DNS\napi.DOMAIN" as DNS
+  storage "Spaces\nTerraform remote state" as Spaces
+  node "Droplet 16 GB\nUbuntu + Docker Compose" as Droplet {
+    rectangle "caddy\nTLS 80/443" as Caddy
+    rectangle "spring-backend" as Spring
+    rectangle "python-ai-service" as Python
+    rectangle "ollama" as Ollama
+    database "mysql" as MySQL
+  }
+}
+
+Infra --> Spaces : state
+Infra --> Droplet : provision\n(cloud-init installs Docker)
+Infra --> FW
+Infra --> DNS
+Deploy --> GHCR : push images
+Deploy --> Droplet : SSH: write .env,\ncompose up
+Droplet --> GHCR : pull images
+Android --> DNS
+DNS --> Caddy : HTTPS + JWT
+Caddy --> Spring
+Spring --> MySQL
+Spring --> Python
+Python --> Ollama
+@enduml
+```
+
+Deployment rules:
+
+- Only Caddy (80/443) and SSH (22) are reachable; MySQL, Ollama, Python AI, and
+  Spring Boot stay on the internal Docker network.
+- No secrets are committed, stored in Terraform state, or placed in cloud-init —
+  the deploy job renders `.env` on the Droplet from GitHub Actions secrets.
+- Ollama remains local to the Droplet, satisfying the free/local LLM constraint
+  without any paid cloud inference.
+
 ## Main User Flows
 
 ### Login And Wellness CRUD

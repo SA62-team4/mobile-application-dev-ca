@@ -14,7 +14,7 @@ Define the build order for the future implementation phase so the team can work 
 | 3 | Wellness CRUD | Backend CRUD and Android CRUD screens work end to end |
 | 4 | Local RAG | Python service indexes KB, retrieves chunks, calls Ollama, backend stores chat |
 | 5 | Agentic AI | Agent analyses records, saves recommendations, Android displays output |
-| 6 | Docker and CI | Compose stack, GitHub Actions, smoke checks, setup docs stable |
+| 6 | Docker, CI, deployment, and security review | Compose stack, GitHub Actions CI + deploy/infra workflows, Terraform infra, DigitalOcean deployment, Codex Security scan guidance, smoke checks, setup docs stable |
 | 7 | Demo hardening | Seed data, video script, final testing, zipped submission checklist complete |
 | Optional 8 | .NET backup rehearsal | Cold-standby `.NET Backup API` mirrors Spring contracts on port `8082` without replacing Spring |
 
@@ -31,9 +31,9 @@ Define the build order for the future implementation phase so the team can work 
 9. Implement Android chatbot screen and chat history.
 10. Implement Python agentic recommendation workflow.
 11. Connect backend recommendation endpoints and Android recommendation screen.
-12. Add Docker Compose, health checks, and CI.
-13. Finalize ERD/API/setup/demo docs and author comments.
-14. Optional: add `.NET Backup API` scaffold, backup Compose override, and parity smoke checks after Spring contracts are stable.
+12. Add Docker Compose, health checks, CI, and `SECURITY.md` Codex Security scan guidance.
+13. Finalize ERD/API/setup/demo docs, security review evidence, and author comments.
+14. Optional: add `.NET Backup API` scaffold, backup Compose override, parity smoke checks, and Codex Security scan evidence after Spring contracts are stable.
 
 ## Parallel Work Streams
 
@@ -80,6 +80,7 @@ Define the build order for the future implementation phase so the team can work 
 
 - Docker Compose stack works on a clean machine.
 - GitHub Actions pass.
+- Codex Security repository or scoped scans have been run for changed runtime components, with findings fixed or documented.
 - Demo script rehearsed under 15 minutes.
 - Author comments added.
 - Final zip contains one integrated solution and video demo.

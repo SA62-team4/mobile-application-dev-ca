@@ -16,6 +16,7 @@ This repository is in active implementation using specs as the contract. Read an
 - Prefer small, reviewable changes.
 - Keep architecture aligned with the CA requirements.
 - When changing planned behavior, update the corresponding file in `docs/specs/`.
+- Prefer extending an existing spec over creating a new one. Fold a new feature into the spec that already owns its lifecycle phase (for example, a new Android screen goes in `07-plan-android-ui-flows.md`). Only add a new spec file for a genuinely new lifecycle artifact, and name it with the Spec Kit convention `NN-<phase>-<topic>.md` (`<phase>` ∈ constitution, specify, clarify, plan, tasks, analyze, validate).
 - Before reporting implementation work complete, run the relevant tests once code exists.
 
 ## Important Project Constraints

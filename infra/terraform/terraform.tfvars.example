@@ -1,0 +1,23 @@
+# Copy to terraform.tfvars (gitignored) and adjust. No secrets here —
+# DIGITALOCEAN_TOKEN and Spaces keys come from environment variables.
+
+# ── Required ──
+ssh_key_name = "your-do-ssh-key-name" # name of an SSH key already in your DO account
+
+# ── Droplet (optional; defaults shown) ──
+region        = "sgp1"          # sgp1 | nyc3 | fra1 | ...
+droplet_size  = "g-4vcpu-16gb"  # >= 16 GB RAM to run Ollama on-server
+droplet_image = "ubuntu-24-04-x64"
+droplet_name  = "wellness-prod"
+project_name  = "Wellness App"
+
+# ── DNS (optional) ──
+# manage_dns = true  -> Terraform creates <subdomain>.<domain> A record in DO DNS.
+# manage_dns = false -> DNS is external (registrar or DuckDNS); domain/subdomain unused.
+manage_dns = true
+domain     = "example.com"
+subdomain  = "api"          # FQDN becomes api.example.com
+
+# No registered domain? Use a free DuckDNS subdomain instead:
+#   manage_dns = false
+#   (leave domain/subdomain as-is; set GitHub Variable API_DOMAIN=<name>.duckdns.org)

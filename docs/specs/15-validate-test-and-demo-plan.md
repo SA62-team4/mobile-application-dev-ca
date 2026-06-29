@@ -115,6 +115,17 @@ Minimum smoke checks:
 - Android physical-device debug build can be installed through `tools/scripts/android-phone-demo.sh`.
 - Optional backup stack exposes `.NET Backup API` on `http://localhost:8082` and can be smoke-tested with the same contract script by setting `BASE_URL`.
 
+## Codex Security Review
+
+Codex Security scans are review evidence, not a replacement for the functional tests above. Follow the workflow in `SECURITY.md`.
+
+Minimum security review evidence:
+
+- Codex Security diff scan for PRs that change auth, authorization, user data ownership, secret handling, Docker/runtime configuration, Android token storage, Python callbacks, or optional backup/desktop API parity.
+- Codex Security repository or scoped-path scan before final submission, covering changed runtime components.
+- Valid high or critical findings fixed before merge/submission, or explicitly deferred with rationale that does not compromise required demo data, secrets, or cross-user access.
+- PR or submission notes include scan type, scope, date, finding summary, fix summary, report path if available, and accepted suppressions.
+
 ## Demo Data
 
 Demo data should be populated through repeatable backend-controlled seed logic or a documented API script. It must not require Android to write directly to MySQL or require manual row editing in Adminer.
@@ -175,6 +186,7 @@ Optional desktop demo note:
 - Author comments added to classes or key methods.
 - `.env.example` included but real `.env` excluded.
 - README/setup instructions included.
+- Codex Security final scan evidence included or referenced.
 - One zipped file named with team name.
 
 ## Acceptance Criteria
@@ -182,4 +194,5 @@ Optional desktop demo note:
 - Test plan covers mandatory CA features.
 - Demo script fits within 15 minutes.
 - Demo explicitly shows Android, backend, MySQL, RAG chatbot, JWT, Python agent, and Dockerisation.
+- Security review evidence shows Codex Security scans were run for security-sensitive changes and final runtime components.
 - Optional AWS is mentioned only if it exists and is stable.

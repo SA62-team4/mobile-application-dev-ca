@@ -1,0 +1,63 @@
+name: Infra (Terraform)
+
+# Manual provisioning of DigitalOcean infra. Run plan first, then apply.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Terraform action
+        type: choice
+        options: [plan, apply, destroy]
+        default: plan
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    environment: production # approval gate for apply/destroy
+    defaults:
+      run:
+        working-directory: infra/terraform
+    env:
+      DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      # DO Spaces creds for the S3 remote state backend.
+      AWS_ACCESS_KEY_ID: ${{ secrets.SPACES_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SPACES_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Render backend + tfvars
+        run: |
+          cat > backend.hcl <<EOF
+          bucket    = "${{ vars.TF_STATE_BUCKET }}"
+          key       = "wellness/terraform.tfstate"
+          endpoints = { s3 = "${{ vars.TF_STATE_ENDPOINT }}" }
+          EOF
+          cat > terraform.tfvars <<EOF
+          region       = "${{ vars.DO_REGION }}"
+          droplet_size = "${{ vars.DROPLET_SIZE }}"
+          ssh_key_name = "${{ vars.SSH_KEY_NAME }}"
+          manage_dns   = ${{ vars.MANAGE_DNS }}
+          domain       = "${{ vars.DOMAIN }}"
+          subdomain    = "${{ vars.SUBDOMAIN }}"
+          EOF
+
+      - run: terraform init -backend-config=backend.hcl
+
+      - run: terraform fmt -check
+
+      - run: terraform validate
+
+      - name: Terraform ${{ inputs.action }}
+        env:
+          ACTION: ${{ inputs.action }}
+        run: |
+          if [ "$ACTION" = "plan" ]; then
+            terraform plan
+          else
+            terraform "$ACTION" -auto-approve
+          fi
