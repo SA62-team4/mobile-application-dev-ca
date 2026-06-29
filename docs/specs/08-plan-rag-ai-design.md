@@ -91,6 +91,8 @@ Generate --> Answer
   - `chunk_index`
   - `snippet`
 - Generate embeddings locally through Ollama.
+- Use Ollama's current `POST /api/embed` endpoint with `nomic-embed-text` for
+  embeddings.
 - Persist the Chroma index in a Docker volume.
 - Provide a development-only reindex endpoint.
 
