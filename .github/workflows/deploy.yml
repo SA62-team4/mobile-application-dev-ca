@@ -4,6 +4,14 @@ name: Deploy
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/deploy.yml"
+      - "spring-backend/**"
+      - "python-ai-service/**"
+      - "rag-knowledge-base/**"
+      - "docker-compose.yml"
+      - "docker-compose.prod.yml"
+      - "Caddyfile"
   workflow_dispatch:
 
 permissions:

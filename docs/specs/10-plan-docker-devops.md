@@ -191,12 +191,14 @@ Infrastructure (`infra/terraform/`):
 Deployment (`.github/workflows/`):
 
 - `infra.yml` (manual) runs `terraform plan/apply/destroy`.
-- `deploy.yml` (on push to `main`) builds `spring-backend` and `python-ai-service`
-  images, pushes to GHCR, then over SSH ensures `/opt/wellness` exists and is
-  owned by the `deploy` user, ships compose/Caddy/knowledge-base files, writes
-  `.env` from secrets, pulls images, runs the prod overlay, ensures the Ollama
-  models are present, and prebuilds the Python RAG vector index before the mobile
-  demo path uses AI.
+- `deploy.yml` builds `spring-backend` and `python-ai-service` images only when a
+  push to `main` changes deploy-relevant paths (`spring-backend/`,
+  `python-ai-service/`, `rag-knowledge-base/`, Compose/Caddy files, or
+  `deploy.yml` itself), or when manually dispatched. It pushes to GHCR, then over
+  SSH ensures `/opt/wellness` exists and is owned by the `deploy` user, ships
+  compose/Caddy/knowledge-base files, writes `.env` from secrets, pulls images,
+  runs the prod overlay, ensures the Ollama models are present, and prebuilds the
+  Python RAG vector index before the mobile demo path uses AI.
 - Both use a `production` GitHub Environment for an approval gate.
 
 Secrets and variables (GitHub → Settings → Secrets and variables → Actions).
