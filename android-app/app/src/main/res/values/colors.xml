@@ -12,4 +12,9 @@
     <color name="text_primary">#0F172A</color>
     <color name="text_secondary">#64748B</color>
     <color name="text_on_primary">#FFFFFF</color>
+    <color name="badge_excellent">#2E7D32</color>
+    <color name="badge_good">#00695C</color>
+    <color name="badge_fair">#E65100</color>
+    <color name="metric_green">#43A047</color>
+    <color name="metric_amber">#FB8C00</color>
 </resources>

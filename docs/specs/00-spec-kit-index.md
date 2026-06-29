@@ -48,6 +48,7 @@ The workflow image also includes Analyze. In this project, Analyze is treated as
 | 13 | `13-analyze-traceability-matrix.md` | Requirement-to-spec-to-test mapping |
 | 14 | `14-validate-quality-gates.md` | Spec conformance gates |
 | 15 | `15-validate-test-and-demo-plan.md` | Verification strategy and 15-minute demo plan |
+| 16 | `16-android-wellness-dashboard.md` | Requirements and design for the Android Wellness Dashboard |
 
 ## Spec Status
 
