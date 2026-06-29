@@ -16,6 +16,12 @@ The specs follow the GitHub Spec Kit engineering lifecycle:
 
 The workflow image also includes Analyze. In this project, Analyze is treated as the review step between Tasks and Implement, using traceability and validation gates to catch gaps before code is generated.
 
+## Spec File Conventions
+
+- Prefer extending an existing spec over creating a new file. A new feature should be folded into the spec that already controls its lifecycle phase — for example, a new Android screen belongs in `07-plan-android-ui-flows.md`, a new endpoint in `06-plan-api-contracts.md`, a new entity in `05-plan-backend-data-model-erd.md`. Only create a new spec file when the work introduces a genuinely new lifecycle artifact that no existing spec covers.
+- Name spec files with the GitHub Spec Kit lifecycle convention `NN-<phase>-<topic>.md`, where `<phase>` is one of `constitution`, `specify`, `clarify`, `plan`, `tasks`, `analyze`, or `validate`. Do not introduce files without a lifecycle-phase prefix.
+- When extending a spec, update its cross-references, this index, and `13-analyze-traceability-matrix.md` so traceability stays intact.
+
 ## Lifecycle Map
 
 | Spec Kit Step | Local File(s) | Outcome |
@@ -48,7 +54,6 @@ The workflow image also includes Analyze. In this project, Analyze is treated as
 | 13 | `13-analyze-traceability-matrix.md` | Requirement-to-spec-to-test mapping |
 | 14 | `14-validate-quality-gates.md` | Spec conformance gates |
 | 15 | `15-validate-test-and-demo-plan.md` | Verification strategy and 15-minute demo plan |
-| 16 | `16-android-wellness-dashboard.md` | Requirements and design for the Android Wellness Dashboard |
 
 ## Spec Status
 
