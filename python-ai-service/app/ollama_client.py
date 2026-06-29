@@ -44,14 +44,18 @@ class OllamaClient:
                 self._raise_for_status(response)
                 return response.json()["embedding"]
 
-    async def generate(self, prompt: str) -> str:
-        async with httpx.AsyncClient(timeout=120) as client:
+    async def generate(self, prompt: str, num_predict: int = 180) -> str:
+        async with httpx.AsyncClient(timeout=180) as client:
             response = await client.post(
                 f"{self.settings.ollama_base_url}/api/generate",
                 json={
                     "model": self.settings.generation_model,
                     "prompt": prompt,
                     "stream": False,
+                    "options": {
+                        "num_predict": num_predict,
+                        "temperature": 0.3,
+                    },
                 },
             )
             self._raise_for_status(response)

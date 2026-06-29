@@ -63,12 +63,14 @@ async def recommendation(user_id: int) -> RecommendationResponse:
     try:
         return await agent.generate_recommendation(user_id)
     except httpx.HTTPError as exc:
-        # The agent must call back to the Spring Boot backend (recent records and
-        # saving the recommendation). Surface a clear, actionable error instead of a
-        # blank 500 when that backend cannot be reached or returns an error.
-        logger.exception("Recommendation agent could not reach the backend at %s", settings.backend_base_url)
+        # The recommendation workflow may fail while calling Spring internal APIs
+        # or local Ollama. Surface a clear, actionable error instead of a blank 500.
+        logger.exception("Recommendation agent workflow failed for backend %s or Ollama %s",
+                         settings.backend_base_url, settings.ollama_base_url)
         raise HTTPException(
             status_code=502,
-            detail=f"Recommendation agent could not reach the backend at {settings.backend_base_url}: {exc}",
+            detail=(
+                "Recommendation agent workflow failed while calling Spring internal APIs "
+                f"or local Ollama: {exc}"
+            ),
         ) from exc
-

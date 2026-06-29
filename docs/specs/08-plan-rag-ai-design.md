@@ -115,6 +115,8 @@ The generation prompt must instruct the model to:
 - Encourage professional medical help for serious or urgent symptoms.
 - Keep answers concise and practical.
 - Return source titles or snippets used.
+- Bound local generation length so CPU-only Ollama inference remains usable for
+  the Android demo path.
 
 ## Chat Response Contract
 

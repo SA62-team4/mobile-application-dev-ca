@@ -67,6 +67,8 @@ Save --> Display
    - Data consistency when records are sparse.
 6. Python retrieves relevant RAG chunks for the chosen focus.
 7. Python prompts Ollama to generate a practical recommendation.
+   - Keep the RAG context and generated output bounded so CPU-only Ollama
+     inference on the DigitalOcean droplet can complete during the demo.
 8. Python saves the recommendation through Spring Boot internal API.
 9. Spring Boot returns the saved recommendation to Android.
 
