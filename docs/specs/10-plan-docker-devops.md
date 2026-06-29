@@ -194,8 +194,9 @@ Deployment (`.github/workflows/`):
 - `deploy.yml` (on push to `main`) builds `spring-backend` and `python-ai-service`
   images, pushes to GHCR, then over SSH ensures `/opt/wellness` exists and is
   owned by the `deploy` user, ships compose/Caddy/knowledge-base files, writes
-  `.env` from secrets, pulls images, runs the prod overlay, and ensures the
-  Ollama models are present.
+  `.env` from secrets, pulls images, runs the prod overlay, ensures the Ollama
+  models are present, and prebuilds the Python RAG vector index before the mobile
+  demo path uses AI.
 - Both use a `production` GitHub Environment for an approval gate.
 
 Secrets and variables (GitHub → Settings → Secrets and variables → Actions).

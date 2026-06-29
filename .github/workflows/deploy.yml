@@ -108,6 +108,15 @@ jobs:
           sleep 10
           \$COMPOSE exec -T ollama sh -c 'ollama list | grep -q llama3.2 || ollama pull llama3.2:3b'
           \$COMPOSE exec -T ollama sh -c 'ollama list | grep -q nomic-embed-text || ollama pull nomic-embed-text'
+          # Prebuild the RAG vector index after models are available so the first
+          # mobile AI request does not have to embed the whole knowledge base.
+          \$COMPOSE exec -T python-ai-service python - <<'PY'
+          import urllib.request
+
+          request = urllib.request.Request("http://localhost:8000/rag/reindex", method="POST")
+          with urllib.request.urlopen(request, timeout=180) as response:
+              print(response.read().decode())
+          PY
           docker logout ghcr.io
           EOF
 
