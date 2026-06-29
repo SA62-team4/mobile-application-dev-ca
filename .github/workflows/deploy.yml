@@ -106,8 +106,9 @@ jobs:
           \$COMPOSE up -d --remove-orphans
           # Ensure Ollama models are present (first deploy pulls ~2.5 GB).
           sleep 10
-          \$COMPOSE exec -T ollama sh -c 'ollama list | grep -q llama3.2 || ollama pull llama3.2:3b'
-          \$COMPOSE exec -T ollama sh -c 'ollama list | grep -q nomic-embed-text || ollama pull nomic-embed-text'
+          \$COMPOSE exec -T ollama sh -c 'ollama list | grep -q "llama3.2:3b" || ollama pull llama3.2:3b'
+          \$COMPOSE exec -T ollama sh -c 'ollama list | grep -q "nomic-embed-text:latest" || ollama pull nomic-embed-text:latest'
+          \$COMPOSE exec -T ollama ollama list
           # Prebuild the RAG vector index after models are available so the first
           # mobile AI request does not have to embed the whole knowledge base.
           \$COMPOSE exec -T python-ai-service python - <<'PY'

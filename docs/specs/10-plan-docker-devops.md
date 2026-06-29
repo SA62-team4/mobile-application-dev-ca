@@ -71,7 +71,7 @@ DOTNET_CONNECTION_STRING=Server=mysql;Port=3306;Database=wellness_app;User=welln
 OLLAMA_BASE_URL=http://ollama:11434
 OLLAMA_HOST_PORT=11434
 OLLAMA_GENERATION_MODEL=llama3.2:3b
-OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text:latest
 CHROMA_PERSIST_DIR=/data/chroma
 ADMINER_HOST_PORT=8081
 ```
@@ -106,7 +106,7 @@ Future setup commands should be documented as:
 ```text
 docker compose up -d mysql ollama
 docker compose exec ollama ollama pull llama3.2:3b
-docker compose exec ollama ollama pull nomic-embed-text
+docker compose exec ollama ollama pull nomic-embed-text:latest
 docker compose up --build
 ```
 

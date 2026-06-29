@@ -64,7 +64,7 @@ services:
     environment:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       OLLAMA_GENERATION_MODEL: ${OLLAMA_GENERATION_MODEL:-llama3.2:3b}
-      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text:latest}
       CHROMA_PERSIST_DIR: ${CHROMA_PERSIST_DIR:-/data/chroma}
       KNOWLEDGE_BASE_DIR: /app/rag-knowledge-base
       BACKEND_BASE_URL: http://spring-backend:8080
