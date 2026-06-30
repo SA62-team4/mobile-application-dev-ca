@@ -3,6 +3,7 @@ package sg.edu.nus.iss.wellness
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -32,6 +33,15 @@ class LoginActivity : Activity() {
 
     companion object {
         private const val RC_GOOGLE_SIGN_IN = 9001
+        private const val TAG = "LoginActivity"
+    }
+
+    private fun showStatus(message: String, error: Boolean = false) {
+        statusText.visibility = View.VISIBLE
+        statusText.setBackgroundResource(
+            if (error) R.drawable.bg_status_error else R.drawable.bg_status_success
+        )
+        statusText.text = message
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,7 +93,8 @@ class LoginActivity : Activity() {
         }
 
         findViewById<Button>(R.id.googleSignInButton).setOnClickListener {
-            statusText.text = "Opening Google sign-in..."
+            Log.d(TAG, "Google sign-in tapped; webClientId=${BuildConfig.GOOGLE_WEB_CLIENT_ID}")
+            showStatus("Opening Google sign-in...")
             @Suppress("DEPRECATION")
             startActivityForResult(googleSignInClient.signInIntent, RC_GOOGLE_SIGN_IN)
         }
@@ -97,30 +108,34 @@ class LoginActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode != RC_GOOGLE_SIGN_IN) return
+        Log.d(TAG, "onActivityResult: resultCode=$resultCode, hasData=${data != null}")
 
         try {
             val account = GoogleSignIn.getSignedInAccountFromIntent(data)
                 .getResult(ApiException::class.java)
             val idToken = account.idToken
+            Log.d(TAG, "Sign-in success: email=${account.email}, idToken=${if (idToken.isNullOrBlank()) "MISSING" else "present"}")
             if (idToken.isNullOrBlank()) {
-                statusText.text = "Google sign-in failed: no ID token returned."
+                showStatus("Google sign-in failed: no ID token returned (check Web Client ID).", error = true)
                 return
             }
             exchangeGoogleToken(idToken)
         } catch (e: ApiException) {
-            statusText.text = "Google sign-in cancelled or failed (code ${e.statusCode})."
+            Log.e(TAG, "Google sign-in failed, statusCode=${e.statusCode}", e)
+            showStatus("Google sign-in failed (code ${e.statusCode}).", error = true)
         }
     }
 
     private fun exchangeGoogleToken(idToken: String) {
         scope.launch {
             runCatching {
-                statusText.text = "Signing in with Google..."
+                showStatus("Signing in with Google...")
                 ApiClient.create(tokenStore).googleLogin(GoogleAuthRequest(idToken))
             }.onSuccess { response ->
                 onLoginSuccess(response.token, response.user.displayName, response.user.email)
-            }.onFailure {
-                statusText.text = "Google sign-in failed. Check backend connection and client ID."
+            }.onFailure { e ->
+                Log.e(TAG, "Backend googleLogin failed", e)
+                showStatus("Google sign-in failed: ${e.message ?: "backend error"}.", error = true)
             }
         }
     }

@@ -174,17 +174,26 @@ Actions:
 
 - Login
 - Go to register
+- Sign in with Google (optional SSO path — REQ-22, see [DEC-013](03-clarify-decisions-and-edge-cases.md))
 
 States:
 
 - Loading while login request is in progress.
 - Inline validation for missing email or password.
 - Error banner for invalid credentials or network failure.
+- For Google sign-in: a status banner covering "opening Google", "signing in", and failure messages (including the Google status code) so configuration errors are visible to the developer.
 
 Success:
 
 - Store JWT securely.
 - Navigate to Records screen.
+
+Google SSO notes:
+
+- A "— or —" divider separates email/password from the **Sign in with Google** button.
+- The button uses the Google Sign-In SDK configured with the Web Client ID (`BuildConfig.GOOGLE_WEB_CLIENT_ID`, supplied via `local.properties`) and `requestIdToken()` + `requestEmail()`.
+- The returned Google ID token is exchanged at `POST /api/auth/google`; on success the same `onLoginSuccess` path stores the JWT and navigates onward.
+- Requires a Google APIs emulator image and an Android OAuth client registered with the debug SHA-1; setup is in `docs/local-sso-quickstart.md`.
 
 ### Register Screen
 

@@ -63,6 +63,7 @@ SPRING_DATASOURCE_PASSWORD=change_me
 SPRING_HOST_PORT=8080
 JWT_SECRET=replace_with_long_random_secret
 JWT_EXPIRY_SECONDS=86400
+GOOGLE_CLIENT_ID=
 AI_SERVICE_URL=http://python-ai-service:8000
 AI_SERVICE_HOST_PORT=8000
 INTERNAL_SERVICE_TOKEN=replace_with_internal_token
@@ -241,6 +242,7 @@ Non-secret config goes in **Variables**.
 | `DOMAIN` | Variable | DNS + `.env` | Your registered domain (hosted in DO DNS when `MANAGE_DNS=true`) |
 | `SUBDOMAIN` | Variable | DNS | Chosen API host label, e.g. `api` |
 | `API_DOMAIN` | Variable | Caddy/`.env` | The full FQDN `SUBDOMAIN.DOMAIN`, e.g. `api.example.com` |
+| `GOOGLE_CLIENT_ID` | Variable | Rendered into Droplet `.env`; backend Google ID token verification (REQ-22) | Google Cloud Console → APIs & Services → Credentials → the **Web** OAuth 2.0 client ID. Non-secret (also embedded in the Android APK). Leave unset to disable SSO in production. |
 
 The built-in `GITHUB_TOKEN` (no setup) is used by `deploy.yml` to push images to
 GHCR. Never store any of these in the repo, Terraform state, or cloud-init.

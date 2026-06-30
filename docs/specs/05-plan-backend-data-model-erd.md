@@ -78,9 +78,12 @@ USERS ||--o{ RECOMMENDATIONS : owns
 
 - Stores account identity and authentication metadata.
 - `email` must be unique and lowercased before persistence.
-- `password_hash` stores a BCrypt hash, never a plain password.
+- `password_hash` stores a BCrypt hash, never a plain password. It is **nullable**: Google SSO users (see [DEC-013/DEC-014](03-clarify-decisions-and-edge-cases.md)) have no local password and are persisted with `password_hash = NULL`.
+- Because `password_hash` is nullable, the email/password login path must treat a null hash as a non-matching credential (BCrypt match fails), so SSO accounts cannot be logged into with a password.
 - `role` can default to `USER`.
 - `enabled` allows future account disabling.
+
+> **Migration note:** Existing databases created before `password_hash` became nullable still carry a `NOT NULL` constraint, and `hibernate.ddl-auto: update` does not relax it. Run `ALTER TABLE app_user MODIFY password_hash VARCHAR(255) NULL;` (or recreate the volume) before enabling SSO. See the troubleshooting table in `docs/local-sso-quickstart.md`.
 
 ### Wellness Records
 
