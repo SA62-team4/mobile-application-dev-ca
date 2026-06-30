@@ -208,6 +208,46 @@ Default backend URL if no override is provided:
 - Emulator: `http://10.0.2.2:8080/`
 - Physical device over USB: `http://127.0.0.1:8080/` with `adb reverse tcp:8080 tcp:8080`
 
+### Troubleshooting: emulator login fails after switching networks
+
+Symptom: the laptop browser/`curl` can reach `https://sa62wellness.duckdns.org` (e.g. on a
+personal hotspot because school wifi blocks DuckDNS), but the Android app on the emulator
+fails to log in.
+
+Cause: a running emulator captures the host DNS configuration at boot and does **not**
+follow live network changes. After the host switches from school wifi to a hotspot, the
+emulator keeps its stale DNS and can no longer resolve any domain, so it never reaches the
+backend.
+
+Confirm DNS is dead inside the emulator (returns `unknown host`):
+
+```bash
+adb shell ping -c 1 sa62wellness.duckdns.org
+adb shell ping -c 1 google.com
+```
+
+Fix: cold-boot the emulator with an explicit DNS server, then reinstall against production.
+
+```bash
+# 1. Kill the emulator with the stale DNS (use its serial from `adb devices`)
+adb -s emulator-5554 emu kill
+
+# 2. Clear any stale AVD lock left by the previous instance
+rm -f ~/.android/avd/Pixel_10.avd/*.lock
+
+# 3. Relaunch with a public DNS server
+~/Library/Android/sdk/emulator/emulator -avd Pixel_10 -dns-server 8.8.8.8 &
+
+# 4. Verify DNS works (should resolve to the droplet IP, e.g. 209.38.57.27)
+adb shell ping -c 1 sa62wellness.duckdns.org
+
+# 5. Reinstall the app pinned to the deployed backend
+WELLNESS_API_BASE_URL=https://sa62wellness.duckdns.org/ ./android-app/gradlew --gradle-user-home .gradle-cache -p android-app :app:installDebug
+```
+
+Keep both the laptop and the emulator on the same network (the hotspot) for the demo, and
+cold-boot the emulator again if you switch networks.
+
 ## Validation
 
 ```bash
