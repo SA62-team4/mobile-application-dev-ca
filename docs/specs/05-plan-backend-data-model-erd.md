@@ -83,7 +83,7 @@ USERS ||--o{ RECOMMENDATIONS : owns
 - `role` can default to `USER`.
 - `enabled` allows future account disabling.
 
-> **Migration note:** Existing databases created before `password_hash` became nullable still carry a `NOT NULL` constraint, and `hibernate.ddl-auto: update` does not relax it. Run `ALTER TABLE app_user MODIFY password_hash VARCHAR(255) NULL;` (or recreate the volume) before enabling SSO. See the troubleshooting table in `docs/local-sso-quickstart.md`.
+> **Migration note:** Existing databases created before `password_hash` became nullable still carry a `NOT NULL` constraint, and `hibernate.ddl-auto: update` does not relax it. Run `ALTER TABLE users MODIFY password_hash VARCHAR(255) NULL;` (or recreate the volume) before enabling SSO. See the troubleshooting table in `docs/local-sso-quickstart.md`.
 
 ### Wellness Records
 

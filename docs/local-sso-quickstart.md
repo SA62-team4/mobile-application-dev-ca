@@ -165,7 +165,7 @@ Your account can sign in immediately after being added.
 | Gradle fails with "toolchain download" error | Run with `JAVA_HOME` pointing to Android Studio's JBR (see Step 6) |
 | Google Sign-In button visible but nothing happens | The emulator may be using a plain AOSP image — switch to a **Google APIs** image |
 | `INSTALL_FAILED_TEST_ONLY` when installing APK | Use `adb install -t` flag, or build with Android Studio which handles this automatically |
-| Backend returns 500 on first Google login, log shows `Column 'password_hash' cannot be null` | Your MySQL volume was created before `password_hash` became nullable, and `ddl-auto: update` never relaxes an existing `NOT NULL` constraint. Fix without data loss: `docker compose exec mysql mysql -uwellness_user -p<password> wellness_app -e "ALTER TABLE app_user MODIFY password_hash VARCHAR(255) NULL;"` — or wipe the volume with `docker compose down -v && docker compose up --build`. |
+| Backend returns 500 on first Google login, log shows `Column 'password_hash' cannot be null` | Your MySQL volume was created before `password_hash` became nullable, and `ddl-auto: update` never relaxes an existing `NOT NULL` constraint. Fix without data loss: `docker compose exec mysql mysql -uwellness_user -p<password> wellness_app -e "ALTER TABLE users MODIFY password_hash VARCHAR(255) NULL;"` — or wipe the volume with `docker compose down -v && docker compose up --build`. |
 
 ---
 

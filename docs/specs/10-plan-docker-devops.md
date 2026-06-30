@@ -247,6 +247,29 @@ Non-secret config goes in **Variables**.
 The built-in `GITHUB_TOKEN` (no setup) is used by `deploy.yml` to push images to
 GHCR. Never store any of these in the repo, Terraform state, or cloud-init.
 
+### Production schema fixes on the Droplet
+
+`hibernate.ddl-auto: update` adds new columns but never relaxes an existing
+constraint, so some schema changes must be applied by hand against the running
+MySQL container. The prod overlay removes MySQL's host port, so connect through
+Compose from `app_dir` (`/opt/wellness`) rather than from outside.
+
+Enabling Google SSO (REQ-22) on a pre-existing database requires making
+`password_hash` nullable (see `05-plan-backend-data-model-erd.md`). After `ssh`
+into the Droplet:
+
+```bash
+cd /opt/wellness
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T mysql \
+  sh -c 'mysql -uwellness_user -p"$MYSQL_PASSWORD" wellness_app \
+    -e "ALTER TABLE users MODIFY password_hash VARCHAR(255) NULL;"'
+```
+
+`sh -c '... "$MYSQL_PASSWORD" ...'` expands the password inside the container
+(where it already exists in the env) so the secret never appears in shell
+history or `ps`. Verify with `SHOW COLUMNS FROM users LIKE "password_hash";`
+— `Null` should read `YES`. No restart is needed.
+
 ### Free DNS via DuckDNS (no registered domain)
 
 DigitalOcean does not give out domain names, and free wildcard services like
