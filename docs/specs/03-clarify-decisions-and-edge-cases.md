@@ -22,6 +22,8 @@ Use it whenever the team asks, "What did we decide?" or "Is this in scope?"
 | DEC-010 | Use PlantUML instead of Mermaid for diagrams. | Mermaid preview failed in local editor. | Docs, diagrams |
 | DEC-011 | Use PlantUML server mode in VS Code workspace settings. | User's preview extension required `plantuml.server`. | `.vscode/settings.json` |
 | DEC-012 | Production cloud target is a DigitalOcean Droplet running Docker Compose, with Ollama on-server, HTTPS via Caddy, Terraform-managed infra, GitHub Actions deploy, and secrets in GitHub Actions secrets. | DO Droplet + Compose is the simplest path that still hosts the local LLM; resolves the prior AWS-vs-other ambiguity. | `10-plan-docker-devops.md`, `infra/terraform/`, deploy workflows |
+| DEC-013 | Google SSO is an additional login path. Android obtains a Google ID token; the backend verifies it (signature via Google JWKS, audience = our Web Client ID, issuer = accounts.google.com) and then issues the same internal HMAC JWT as email/password login. | One consistent token format for all API calls regardless of login method; keeps email/password and JWT model unchanged. | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md`, `05-plan-backend-data-model-erd.md`, `10-plan-docker-devops.md` |
+| DEC-014 | SSO-provisioned users have a null `password_hash`. New Google users are auto-provisioned on first login by email; an existing email/password user signing in with Google reuses the same account. | SSO users have no local password; matching by email avoids duplicate accounts. | `05-plan-backend-data-model-erd.md`, `06-plan-api-contracts.md` |
 
 ## Open Questions
 
@@ -39,6 +41,10 @@ Use it whenever the team asks, "What did we decide?" or "Is this in scope?"
 | --- | --- | --- |
 | Auth | Logout with stateless JWT | Android clears token; backend logout endpoint returns success for UX. |
 | Auth | Expired token | Android returns user to login and clears stored token. |
+| Auth | Invalid/expired/wrong-audience Google ID token | Backend returns `401`; Android shows a sign-in error and stays on login. |
+| Auth | Google sign-in returns no ID token (misconfigured Web Client ID) | Android shows a configuration error; no backend call is made. |
+| Auth | Google account email matches an existing email/password user | Reuse the existing account; do not create a duplicate. |
+| Auth | SSO user (null password) attempts email/password login path | BCrypt match against the null/empty hash always fails; login is rejected. |
 | Records | User guesses another record id | Backend returns not found or forbidden, never the other user's data. |
 | RAG | Ollama unavailable | Show friendly retry/error message; do not fake a saved AI response. |
 | RAG | No matching KB chunks | Give cautious wellness guidance and note limited available context. |

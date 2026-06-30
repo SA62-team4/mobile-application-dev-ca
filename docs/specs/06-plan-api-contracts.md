@@ -133,6 +133,50 @@ Response `200 OK`:
 }
 ```
 
+### Google SSO (optional — REQ-22)
+
+`POST /api/auth/google`
+
+Additional login path. The Android client obtains a Google ID token via the Google Sign-In SDK and exchanges it here. No JWT is required to call this endpoint (`/api/auth/**` is public).
+
+Request:
+
+```json
+{
+  "idToken": "<google-id-token>"
+}
+```
+
+The backend verifies the token before trusting it:
+
+- Signature against Google's JWKS (`https://www.googleapis.com/oauth2/v3/certs`).
+- `aud` claim equals the configured Web Client ID (`app.google.client-id` / `GOOGLE_CLIENT_ID`).
+- `iss` claim is `accounts.google.com` (or `https://accounts.google.com`).
+- `exp` not expired; `email` claim present.
+
+On success the user is looked up by email; a new user is auto-provisioned (display name from the token, `password_hash = NULL`), an existing user is reused. The backend then issues the **same** JWT format as `/api/auth/login`.
+
+Response `200 OK`:
+
+```json
+{
+  "token": "jwt-token",
+  "tokenType": "Bearer",
+  "expiresInSeconds": 86400,
+  "user": {
+    "id": 1,
+    "displayName": "Asha Tan",
+    "email": "asha@example.com"
+  }
+}
+```
+
+Errors:
+
+- `400` if `idToken` is missing or blank.
+- `401` if the token is invalid, expired, or has the wrong audience/issuer.
+- `403` if the matched account is disabled.
+
 ### Logout
 
 `POST /api/auth/logout`

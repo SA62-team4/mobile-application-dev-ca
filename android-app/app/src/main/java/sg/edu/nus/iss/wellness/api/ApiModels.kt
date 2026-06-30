@@ -7,6 +7,7 @@ package sg.edu.nus.iss.wellness.api
  */
 data class RegisterRequest(val displayName: String, val email: String, val password: String)
 data class LoginRequest(val email: String, val password: String)
+data class GoogleAuthRequest(val idToken: String)
 data class UserResponse(val id: Long, val displayName: String, val email: String)
 data class LoginResponse(val token: String, val tokenType: String, val expiresInSeconds: Long, val user: UserResponse)
 

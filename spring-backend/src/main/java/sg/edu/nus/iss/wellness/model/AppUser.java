@@ -24,7 +24,7 @@ public class AppUser implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, name = "password_hash")
+    @Column(name = "password_hash")
     private String passwordHash;
 
     @Column(nullable = false, name = "display_name")
@@ -49,7 +49,7 @@ public class AppUser implements UserDetails {
 
     @Override
     public String getPassword() {
-        return passwordHash;
+        return passwordHash != null ? passwordHash : "";
     }
 
     @Override

@@ -29,6 +29,7 @@ This matrix links each requirement to the specs, implementation evidence, and te
 | REQ-19 | Single integrated zipped submission | `02-specify-project-requirements.md`, `15-validate-test-and-demo-plan.md` | Final zip named with team name | Submission checklist review |
 | REQ-20 | Mock data can be populated into MySQL for demo rehearsal | `02-specify-project-requirements.md`, `15-validate-test-and-demo-plan.md`, `12-tasks-implementation-backlog.md` | Backend seed profile or documented API seed script | Demo data reset/reseed check |
 | REQ-21 | Optional .NET (Avalonia) desktop client consumes the Spring Boot REST API (bonus) | `02-specify-project-requirements.md`, `04-plan-system-architecture.md`, `06-plan-api-contracts.md` | `desktop-app/` Avalonia client, shared REST contracts, in-memory JWT | `dotnet build`/`dotnet test`, manual desktop demo of auth→CRUD→chat→recommendation |
+| REQ-22 | Optional Google SSO as an additional Android login path (bonus) | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md`, `05-plan-backend-data-model-erd.md`, `10-plan-docker-devops.md` | `GoogleTokenVerifier`, `POST /api/auth/google`, nullable `password_hash`, Android Google Sign-In button, `GOOGLE_CLIENT_ID` env across Compose/CI/Ansible | Backend token-verify tests (400/401), manual emulator Google sign-in demo, `docs/google-sso-setup.md` / `docs/local-sso-quickstart.md` |
 
 ## Cross-Cutting Non-Functional Requirements
 

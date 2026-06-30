@@ -3,6 +3,11 @@ plugins {
     id "org.jetbrains.kotlin.android"
 }
 
+def localProps = new Properties()
+def localPropsFile = rootProject.file('local.properties')
+if (localPropsFile.exists()) localProps.load(localPropsFile.newDataInputStream())
+def googleWebClientId = localProps.getProperty('GOOGLE_WEB_CLIENT_ID', '')
+
 def defaultApiBaseUrl = "http://10.0.2.2:8080/"
 def apiBaseUrl = providers.gradleProperty("WELLNESS_API_BASE_URL")
         .orElse(providers.environmentVariable("WELLNESS_API_BASE_URL"))
@@ -27,6 +32,7 @@ android {
         versionCode 1
         versionName "1.0"
         buildConfigField "String", "API_BASE_URL", "\"${apiBaseUrlForBuildConfig()}\""
+        buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${googleWebClientId}\""
     }
 
     buildFeatures {
@@ -48,5 +54,6 @@ dependencies {
     implementation "com.squareup.retrofit2:retrofit:2.11.0"
     implementation "com.squareup.retrofit2:converter-gson:2.11.0"
     implementation "com.squareup.okhttp3:logging-interceptor:4.12.0"
+    implementation "com.google.android.gms:play-services-auth:21.0.0"
     testImplementation "junit:junit:4.13.2"
 }

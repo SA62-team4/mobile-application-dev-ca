@@ -73,12 +73,14 @@ Optional enhancements:
 - Scheduled agent recommendation generation.
 - Rendered PNG/PDF exports of PlantUML diagrams for presentation slides.
 - Optional `.NET (Avalonia) desktop client` that consumes the same Spring Boot REST API as Android, for cross-platform bonus evidence.
+- Optional Google Single Sign-On (SSO) as an additional Android login path alongside email/password.
 
 Optional bonus requirement:
 
 | ID | Requirement |
 | --- | --- |
 | REQ-21 | Optional .NET (Avalonia) desktop client consumes the Spring Boot REST API for auth, wellness CRUD, chatbot, and recommendations. It is an additional client only and must not replace Android, the backend, or any mandatory requirement. |
+| REQ-22 | Optional Google SSO lets a user sign in with a Google account. The Android client obtains a Google ID token and the backend verifies it, then issues the same internal JWT used by email/password login. It is an additional login path only and must not replace email/password auth or the JWT model. |
 
 ## Mock Data Requirement
 

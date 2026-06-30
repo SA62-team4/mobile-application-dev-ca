@@ -63,6 +63,7 @@ SPRING_DATASOURCE_PASSWORD=change_me
 SPRING_HOST_PORT=8080
 JWT_SECRET=replace_with_long_random_secret
 JWT_EXPIRY_SECONDS=86400
+GOOGLE_CLIENT_ID=
 AI_SERVICE_URL=http://python-ai-service:8000
 AI_SERVICE_HOST_PORT=8000
 INTERNAL_SERVICE_TOKEN=replace_with_internal_token
@@ -241,9 +242,33 @@ Non-secret config goes in **Variables**.
 | `DOMAIN` | Variable | DNS + `.env` | Your registered domain (hosted in DO DNS when `MANAGE_DNS=true`) |
 | `SUBDOMAIN` | Variable | DNS | Chosen API host label, e.g. `api` |
 | `API_DOMAIN` | Variable | Caddy/`.env` | The full FQDN `SUBDOMAIN.DOMAIN`, e.g. `api.example.com` |
+| `GOOGLE_CLIENT_ID` | Variable | Rendered into Droplet `.env`; backend Google ID token verification (REQ-22) | Google Cloud Console → APIs & Services → Credentials → the **Web** OAuth 2.0 client ID. Non-secret (also embedded in the Android APK). Leave unset to disable SSO in production. |
 
 The built-in `GITHUB_TOKEN` (no setup) is used by `deploy.yml` to push images to
 GHCR. Never store any of these in the repo, Terraform state, or cloud-init.
+
+### Production schema fixes on the Droplet
+
+`hibernate.ddl-auto: update` adds new columns but never relaxes an existing
+constraint, so some schema changes must be applied by hand against the running
+MySQL container. The prod overlay removes MySQL's host port, so connect through
+Compose from `app_dir` (`/opt/wellness`) rather than from outside.
+
+Enabling Google SSO (REQ-22) on a pre-existing database requires making
+`password_hash` nullable (see `05-plan-backend-data-model-erd.md`). After `ssh`
+into the Droplet:
+
+```bash
+cd /opt/wellness
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T mysql \
+  sh -c 'mysql -uwellness_user -p"$MYSQL_PASSWORD" wellness_app \
+    -e "ALTER TABLE users MODIFY password_hash VARCHAR(255) NULL;"'
+```
+
+`sh -c '... "$MYSQL_PASSWORD" ...'` expands the password inside the container
+(where it already exists in the env) so the secret never appears in shell
+history or `ps`. Verify with `SHOW COLUMNS FROM users LIKE "password_hash";`
+— `Null` should read `YES`. No restart is needed.
 
 ### Free DNS via DuckDNS (no registered domain)
 
