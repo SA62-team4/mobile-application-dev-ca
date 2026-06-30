@@ -1,0 +1,60 @@
+# Production overlay for the droplet. Apply on top of the base compose:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Changes: prebuilt GHCR images for spring/python, no public host ports except
+# Caddy (80/443), Adminer disabled (debug profile), Caddy TLS reverse proxy added.
+# mem_limit (enforced, unlike deploy.resources) sized to fit an 8 GB droplet and
+# to cap the Spring JVM (UseContainerSupport reads this limit). Sum ~6.25 GB.
+
+services:
+
+  # deploy.resources is reset because docker compose ignores it and it cannot
+  # coexist with a distinct mem_limit. mem_limit is the enforced cap.
+  mysql:
+    ports: !reset [] # internal only
+    deploy: !reset null
+    mem_limit: 512m
+
+  ollama:
+    ports: !reset []
+    deploy: !reset null
+    mem_limit: 4608m # ~4.5 GB; fits llama3.2:3b
+
+  python-ai-service:
+    image: ${PYTHON_IMAGE:-ghcr.io/sa62-team4/wellness-python-ai-service:latest}
+    build: !reset null
+    ports: !reset []
+    deploy: !reset null
+    mem_limit: 768m
+
+  spring-backend:
+    image: ${SPRING_IMAGE:-ghcr.io/sa62-team4/wellness-spring-backend:latest}
+    build: !reset null
+    ports: !reset []
+    deploy: !reset null
+    mem_limit: 512m
+
+  adminer:
+    profiles: ["debug"] # not started in prod
+
+  # Public HTTPS edge; only internet-facing service.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data   # persist certs across restarts
+      - caddy-config:/config
+    networks:
+      - wellness-net
+    depends_on:
+      spring-backend:
+        condition: service_healthy
+
+volumes:
+  caddy-data:
+  caddy-config:

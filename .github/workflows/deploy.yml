@@ -1,0 +1,108 @@
+name: Deploy
+
+# Build images, push to GHCR, then deploy the prod stack to the droplet.
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/deploy.yml"
+      - "spring-backend/**"
+      - "python-ai-service/**"
+      - "rag-knowledge-base/**"
+      - "docker-compose.yml"
+      - "docker-compose.prod.yml"
+      - "Caddyfile"
+  workflow_dispatch:
+    inputs:
+      skip_build:
+        description: "Skip image build and deploy an existing tag (config-only redeploy)"
+        type: boolean
+        default: false
+      image_tag:
+        description: "Image tag to deploy when skip_build is true"
+        type: string
+        default: latest
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_PREFIX: ghcr.io/sa62-team4
+
+jobs:
+  build:
+    # Skipped on a manual config-only redeploy; always runs on push to main.
+    if: ${{ github.event_name == 'push' || !inputs.skip_build }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push spring-backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./spring-backend
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/wellness-spring-backend:${{ github.sha }}
+            ${{ env.IMAGE_PREFIX }}/wellness-spring-backend:latest
+
+      - name: Build & push python-ai-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./python-ai-service
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/wellness-python-ai-service:${{ github.sha }}
+            ${{ env.IMAGE_PREFIX }}/wellness-python-ai-service:latest
+
+  deploy:
+    needs: build
+    # Run even when build was skipped (config-only redeploy); only block if build failed.
+    if: ${{ always() && needs.build.result != 'failure' && needs.build.result != 'cancelled' }}
+    runs-on: ubuntu-latest
+    environment: production # approval gate
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Install Ansible
+        run: |
+          pipx install --include-deps ansible
+          pipx inject ansible requests
+          ansible-galaxy collection install -r infra/ansible/requirements.yml
+
+      - name: Deploy with Ansible
+        working-directory: infra/ansible
+        # Secrets go through the environment (read via lookup('env') in the
+        # playbook) so they never land in the process argv. Non-sensitive config
+        # is passed as extra-vars.
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          INTERNAL_SERVICE_TOKEN: ${{ secrets.INTERNAL_SERVICE_TOKEN }}
+          # Context data goes through env vars (not the run: script) so untrusted
+          # input cannot be injected into the shell.
+          API_DOMAIN: ${{ vars.API_DOMAIN }}
+          APP_IMAGE_TAG: ${{ (github.event_name == 'workflow_dispatch' && inputs.skip_build) && inputs.image_tag || github.sha }}
+        run: |
+          ansible-playbook site.yml \
+            --extra-vars "app_image_prefix=${IMAGE_PREFIX}" \
+            --extra-vars "app_image_tag=${APP_IMAGE_TAG}" \
+            --extra-vars "api_domain=${API_DOMAIN}"

@@ -3,6 +3,7 @@ package sg.edu.nus.iss.wellness
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -60,16 +61,22 @@ class LoginActivity : Activity() {
             val email = emailInput.text.toString().trim()
             val password = passwordInput.text.toString()
             if (email.isBlank() || password.isBlank()) {
+                statusText.visibility = View.VISIBLE
+                statusText.setBackgroundResource(R.drawable.bg_status_error)
                 statusText.text = "Email and password are required."
                 return@setOnClickListener
             }
             scope.launch {
                 runCatching {
+                    statusText.visibility = View.VISIBLE
+                    statusText.setBackgroundResource(R.drawable.bg_status_success)
                     statusText.text = "Logging in..."
                     ApiClient.create(tokenStore).login(LoginRequest(email, password))
                 }.onSuccess { response ->
                     onLoginSuccess(response.token, response.user.displayName, response.user.email)
                 }.onFailure {
+                    statusText.visibility = View.VISIBLE
+                    statusText.setBackgroundResource(R.drawable.bg_status_error)
                     statusText.text = "Login failed. Check your credentials or backend connection."
                 }
             }

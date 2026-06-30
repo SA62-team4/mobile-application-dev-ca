@@ -16,6 +16,12 @@ The specs follow the GitHub Spec Kit engineering lifecycle:
 
 The workflow image also includes Analyze. In this project, Analyze is treated as the review step between Tasks and Implement, using traceability and validation gates to catch gaps before code is generated.
 
+## Spec File Conventions
+
+- Prefer extending an existing spec over creating a new file. A new feature should be folded into the spec that already controls its lifecycle phase — for example, a new Android screen belongs in `07-plan-android-ui-flows.md`, a new endpoint in `06-plan-api-contracts.md`, a new entity in `05-plan-backend-data-model-erd.md`. Only create a new spec file when the work introduces a genuinely new lifecycle artifact that no existing spec covers.
+- Name spec files with the GitHub Spec Kit lifecycle convention `NN-<phase>-<topic>.md`, where `<phase>` is one of `constitution`, `specify`, `clarify`, `plan`, `tasks`, `analyze`, or `validate`. Do not introduce files without a lifecycle-phase prefix.
+- When extending a spec, update its cross-references, this index, and `13-analyze-traceability-matrix.md` so traceability stays intact.
+
 ## Lifecycle Map
 
 | Spec Kit Step | Local File(s) | Outcome |
@@ -24,7 +30,7 @@ The workflow image also includes Analyze. In this project, Analyze is treated as
 | Specify | `02-specify-project-requirements.md` | Requirement IDs, acceptance criteria, team ownership |
 | Clarify | `03-clarify-decisions-and-edge-cases.md` | Resolved decisions, open questions, edge cases |
 | Plan | `04-plan-system-architecture.md` through `11-plan-implementation-roadmap.md` | Architecture, data, API, UI, AI, Docker, roadmap |
-| Tasks | `12-tasks-implementation-backlog.md` | Implementation-ready task units |
+| Tasks | `12-tasks-implementation-backlog.md`, `16-kanban-sprint-board.md` | Implementation-ready task units and the sprint/Kanban board view |
 | Analyze | `13-analyze-traceability-matrix.md`, `14-validate-quality-gates.md` | Gap analysis before implementation |
 | Implement | Future code and tests | AI-assisted implementation against specs |
 | Validate | `15-validate-test-and-demo-plan.md`, `14-validate-quality-gates.md` | Evidence that output matches spec |
@@ -48,6 +54,7 @@ The workflow image also includes Analyze. In this project, Analyze is treated as
 | 13 | `13-analyze-traceability-matrix.md` | Requirement-to-spec-to-test mapping |
 | 14 | `14-validate-quality-gates.md` | Spec conformance gates |
 | 15 | `15-validate-test-and-demo-plan.md` | Verification strategy and 15-minute demo plan |
+| 16 | `16-kanban-sprint-board.md` | Sprint plan and Kanban board view over the task backlog |
 
 ## Spec Status
 
@@ -82,6 +89,7 @@ Implementation may begin when:
 - Android screen flow is clear enough for UI work.
 - RAG and agent specs are clear enough for AI work.
 - Docker and CI expectations are clear enough for integration work.
+- Optional cold-standby `.NET Backup API` work, when included, is documented as backup evidence and not as a replacement for Spring Boot.
 - Task IDs in `12-tasks-implementation-backlog.md` are accepted by the team.
 - Validation gates in `14-validate-quality-gates.md` are accepted by the team.
 

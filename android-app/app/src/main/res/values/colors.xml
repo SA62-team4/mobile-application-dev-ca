@@ -1,7 +1,20 @@
 <resources>
-    <color name="primary">#2563EB</color>
-    <color name="primary_dark">#1E40AF</color>
+    <color name="primary">#0D9488</color>
+    <color name="primary_dark">#0F766E</color>
+    <color name="secondary">#2563EB</color>
+    <color name="warning">#F59E0B</color>
+    <color name="error">#DC2626</color>
+    <color name="bg_app">#F8FAFC</color>
+    <color name="bg_surface">#FFFFFF</color>
+    <color name="bg_subtle">#ECFDF5</color>
     <color name="surface">#FFFFFF</color>
-    <color name="text_primary">#111827</color>
+    <color name="border_default">#E2E8F0</color>
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="text_on_primary">#FFFFFF</color>
+    <color name="badge_excellent">#2E7D32</color>
+    <color name="badge_good">#00695C</color>
+    <color name="badge_fair">#E65100</color>
+    <color name="metric_green">#43A047</color>
+    <color name="metric_amber">#FB8C00</color>
 </resources>
-

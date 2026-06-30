@@ -1,0 +1,4 @@
+# Copy to backend.hcl, then: terraform init -backend-config=backend.hcl
+bucket    = "your-spaces-bucket"
+key       = "wellness/terraform.tfstate"
+endpoints = { s3 = "https://sgp1.digitaloceanspaces.com" }

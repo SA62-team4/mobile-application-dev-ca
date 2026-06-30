@@ -14,8 +14,9 @@ Define the build order for the future implementation phase so the team can work 
 | 3 | Wellness CRUD | Backend CRUD and Android CRUD screens work end to end |
 | 4 | Local RAG | Python service indexes KB, retrieves chunks, calls Ollama, backend stores chat |
 | 5 | Agentic AI | Agent analyses records, saves recommendations, Android displays output |
-| 6 | Docker and CI | Compose stack, GitHub Actions, smoke checks, setup docs stable |
+| 6 | Docker, CI, deployment, and security review | Compose stack, GitHub Actions CI (incl. Ansible lint) + deploy/infra workflows, Terraform infra, Ansible config + deploy, DigitalOcean deployment, Codex Security scan guidance, smoke checks, setup docs stable |
 | 7 | Demo hardening | Seed data, video script, final testing, zipped submission checklist complete |
+| Optional 8 | .NET backup rehearsal | Cold-standby `.NET Backup API` mirrors Spring contracts on port `8082` without replacing Spring |
 
 ## Recommended Build Order
 
@@ -30,8 +31,9 @@ Define the build order for the future implementation phase so the team can work 
 9. Implement Android chatbot screen and chat history.
 10. Implement Python agentic recommendation workflow.
 11. Connect backend recommendation endpoints and Android recommendation screen.
-12. Add Docker Compose, health checks, and CI.
-13. Finalize ERD/API/setup/demo docs and author comments.
+12. Add Docker Compose, health checks, CI, and `SECURITY.md` Codex Security scan guidance.
+13. Finalize ERD/API/setup/demo docs, security review evidence, and author comments.
+14. Optional: add `.NET Backup API` scaffold, backup Compose override, parity smoke checks, and Codex Security scan evidence after Spring contracts are stable.
 
 ## Parallel Work Streams
 
@@ -44,6 +46,7 @@ Define the build order for the future implementation phase so the team can work 
 | Backend domain APIs | Member 5 | ERD and auth user model agreed | Android CRUD, AI saves |
 | RAG service | Member 6 | AI service scaffold and KB format agreed | Chatbot |
 | Agent/Docker/CI | Member 7 | Backend internal API contract agreed | Recommendation demo, integration |
+| .NET backup backend | Member 7 | Spring API contracts and MySQL schema stable | Optional backup rehearsal only |
 
 ## Milestone Acceptance
 
@@ -77,9 +80,17 @@ Define the build order for the future implementation phase so the team can work 
 
 - Docker Compose stack works on a clean machine.
 - GitHub Actions pass.
+- Codex Security repository or scoped scans have been run for changed runtime components, with findings fixed or documented.
 - Demo script rehearsed under 15 minutes.
 - Author comments added.
 - Final zip contains one integrated solution and video demo.
+
+### Optional Milestone F: Backup Backend Ready
+
+- `.NET Backup API` builds and exposes Spring-compatible health/status endpoints.
+- Backup API uses the same MySQL schema, JWT secret, BCrypt-compatible passwords, and JSON/error shapes as Spring.
+- Backup Compose override exposes .NET on host port `8082`.
+- Contract smoke checks can target either Spring `8080` or .NET `8082` with `BASE_URL`.
 
 ## Risk Controls
 
@@ -88,4 +99,4 @@ Define the build order for the future implementation phase so the team can work 
 - Use deterministic agent rules before LLM generation to make behavior explainable.
 - Mock or bypass heavyweight Ollama generation in CI.
 - Prepare demo data before the recording.
-
+- Keep `.NET Backup API` as cold standby so the main Spring Boot demo path remains simple and assignment-compliant.

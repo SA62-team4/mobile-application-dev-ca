@@ -1,0 +1,34 @@
+---
+# Configure the droplet and deploy the wellness stack.
+# Run bootstrap + app together (default), or a subset with --tags.
+#
+#   ansible-playbook site.yml                 # full run
+#   ansible-playbook site.yml --tags app      # redeploy app only
+#   ansible-playbook site.yml --tags bootstrap
+- name: Deploy wellness stack
+  hosts: wellness
+  become: true
+  gather_facts: true
+
+  vars:
+    # Repo root relative to this playbook, so roles can copy compose/Caddy files
+    # and the knowledge base from the checked-out repository.
+    repo_root: "{{ playbook_dir }}/../.."
+    app_dir: /opt/wellness
+
+    # Secrets are read from the environment (not CLI extra-vars) so they never
+    # appear in the process argv. The deploy workflow exports them from the
+    # production GitHub Environment secrets.
+    ghcr_user: "{{ lookup('env', 'GHCR_USER') }}"
+    ghcr_pat: "{{ lookup('env', 'GHCR_PAT') }}"
+    mysql_password: "{{ lookup('env', 'MYSQL_PASSWORD') }}"
+    mysql_root_password: "{{ lookup('env', 'MYSQL_ROOT_PASSWORD') }}"
+    spring_datasource_password: "{{ lookup('env', 'SPRING_DATASOURCE_PASSWORD') }}"
+    jwt_secret: "{{ lookup('env', 'JWT_SECRET') }}"
+    internal_service_token: "{{ lookup('env', 'INTERNAL_SERVICE_TOKEN') }}"
+
+  roles:
+    - role: bootstrap
+      tags: [bootstrap]
+    - role: app
+      tags: [app]

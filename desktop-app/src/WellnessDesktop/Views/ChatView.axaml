@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:WellnessDesktop.ViewModels"
+             xmlns:m="clr-namespace:WellnessDesktop.Models"
+             x:Class="WellnessDesktop.Views.ChatView"
+             x:DataType="vm:ChatViewModel">
+
+  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="8">
+
+    <StackPanel Grid.Row="0" Margin="0,0,0,8">
+      <TextBlock Text="Wellness chatbot" FontSize="18" FontWeight="Bold" />
+      <TextBlock Text="Ask a wellness question. Answers are grounded in the local knowledge base."
+                 Foreground="#777" />
+    </StackPanel>
+
+    <!-- Error banner (own row, never overlaps content) -->
+    <Border Grid.Row="1" Margin="0,0,0,8" Padding="10,8" CornerRadius="6"
+            Background="#FDECEA" BorderBrush="#F5C6CB" BorderThickness="1"
+            IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <TextBlock Text="{Binding ErrorMessage}" Foreground="#C0392B" TextWrapping="Wrap" />
+    </Border>
+
+    <ProgressBar Grid.Row="2" IsIndeterminate="True" Height="4" Margin="0,0,0,8"
+                 IsVisible="{Binding IsLoading}" />
+
+    <Panel Grid.Row="3">
+      <TextBlock Text="No conversation yet. Ask your first question below."
+                 HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#777"
+                 IsVisible="{Binding IsEmpty}" />
+
+      <ScrollViewer>
+        <ItemsControl ItemsSource="{Binding Messages}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="m:ChatMessageDto">
+              <Border Margin="0,0,0,10" Padding="12" CornerRadius="8"
+                      BorderBrush="#E0E0E0" BorderThickness="1">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="{Binding Question}" FontWeight="Bold" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding Answer}" TextWrapping="Wrap" />
+                  <ItemsControl ItemsSource="{Binding Sources}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="m:ChatSourceDto">
+                        <Border Margin="0,4,0,0" Padding="8" CornerRadius="6" Background="#F2F2F2">
+                          <StackPanel>
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" />
+                            <TextBlock Text="{Binding Snippet}" FontSize="12" Foreground="#666"
+                                       TextWrapping="Wrap" />
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Panel>
+
+    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+      <TextBox Grid.Column="0" Text="{Binding Question}" Watermark="Type your question..."
+               IsEnabled="{Binding !IsLoading}" />
+      <Button Grid.Column="1" Content="Ask" Command="{Binding AskCommand}"
+              IsEnabled="{Binding !IsLoading}" Classes="accent" Margin="8,0,0,0" />
+    </Grid>
+  </Grid>
+</UserControl>

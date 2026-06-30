@@ -20,7 +20,7 @@ class AgentService:
         focus = self._choose_focus(records)
         trend_summary = self._trend_summary(records, focus)
         chunks = await self.rag.retrieve(focus)
-        context = "\n\n".join(f"{chunk.title}: {chunk.text}" for chunk in chunks)
+        context = "\n\n".join(f"{chunk.title}: {chunk.snippet}" for chunk in chunks)
         prompt = f"""Generate a short personalised wellness recommendation.
 The recommendation must be educational, practical, and non-medical.
 
@@ -37,7 +37,7 @@ Action items:
 - item 2
 - item 3
 """
-        generated = await self.ollama.generate(prompt)
+        generated = await self.ollama.generate(prompt, num_predict=160)
         title, recommendation_text, action_items = self._parse_generated(generated, focus)
         saved = await self.backend.save_recommendation(
             user_id,
@@ -94,4 +94,3 @@ Action items:
                 "Review your progress after three days",
             ]
         return title, recommendation, action_items[:3]
-

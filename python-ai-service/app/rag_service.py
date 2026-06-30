@@ -46,7 +46,7 @@ class RagService:
     async def chat(self, request: RagChatRequest) -> RagChatResponse:
         retrieved = await self.retrieve(request.question)
         prompt = self._build_prompt(request, retrieved)
-        answer = await self.ollama.generate(prompt)
+        answer = await self.ollama.generate(prompt, num_predict=220)
         if not answer:
             answer = "I could not generate a response right now. Please try again."
         return RagChatResponse(
@@ -77,7 +77,7 @@ class RagService:
         return chunks
 
     def _build_prompt(self, request: RagChatRequest, chunks: list[KnowledgeChunk]) -> str:
-        context = "\n\n".join(f"Source: {chunk.title}\n{chunk.text}" for chunk in chunks)
+        context = "\n\n".join(f"Source: {chunk.title}\n{chunk.snippet}" for chunk in chunks)
         records = "\n".join(
             f"- {record.recordDate}: sleep {record.sleepHours}h, exercise {record.exerciseType or 'none'} "
             f"{record.exerciseMinutes}min, mood {record.moodScore}/5"
@@ -100,4 +100,3 @@ User question:
 {request.question}
 
 Answer:"""
-

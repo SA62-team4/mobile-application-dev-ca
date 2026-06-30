@@ -10,6 +10,23 @@
 | Upstream specs | `02-specify-project-requirements.md`, `06-plan-api-contracts.md` |
 | Downstream specs | Android layouts, ViewModels, manual QA checklist |
 
+## Figma UI Specification
+
+Figma file: [SA62 Wellness Android UI Spec](https://www.figma.com/design/C8xBLWCbQfWMD7dIiVaf8c/SA62-Wellness-Android-UI-Spec?t=re8jTqWW4UALHDKv-0)
+
+The Figma file is the visual handoff for Android XML implementation. It contains:
+
+- `00 Overview`: app flow map and requirement trace.
+- `01 Design System`: colors, typography, spacing, component inventory, and reusable local components.
+- `02 Auth`: login and register phone frames.
+- `03 App Screens`: dashboard, add/edit record, chatbot, recommendations, and profile phone frames.
+- `04 States`: loading, empty, error, success, and local AI waiting phone frames.
+- `05 Dashboard`: today's snapshot tiles, the Sleep/Activity/Mood metric cards with sparklines and status badges, the AI insight teaser, and the historical records list with the date-range filter chip.
+
+The Dashboard is the authenticated landing view. It replaces the raw records list as the first tab while keeping the historical record cards rendered beneath the summary section. The data, aggregation, and threshold rules that drive these frames are defined in [Wellness Dashboard Logic](#wellness-dashboard-logic) below.
+
+All phone frames use `360 x 800dp` as the compact Android portrait reference size.
+
 ## UI Technology
 
 - Kotlin Android app.
@@ -18,6 +35,80 @@
 - API client read/call timeouts must allow slow local Ollama responses for chatbot and recommendation generation.
 - ViewModel and LiveData or StateFlow for screen state.
 - Secure token storage for JWT.
+
+## Visual Design Tokens
+
+Use the Figma design tokens as the Android XML resource target. Resource names may be adjusted to match Android naming rules, but semantic meaning should stay the same.
+
+### Color Roles
+
+| Role | Figma token | Android target | Usage |
+| --- | --- | --- | --- |
+| Primary | `color/bg/primary` | `@color/primary` | Primary buttons, selected nav item, positive wellness accents |
+| Secondary | `color/bg/secondary` | `@color/secondary` | Secondary information accents |
+| App background | `color/bg/app` | `@color/bg_app` | Screen background |
+| Surface | `color/bg/surface` | `@color/bg_surface` | Cards, forms, top bar, bottom navigation |
+| Subtle surface | `color/bg/subtle` | `@color/bg_subtle` | Recommendation cards, selected states, soft wellness panels |
+| Warning | `color/bg/warning` | `@color/warning` | Caution or slow local AI notices |
+| Error | `color/bg/error` | `@color/error` | Validation and service failure states |
+| Text primary | `color/text/primary` | `@color/text_primary` | Main content text |
+| Text secondary | `color/text/secondary` | `@color/text_secondary` | Metadata, helper text, secondary copy |
+| Text on primary | `color/text/on-primary` | `@color/text_on_primary` | Text on primary/error filled buttons |
+| Border default | `color/border/default` | `@color/border_default` | Cards and text field outlines |
+| Border focus | `color/border/focus` | `@color/border_focus` | Focused text fields and selected controls |
+| Badge excellent | `color/badge/excellent` | `@color/badge_excellent` | "Excellent" status pill on dashboard metric cards (`#2E7D32`) |
+| Badge good | `color/badge/good` | `@color/badge_good` | "Good" status pill on dashboard metric cards (`#00695C`) |
+| Badge fair | `color/badge/fair` | `@color/badge_fair` | "Fair" status pill on dashboard metric cards (`#E65100`) |
+| Metric line/bar | `color/metric/green` | `@color/metric_green` | Activity sparkline bars (`#43A047`) |
+| Metric accent | `color/metric/amber` | `@color/metric_amber` | Mood sparkline line and dots (`#FB8C00`) |
+
+Status-badge colors map directly to the weekly-average thresholds in [Wellness Dashboard Logic](#status-badge-thresholds). "Below Target" reuses `@color/error` and "No Data" reuses `@color/text_secondary`; Sleep sparklines reuse `@color/secondary` (blue).
+
+### Typography
+
+- Font family: Roboto.
+- Screen headline: 28sp bold.
+- App bar title: 22sp bold.
+- Section/card heading: 18sp medium.
+- Body text: 16sp regular.
+- Button text: 14sp medium.
+- Caption/helper text: 12sp regular.
+- Letter spacing remains `0`.
+
+### Spacing, Shape, And Touch Targets
+
+- Base spacing follows an 8dp rhythm: 4, 8, 12, 16, 24, 32, 48.
+- Minimum tappable control size: 48dp.
+- Text fields and primary controls should be at least 48dp high.
+- Cards use 12-16dp corner radius.
+- Larger panels and dialog-like state blocks may use 20-24dp radius.
+- Use restrained elevation for cards; avoid heavy shadows.
+
+## Reusable UI Components
+
+The Figma file defines reusable local components for Android implementation:
+
+- App bar.
+- Bottom navigation item, selected and default.
+- Primary, secondary, and destructive buttons.
+- Default and error text fields.
+- Wellness record card.
+- Recommendation card.
+- User and assistant chat bubbles.
+- State block for loading, empty, error, success, and AI waiting states.
+- Mood selector from 1 to 5.
+- Snapshot tile (icon, value, label) used in the three-up dashboard header.
+- Metric card with embedded sparkline, weekly stat line, and status badge pill.
+- Status badge pill (Excellent, Good, Fair, Below Target, No Data).
+- AI insight teaser card (title plus truncated excerpt) that links to Recommendations.
+- Dismissible filter chip for the active date-range filter.
+
+Android XML should map these to reusable layouts/styles where practical:
+
+- Use a bottom navigation component or equivalent XML layout for authenticated tabs.
+- Use `RecyclerView` item layouts for records, chat history, and recommendations.
+- Use reusable card/item XML layouts instead of programmatically adding plain `TextView` rows.
+- Use Material Components for text fields, buttons, cards, and bottom navigation if the dependency is added.
 
 ## Navigation
 
@@ -46,24 +137,29 @@ After login:
 left to right direction
 
 rectangle "Home Shell" as Home
-rectangle "Records" as Records
+rectangle "Dashboard" as Dashboard
+rectangle "Add/Edit Record" as Record
 rectangle "Chatbot" as Chat
 rectangle "Recommendations" as Recs
 rectangle "Profile" as Profile
 
-Home --> Records
+Home --> Dashboard
 Home --> Chat
 Home --> Recs
 Home --> Profile
+Dashboard --> Record
+Dashboard --> Recs
 @enduml
 ```
 
 Use bottom navigation for the authenticated area:
 
-- Records
+- Dashboard
 - Chat
 - Recommendations
 - Profile
+
+The Dashboard tab is the landing view. It surfaces today's snapshot, weekly trends, and the historical records list. The AI insight teaser on the Dashboard deep-links into the Recommendations tab, and the add/edit record flow is opened from within the Dashboard's records section.
 
 ## Screens
 
@@ -116,7 +212,36 @@ Success:
 - Show success message.
 - Navigate to login screen.
 
+### Dashboard Screen
+
+The authenticated landing view. Replaces the standalone records list as the first bottom-nav tab; the records list is now rendered within this screen. App bar title reads "Dashboard". See [Wellness Dashboard Logic](#wellness-dashboard-logic) for aggregation and threshold rules.
+
+Content, top to bottom:
+
+- **Today's snapshot**: three horizontal tiles showing today's Sleep hours, Activity minutes, and Mood score. If there is no entry for today, fall back to the most recent day's values with a "No entry today" note and the fallback date.
+- **Metric cards** for Sleep, Activity, and Mood, each with:
+  - A sparkline trend chart (Sleep blue line, Activity green bars skipping zero-exercise days, Mood amber line with dots).
+  - A weekly stat line (for example, "Avg 7.2 h · 6 days logged") over the past 7 calendar days.
+  - A status badge pill (Excellent, Good, Fair, Below Target, No Data) derived from the weekly average.
+- **AI insight teaser**: a card previewing the newest recommendation (title plus excerpt truncated to 120 characters). Tapping it opens the Recommendations tab; when none exist it shows a prompt to generate one.
+- **Historical records** section: the scrollable record cards, with a `📅 Filter` action that opens a start-date then end-date picker and filters the list in memory. An active filter shows a dismissible chip to clear it.
+
+Behavior:
+
+- Loads wellness records and AI recommendations concurrently.
+- Multiple records logged on the same day are consolidated for calculations (sum activity minutes, average sleep and mood).
+- Records with malformed/unparseable dates are skipped silently so the screen does not crash.
+- The date-range filter is client-side only and triggers no extra API calls.
+
+States:
+
+- Loading dashboard while records and recommendations are fetched.
+- Empty state when there is no logged data yet.
+- Error state when the backend is unreachable.
+
 ### Records Screen
+
+The records list is embedded in the Dashboard's historical records section rather than being a separate tab. The behavior below describes that list and the add/edit flow it launches.
 
 Content:
 
@@ -236,6 +361,64 @@ Logout behavior:
 - Navigate to login screen.
 - If backend call fails, still allow local logout after confirmation.
 
+## Wellness Dashboard Logic
+
+This section defines the data, aggregation, and threshold rules behind the Dashboard Screen. It is the source of truth for the dashboard's calculations and replaces the former standalone `16-android-wellness-dashboard.md` spec.
+
+### Today's Snapshot
+
+- Shows today's Sleep hours, Activity minutes, and Mood score in the three header tiles.
+- If today has no logged entry, fall back to the most recent day's values with a "No entry today" note and the fallback date label.
+
+### Metric Cards And Sparklines
+
+Three cards represent Sleep, Activity, and Mood. Each shows a sparkline trend chart, a weekly stat line, and a status badge.
+
+- Sparklines are drawn with a custom Canvas view (`SparklineView`) so no external charting dependency is added:
+  - Sleep: blue line chart with a dot at the latest point.
+  - Activity: green bar chart that skips zero-exercise days.
+  - Mood: amber line chart with dots on all logged points.
+- Weekly stat line summarizes the past 7 calendar days, for example "Avg 7.2 h · 6 days logged".
+
+### Status Badge Thresholds
+
+Status badges derive from the weekly averages. Comparisons are rounded to 1 decimal place to avoid floating-point edge cases (for example, an average sleep of `6.99` rounds to `7.0` and earns Good).
+
+| Metric | Excellent | Good | Fair | Below Target |
+| --- | --- | --- | --- | --- |
+| Sleep average | ≥ 8.0 h | 7.0 – 7.9 h | 6.0 – 6.9 h | < 6.0 h |
+| Active days | ≥ 5 days | 3 – 4 days | 1 – 2 days | 0 days |
+| Mood average | ≥ 4.0 | 3.0 – 3.9 | 2.0 – 2.9 | < 2.0 |
+
+Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color/badge_excellent`, Good `@color/badge_good`, Fair `@color/badge_fair`, Below Target `@color/error`, No Data `@color/text_secondary`.
+
+### AI Insight Teaser
+
+- Shows the newest generated recommendation as a preview: title plus an excerpt truncated to 120 characters.
+- Tapping it opens the Recommendations tab. When no recommendations exist, it shows a prompt to generate one.
+
+### Historical Records And Date Filter
+
+- The historical record cards render below the summary section.
+- A `📅 Filter` action opens a start-date then end-date `DatePickerDialog` sequence and filters the list in memory; no extra API calls are triggered.
+- When a filter is active, a dismissible chip appears to clear it. Range filtering is inclusive on both boundaries.
+
+### Multi-Log Aggregation And Safety
+
+- Deduplication: when a user logs multiple records on the same day, they are consolidated for calculations — sum exercise minutes, average sleep hours, and average mood score.
+- Crash prevention: records with malformed or unparseable dates are skipped silently during calculation so a bad row cannot crash the screen.
+
+### Implementation Notes
+
+- `DashboardDataHelper`: pure-Kotlin helper for aggregation, date grouping, badge thresholds, and date filtering. Having no Android SDK dependency, it is unit-testable on the local JVM.
+- `SparklineView`: lightweight custom `View` that overrides `onDraw` to render lines, round-rect bars, and axis labels on the native `Canvas`.
+- `HomeActivity`: hosts the dashboard as the landing tab, loads wellness records and recommendations concurrently, and builds the UI programmatically.
+
+### Dashboard Tests
+
+- JVM unit tests (`DashboardDataHelperTest`) cover deduplication (averaging vs. summing), defensive date parsing, rounding margins, and date-filter boundary inclusivity.
+- Manual checks: load under 2 seconds, graceful empty states with zero data or an offline backend, and safe multi-tab navigation.
+
 ## User Experience Rules
 
 - Keep labels plain and understandable.
@@ -243,11 +426,34 @@ Logout behavior:
 - Preserve form inputs after validation errors.
 - Disable duplicate submissions while requests are in progress.
 - Keep all authenticated screens resilient to expired JWT by returning to login.
+- Match the Figma component hierarchy and spacing unless a small Android adjustment is needed for accessibility or platform behavior.
+- Keep all primary actions reachable in the 360dp compact portrait layout.
+- Prefer icon plus label for bottom navigation; avoid using top-row tab buttons in the authenticated shell.
+
+## State Design Rules
+
+Major workflows must have explicit visual states:
+
+| Workflow | Loading | Empty | Error | Success |
+| --- | --- | --- | --- | --- |
+| Dashboard | Loading dashboard while records and recommendations load | Empty state with prompt to add first record | Backend unreachable retry message | Snapshot, metric cards, teaser, and records render |
+| Login | Disable login button and show progress | Not applicable | Inline banner for invalid credentials or network failure | Navigate to Dashboard |
+| Register | Disable register button and show progress | Not applicable | Inline validation and friendly backend error | Success message, then Login |
+| Records | Loading records state | Empty records state with Add record action | Retry state for backend/network failure | Refreshed list after save/delete |
+| Add/Edit Record | Save in progress | Not applicable | Inline field errors and save failure message | Return to Records and refresh |
+| Chatbot | Typing/thinking indicator | Empty history with prompt suggestions | Preserve typed question and show retry message | New saved chat appears in history |
+| Recommendations | Loading existing recommendations | Empty recommendations state with Generate action | Agent/Ollama unavailable retry message | New recommendation appears at top |
+| Profile | Optional logout progress | Not applicable | Backend logout failure still allows confirmed local logout | Token cleared and Login shown |
+
+The local AI waiting state must explain that generation can take up to a minute and must prevent duplicate chat or recommendation submissions.
 
 ## Android Acceptance Criteria
 
 - App supports the full demo flow from login to logout.
+- Dashboard is the landing tab and shows today's snapshot, Sleep/Activity/Mood metric cards with sparklines and status badges, the AI insight teaser, and the historical records list with date-range filter.
+- Dashboard status badges match the weekly-average thresholds in [Wellness Dashboard Logic](#status-badge-thresholds), and same-day records are consolidated before calculation.
 - All backend calls include JWT after login.
 - No screen calls MySQL or Python AI service directly.
 - Required form validation works before network requests.
 - Loading, empty, success, and error states exist for major workflows.
+- Android screens can be visually checked against the Figma file during manual QA.
