@@ -116,6 +116,7 @@ jobs:
           APP_IMAGE_TAG: ${{ (github.event_name == 'workflow_dispatch' && inputs.skip_build) && inputs.image_tag || github.sha }}
         run: |
           ansible-playbook site.yml \
+            --limit wellness \
             --extra-vars "app_image_prefix=${IMAGE_PREFIX}" \
             --extra-vars "app_image_tag=${APP_IMAGE_TAG}" \
             --extra-vars "api_domain=${API_DOMAIN}" \
