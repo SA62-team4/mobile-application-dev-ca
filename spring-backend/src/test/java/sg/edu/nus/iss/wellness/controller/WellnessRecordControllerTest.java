@@ -176,8 +176,7 @@ public class WellnessRecordControllerTest {
         assertThat(savedEntry).isEmpty();
     }
 
-    // Test 6 - Valid log entry, but no authorisation header/token. Expected 403 Forbidden error.
-    // NOTE: Specs indicate that a 401 error is expected. Pending confirmation if this is correct.
+    // Test 6 - Valid log entry, but no authorisation header/token. Expected 401 Unauthorised error.
     @Test
     void UnauthorizedEntryValidBodyNoToken() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
