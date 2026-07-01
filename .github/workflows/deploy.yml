@@ -12,14 +12,25 @@ on:
       - "docker-compose.yml"
       - "docker-compose.prod.yml"
       - "Caddyfile"
+      - "infra/ansible/ansible.cfg"
+      - "infra/ansible/inventory.yml"
+      - "infra/ansible/requirements.yml"
+      - "infra/ansible/site.yml"
+      - "infra/ansible/roles/app/**"
+      - "infra/ansible/roles/bootstrap/**"
   workflow_dispatch:
     inputs:
+      target:
+        description: Deployment target
+        type: choice
+        options: [app, sonar]
+        default: app
       skip_build:
-        description: "Skip image build and deploy an existing tag (config-only redeploy)"
+        description: "App only: skip image build and deploy an existing tag"
         type: boolean
         default: false
       image_tag:
-        description: "Image tag to deploy when skip_build is true"
+        description: "App only: image tag to deploy when skip_build is true"
         type: string
         default: latest
 
@@ -33,7 +44,7 @@ env:
 jobs:
   build:
     # Skipped on a manual config-only redeploy; always runs on push to main.
-    if: ${{ github.event_name == 'push' || !inputs.skip_build }}
+    if: ${{ github.event_name == 'push' || (inputs.target == 'app' && !inputs.skip_build) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,10 +75,10 @@ jobs:
             ${{ env.IMAGE_PREFIX }}/wellness-python-ai-service:${{ github.sha }}
             ${{ env.IMAGE_PREFIX }}/wellness-python-ai-service:latest
 
-  deploy:
+  deploy-app:
     needs: build
     # Run even when build was skipped (config-only redeploy); only block if build failed.
-    if: ${{ always() && needs.build.result != 'failure' && needs.build.result != 'cancelled' }}
+    if: ${{ always() && (github.event_name == 'push' || inputs.target == 'app') && needs.build.result != 'failure' && needs.build.result != 'cancelled' }}
     runs-on: ubuntu-latest
     environment: production # approval gate
     steps:
@@ -109,3 +120,30 @@ jobs:
             --extra-vars "app_image_tag=${APP_IMAGE_TAG}" \
             --extra-vars "api_domain=${API_DOMAIN}" \
             --extra-vars "google_client_id=${GOOGLE_CLIENT_ID}"
+
+  deploy-sonar:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.target == 'sonar' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Install Ansible
+        run: |
+          pipx install --include-deps ansible
+          pipx inject ansible requests
+          ansible-galaxy collection install -r infra/ansible/requirements.yml
+
+      - name: Deploy SonarQube with Ansible
+        working-directory: infra/ansible
+        env:
+          SONAR_DROPLET_HOST: ${{ secrets.SONAR_DROPLET_HOST }}
+          SONAR_DOMAIN: ${{ vars.SONAR_DOMAIN }}
+          SONAR_POSTGRES_DB: ${{ vars.SONAR_POSTGRES_DB }}
+          SONAR_POSTGRES_USER: ${{ vars.SONAR_POSTGRES_USER }}
+          SONAR_POSTGRES_PASSWORD: ${{ secrets.SONAR_POSTGRES_PASSWORD }}
+        run: ansible-playbook site.yml --limit sonar

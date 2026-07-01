@@ -1,0 +1,66 @@
+---
+# Deploy SonarQube Community Build as an isolated quality dashboard.
+
+- name: Validate SonarQube deployment inputs
+  ansible.builtin.assert:
+    that:
+      - sonar_domain | length > 0
+      - sonar_postgres_password | length > 0
+    fail_msg: "Set SONAR_DOMAIN and SONAR_POSTGRES_PASSWORD before running the SonarQube play in site.yml."
+
+- name: Configure vm.max_map_count for SonarQube search
+  ansible.posix.sysctl:
+    name: vm.max_map_count
+    value: "524288"
+    state: present
+    reload: true
+
+- name: Configure file-max for SonarQube
+  ansible.posix.sysctl:
+    name: fs.file-max
+    value: "131072"
+    state: present
+    reload: true
+
+- name: Ship SonarQube compose and Caddy files
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/{{ item }}"
+    dest: "{{ app_dir }}/{{ item }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+  loop:
+    - docker-compose.sonar.yml
+    - Caddyfile.sonar
+
+- name: Render .env.sonar from secrets
+  ansible.builtin.template:
+    src: env.sonar.j2
+    dest: "{{ app_dir }}/.env.sonar"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"
+  no_log: true
+
+- name: Pull images and start SonarQube stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ app_dir }}"
+    env_files:
+      - "{{ app_dir }}/.env.sonar"
+    files:
+      - docker-compose.sonar.yml
+    state: present
+    pull: always
+    remove_orphans: true
+
+- name: Wait for SonarQube to report UP
+  ansible.builtin.uri:
+    url: "https://{{ sonar_domain }}/api/system/status"
+    return_content: true
+  register: sonarqube_status
+  retries: 30
+  delay: 10
+  until: sonarqube_status.status == 200 and '"UP"' in sonarqube_status.content
+  changed_when: false
+  delegate_to: localhost
+  become: false

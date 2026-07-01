@@ -1,8 +1,9 @@
 # Terraform — Wellness App (DigitalOcean)
 
-Provisions a single hardened droplet (Docker stack host), reserved IP, cloud
-firewall (22/80/443), DNS, and project. Infra only — app deploy and secrets are
-handled by the GitHub Actions `deploy.yml` workflow.
+Provisions the app runtime droplet and the SonarQube Community Build dashboard
+droplet, each with a reserved IP, cloud firewall (22/80/443), optional DNS, and
+project grouping. Infra only — app/SonarQube deploys and secrets are handled by
+the GitHub Actions `deploy.yml` workflow.
 
 For CI, these are stored as GitHub Actions secrets/variables on the `production`
 Environment — see the table in `docs/specs/10-plan-docker-devops.md`.
@@ -42,12 +43,15 @@ Set in `terraform.tfvars` (see `terraform.tfvars.example`).
 | `ssh_key_name` | yes | — | Name of an SSH key already in your DO account |
 | `region` | no | `sgp1` | DO region slug |
 | `droplet_size` | no | `s-4vcpu-8gb` | Size slug. 8 GB fits the prod mem_limits; `g-4vcpu-16gb` is roomier but tier-restricted on new accounts |
+| `sonar_droplet_size` | no | `s-2vcpu-4gb` | SonarQube Droplet size. 4 GB is the practical minimum; 8 GB is smoother for indexing |
 | `droplet_image` | no | `ubuntu-24-04-x64` | Base image slug |
 | `droplet_name` | no | `wellness-prod` | Droplet hostname |
+| `sonar_droplet_name` | no | `wellness-sonar` | SonarQube Droplet hostname |
 | `project_name` | no | `Wellness App` | DO project that groups resources |
 | `manage_dns` | no | `true` | Create the A record in DO DNS. Set `false` for a registrar or DuckDNS |
 | `domain` | when `manage_dns` | `""` | Apex domain in DO DNS, e.g. `example.com` |
 | `subdomain` | no | `api` | API host; FQDN is `<subdomain>.<domain>` |
+| `sonar_subdomain` | no | `sonar` | SonarQube dashboard host; FQDN is `<sonar_subdomain>.<domain>` |
 
 ### No domain? Use DuckDNS (free, keeps HTTPS)
 
@@ -93,7 +97,7 @@ cp backend.hcl.example backend.hcl             # edit
 terraform init -backend-config=backend.hcl
 terraform plan
 terraform apply
-terraform output            # reserved_ip, fqdn
+terraform output            # reserved_ip, fqdn, sonar_reserved_ip, sonar_fqdn
 ```
 
 cloud-init only creates the `deploy` user and installs Python. After apply, the
