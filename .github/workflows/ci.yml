@@ -11,7 +11,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Install PlantUML
         run: |
           sudo apt-get update
@@ -25,10 +25,10 @@ jobs:
       SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: temurin
           java-version: "17"
@@ -52,15 +52,15 @@ jobs:
       SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: temurin
           java-version: "17"
-      - uses: android-actions/setup-android@v3
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
       - name: Build and test Android app
         working-directory: android-app
         run: ./gradlew --gradle-user-home ../.gradle-cache :app:assembleDebug :app:testDebugUnitTest
@@ -70,7 +70,7 @@ jobs:
         run: ./gradlew --gradle-user-home ../.gradle-cache :app:lintDebug
       - name: Scan Android app with SonarQube
         if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@2f77a1ec69fb1d595b06f35ab27e97605bdef703 # v5
         env:
           SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
@@ -83,13 +83,13 @@ jobs:
       SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: "10.0.x"
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         with:
           distribution: temurin
@@ -121,10 +121,10 @@ jobs:
       SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - name: Compile Python service
@@ -132,7 +132,7 @@ jobs:
         run: python -m compileall app
       - name: Scan Python AI service with SonarQube
         if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@2f77a1ec69fb1d595b06f35ab27e97605bdef703 # v5
         env:
           SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
@@ -142,8 +142,8 @@ jobs:
   desktop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: "10.0.x"
       - name: Build and test .NET desktop client
@@ -155,7 +155,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Validate Compose file
         run: docker compose config
       - name: Validate .NET backup Compose override
@@ -169,8 +169,8 @@ jobs:
   ansible:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - name: Install Ansible
@@ -183,3 +183,40 @@ jobs:
       - name: Lint playbooks
         working-directory: infra/ansible
         run: ansible-lint
+
+  # Keep committed lockfiles in sync so Semgrep Supply Chain (Managed Scans) can resolve deps
+  lockfiles:
+    name: Verify supply chain lockfiles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: "10.0.x"
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+
+      - name: Regenerate Maven dependency tree
+        working-directory: spring-backend
+        run: mvn -B dependency:tree -DoutputType=text -DoutputFile=maven_dep_tree.txt
+      - name: Check maven_dep_tree.txt in sync
+        run: git diff --exit-code spring-backend/maven_dep_tree.txt
+
+      - name: Regenerate Gradle lockfile
+        working-directory: android-app
+        run: ./gradlew :app:dependencies --write-locks
+      - name: Check gradle.lockfile in sync
+        run: git diff --exit-code android-app/app/gradle.lockfile
+
+      - name: Verify .NET lockfiles (locked restore)
+        run: |
+          for proj in dotnet-backend/Wellness.Backup.Api.csproj \
+                      dotnet-backend/tests/Wellness.Backup.Api.Tests/Wellness.Backup.Api.Tests.csproj \
+                      desktop-app/src/WellnessDesktop/WellnessDesktop.csproj \
+                      desktop-app/tests/WellnessDesktop.Tests/WellnessDesktop.Tests.csproj; do
+            dotnet restore "$proj" --locked-mode
+          done

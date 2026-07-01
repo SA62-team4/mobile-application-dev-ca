@@ -21,6 +21,11 @@ def apiBaseUrlForBuildConfig = {
     return value.replace("\\", "\\\\").replace("\"", "\\\"")
 }
 
+// Enable dependency locking so Semgrep Supply Chain (Managed Scans) can resolve deps without a build
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 android {
     namespace "sg.edu.nus.iss.wellness"
     compileSdk 35
