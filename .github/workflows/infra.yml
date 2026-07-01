@@ -44,14 +44,14 @@ jobs:
           : "${SONAR_SUBDOMAIN:=sonar}"
           TF_DIR="infra/terraform"
           cat > "$TF_DIR/terraform.tfvars" <<EOF
-          region       = "$DO_REGION"
-          droplet_size = "$DROPLET_SIZE"
+          region              = "$DO_REGION"
+          droplet_size        = "$DROPLET_SIZE"
           sonar_droplet_size = "$SONAR_DROPLET_SIZE"
-          ssh_key_name = "$SSH_KEY_NAME"
-          manage_dns   = $MANAGE_DNS
-          domain       = "$DOMAIN"
-          subdomain    = "$SUBDOMAIN"
-          sonar_subdomain = "$SONAR_SUBDOMAIN"
+          ssh_key_name        = "$SSH_KEY_NAME"
+          manage_dns          = $MANAGE_DNS
+          domain              = "$DOMAIN"
+          subdomain           = "$SUBDOMAIN"
+          sonar_subdomain     = "$SONAR_SUBDOMAIN"
           EOF
 
           cat > "$TF_DIR/backend.hcl" <<EOF
