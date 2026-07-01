@@ -38,6 +38,9 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
 
+      - name: Check Terraform formatting
+        run: terraform -chdir=infra/terraform fmt -check -diff
+
       - name: Render backend + tfvars
         run: |
           : "${SONAR_DROPLET_SIZE:=s-2vcpu-4gb}"
@@ -60,11 +63,11 @@ jobs:
           endpoints = { s3 = "$TF_STATE_ENDPOINT" }
           EOF
 
+          terraform -chdir="$TF_DIR" fmt terraform.tfvars backend.hcl
+
           echo "TF_DIR=$TF_DIR" >> "$GITHUB_ENV"
 
       - run: terraform -chdir="$TF_DIR" init -backend-config=backend.hcl
-
-      - run: terraform -chdir="$TF_DIR" fmt -check
 
       - run: terraform -chdir="$TF_DIR" validate
 
