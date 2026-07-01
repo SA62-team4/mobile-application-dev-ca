@@ -1,9 +1,14 @@
 package sg.edu.nus.iss.wellness.config;
 
+import java.time.Instant;
+import java.util.List;
+
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -21,10 +26,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import sg.edu.nus.iss.wellness.error.GlobalExceptionHandler;
 import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 import sg.edu.nus.iss.wellness.security.JwtAuthenticationFilter;
-
-import java.util.List;
 
 /**
  * Security configuration for JWT-protected REST APIs.
@@ -38,7 +45,8 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             JwtAuthenticationFilter jwtAuthenticationFilter,
-                                            AuthenticationProvider authenticationProvider) throws Exception {
+                                            AuthenticationProvider authenticationProvider,
+                                            ObjectMapper objectMapper) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -50,6 +58,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authEx) -> {
+                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    var body = new GlobalExceptionHandler.ErrorResponse(
+                        Instant.now(), 401, "Unauthorized", "Authentication required", request.getRequestURI());
+                    objectMapper.writeValue(response.getWriter(), body);
+                    }))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
