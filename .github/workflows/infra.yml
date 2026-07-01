@@ -63,7 +63,7 @@ jobs:
           endpoints = { s3 = "$TF_STATE_ENDPOINT" }
           EOF
 
-          terraform -chdir="$TF_DIR" fmt terraform.tfvars backend.hcl
+          terraform -chdir="$TF_DIR" fmt terraform.tfvars
 
           echo "TF_DIR=$TF_DIR" >> "$GITHUB_ENV"
 
