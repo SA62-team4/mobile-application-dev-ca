@@ -71,10 +71,10 @@ Do not execute these tasks until the implementation phase is explicitly requeste
 | Task ID | Requirement IDs | Task | Owner | Depends On | Done When |
 | --- | --- | --- | --- | --- | --- |
 | T-601 | REQ-14 | Create Docker Compose stack | Member 7 | T-201, T-401 | Backend, MySQL, Python, Ollama start |
-| T-602 | REQ-16 | Complete GitHub Actions workflows | Member 7 | T-601 | CI passes on PR |
+| T-602 | REQ-16 | Complete GitHub Actions workflows | Member 7 | T-601 | CI passes on PR, and guarded SonarQube Community Build scans publish dashboard evidence when `SONAR_HOST_URL` and `SONAR_TOKEN` are configured |
 | T-603 | REQ-17, REQ-20 | Prepare repeatable demo seed data and script | Member 7 | T-303, T-405, T-504 | Demo data can be reset/reseeded and rehearsal fits 15 minutes |
 | T-604 | REQ-18, REQ-19 | Final submission checklist | Whole team | T-603 | Zip/video/docs ready |
-| T-605 | REQ-16, NFR-01, NFR-02, NFR-03 | Add `SECURITY.md` Codex Security scan workflow and collect scan evidence before merge/submission | Member 7 | T-602 | PR and final-submission docs state scan type, scope, findings, fixes, and accepted suppressions |
+| T-605 | REQ-16, NFR-01, NFR-02, NFR-03 | Add `SECURITY.md` Codex Security scan workflow and collect scan evidence before merge/submission; use SonarQube Community Build as supplementary quality-dashboard evidence | Member 7 | T-602 | PR and final-submission docs state scan type, scope, findings, fixes, accepted suppressions, and SonarQube quality-gate evidence where configured |
 | T-606 | REQ-16 | Author Terraform infra (`infra/terraform/`) for the DigitalOcean Droplet, reserved IP, firewall, DNS, and remote state; cloud-init only bootstraps the `deploy` user + Python for Ansible | Member 7 | T-601 | `terraform apply` provisions the Droplet with the `deploy` user reachable by Ansible |
 | T-607 | REQ-16 | Add prod overlay (`docker-compose.prod.yml`) and `Caddyfile` for HTTPS + internal-only services | Member 7 | T-601 | Prod overlay validates and exposes only Caddy 80/443 |
 | T-608 | REQ-16 | Author Ansible config + deploy playbooks (`infra/ansible/`, bootstrap + app roles), invoke them from `deploy.yml`, add the `ansible` syntax/lint CI job, and configure the `production` Environment and GitHub secrets | Member 7 | T-606, T-607 | Push to `main` runs the playbook; the play is idempotent and the HTTPS health check passes |

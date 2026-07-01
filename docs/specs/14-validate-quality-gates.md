@@ -35,6 +35,8 @@ Checklist:
 - Android UI PRs compare XML screens against the Figma UI spec where applicable.
 - Android UI PRs verify there are no overlapping labels, fields, cards, buttons, or navigation controls on compact `360dp` portrait layouts.
 - Tests match the changed subsystem.
+- SonarQube scan steps are present and either publish to the configured dashboard
+  or skip cleanly when `SONAR_HOST_URL`/`SONAR_TOKEN` are unavailable.
 - Security-sensitive PRs include Codex Security diff scan evidence according to `SECURITY.md`.
 - No paid/cloud LLM dependency is introduced.
 - No direct Android-to-MySQL or Android-to-Python path is introduced.
@@ -61,6 +63,9 @@ Checklist:
 - RAG responses include source snippets.
 - Python agent retrieves recent records, analyses trends, and saves recommendations.
 - Docker Compose starts required backend/runtime services.
+- SonarQube Community Build, if used for team evidence, runs from
+  `docker-compose.sonar.yml` outside the main demo stack and the team can access
+  the dashboard.
 - Optional backup validation: `.NET Backup API` health/status endpoints match Spring and backup mode uses the same MySQL schema and internal service token header.
 - Optional desktop validation (`REQ-21`): the .NET Avalonia desktop client completes auth, wellness CRUD, chatbot, and recommendation flows against the same running Spring Boot backend, with loading/empty/success/error states and friendly error messages.
 
@@ -79,6 +84,8 @@ Checklist:
 - Seed data exists and shows meaningful trends.
 - Ollama models are pulled before demo.
 - Codex Security repository or scoped scans have been run for changed runtime components, with findings fixed or documented.
+- SonarQube dashboard evidence is captured for configured components, including
+  quality gate status and issue summary.
 - PlantUML diagrams render or exported images are available.
 - ERD matches implemented schema.
 - API docs match implemented endpoints.
@@ -104,6 +111,11 @@ Checklist:
 - `ansible-playbook --syntax-check` and `ansible-lint` pass in CI (the `ansible` job).
 - `https://api.<domain>/actuator/health` returns `UP` with a valid certificate.
 - No secrets are committed to the repo, Terraform state, cloud-init, or the playbooks; all live in GitHub Actions secrets and are passed to Ansible via the environment.
+- If SonarQube is deployed to DigitalOcean, the combined `infra.yml` provisions
+  the dedicated Droplet and `deploy.yml` with `target=sonar` runs
+  `site.yml --limit sonar`; the dashboard is reachable over HTTPS on
+  `sonar.<domain>`, team members have non-admin access, and port `9000` is not
+  publicly exposed.
 - Full Android flow works against the HTTPS domain; Droplet reboot restores the stack with models persisted.
 
 Pass condition:

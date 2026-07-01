@@ -6,3 +6,7 @@ all:
       ansible_host: "{{ lookup('env', 'DROPLET_HOST') }}"
       ansible_user: deploy
       ansible_python_interpreter: /usr/bin/python3
+    sonar:
+      ansible_host: "{{ lookup('env', 'SONAR_DROPLET_HOST') }}"
+      ansible_user: deploy
+      ansible_python_interpreter: /usr/bin/python3

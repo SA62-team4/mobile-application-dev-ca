@@ -4,6 +4,7 @@
 #
 #   ansible-playbook site.yml                 # full run
 #   ansible-playbook site.yml --tags app      # redeploy app only
+#   ansible-playbook site.yml --limit sonar   # deploy SonarQube only
 #   ansible-playbook site.yml --tags bootstrap
 - name: Deploy wellness stack
   hosts: wellness
@@ -32,3 +33,23 @@
       tags: [bootstrap]
     - role: app
       tags: [app]
+
+- name: Deploy SonarQube Community Build
+  hosts: sonar
+  become: true
+  gather_facts: true
+
+  vars:
+    repo_root: "{{ playbook_dir }}/../.."
+    app_dir: /opt/sonarqube
+
+    sonar_domain: "{{ lookup('env', 'SONAR_DOMAIN') }}"
+    sonar_postgres_db: "{{ lookup('env', 'SONAR_POSTGRES_DB') | default('sonarqube', true) }}"
+    sonar_postgres_user: "{{ lookup('env', 'SONAR_POSTGRES_USER') | default('sonarqube', true) }}"
+    sonar_postgres_password: "{{ lookup('env', 'SONAR_POSTGRES_PASSWORD') }}"
+
+  roles:
+    - role: bootstrap
+      tags: [bootstrap]
+    - role: sonarqube
+      tags: [sonarqube]

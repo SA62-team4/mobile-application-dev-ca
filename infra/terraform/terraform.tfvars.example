@@ -13,12 +13,18 @@ droplet_image = "ubuntu-24-04-x64"
 droplet_name  = "wellness-prod"
 project_name  = "Wellness App"
 
+# SonarQube Community Build quality dashboard droplet.
+# s-2vcpu-4gb is the practical minimum; s-4vcpu-8gb is smoother for indexing.
+sonar_droplet_size = "s-2vcpu-4gb"
+sonar_droplet_name = "wellness-sonar"
+
 # ── DNS (optional) ──
 # manage_dns = true  -> Terraform creates <subdomain>.<domain> A record in DO DNS.
 # manage_dns = false -> DNS is external (registrar or DuckDNS); domain/subdomain unused.
 manage_dns = true
 domain     = "example.com"
 subdomain  = "api"          # FQDN becomes api.example.com
+sonar_subdomain = "sonar"   # FQDN becomes sonar.example.com
 
 # No registered domain? Use a free DuckDNS subdomain instead:
 #   manage_dns = false

@@ -17,14 +17,22 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
     environment: production # approval gate for apply/destroy
-    defaults:
-      run:
-        working-directory: infra/terraform
     env:
       DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
       # DO Spaces creds for the S3 remote state backend.
       AWS_ACCESS_KEY_ID: ${{ secrets.SPACES_ACCESS_KEY }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.SPACES_SECRET_KEY }}
+      ACTION: ${{ inputs.action }}
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+      TF_STATE_ENDPOINT: ${{ vars.TF_STATE_ENDPOINT }}
+      DO_REGION: ${{ vars.DO_REGION }}
+      DROPLET_SIZE: ${{ vars.DROPLET_SIZE }}
+      SONAR_DROPLET_SIZE: ${{ vars.SONAR_DROPLET_SIZE }}
+      SSH_KEY_NAME: ${{ vars.SSH_KEY_NAME }}
+      MANAGE_DNS: ${{ vars.MANAGE_DNS }}
+      DOMAIN: ${{ vars.DOMAIN }}
+      SUBDOMAIN: ${{ vars.SUBDOMAIN }}
+      SONAR_SUBDOMAIN: ${{ vars.SONAR_SUBDOMAIN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,32 +40,42 @@ jobs:
 
       - name: Render backend + tfvars
         run: |
-          cat > backend.hcl <<EOF
-          bucket    = "${{ vars.TF_STATE_BUCKET }}"
+          : "${SONAR_DROPLET_SIZE:=s-2vcpu-4gb}"
+          : "${SONAR_SUBDOMAIN:=sonar}"
+          TF_DIR="infra/terraform"
+          cat > "$TF_DIR/terraform.tfvars" <<EOF
+          region       = "$DO_REGION"
+          droplet_size = "$DROPLET_SIZE"
+          sonar_droplet_size = "$SONAR_DROPLET_SIZE"
+          ssh_key_name = "$SSH_KEY_NAME"
+          manage_dns   = $MANAGE_DNS
+          domain       = "$DOMAIN"
+          subdomain    = "$SUBDOMAIN"
+          sonar_subdomain = "$SONAR_SUBDOMAIN"
+          EOF
+
+          cat > "$TF_DIR/backend.hcl" <<EOF
+          bucket    = "$TF_STATE_BUCKET"
           key       = "wellness/terraform.tfstate"
-          endpoints = { s3 = "${{ vars.TF_STATE_ENDPOINT }}" }
-          EOF
-          cat > terraform.tfvars <<EOF
-          region       = "${{ vars.DO_REGION }}"
-          droplet_size = "${{ vars.DROPLET_SIZE }}"
-          ssh_key_name = "${{ vars.SSH_KEY_NAME }}"
-          manage_dns   = ${{ vars.MANAGE_DNS }}
-          domain       = "${{ vars.DOMAIN }}"
-          subdomain    = "${{ vars.SUBDOMAIN }}"
+          endpoints = { s3 = "$TF_STATE_ENDPOINT" }
           EOF
 
-      - run: terraform init -backend-config=backend.hcl
+          echo "TF_DIR=$TF_DIR" >> "$GITHUB_ENV"
 
-      - run: terraform fmt -check
+      - run: terraform -chdir="$TF_DIR" init -backend-config=backend.hcl
 
-      - run: terraform validate
+      - run: terraform -chdir="$TF_DIR" fmt -check
+
+      - run: terraform -chdir="$TF_DIR" validate
 
       - name: Terraform ${{ inputs.action }}
-        env:
-          ACTION: ${{ inputs.action }}
         run: |
           if [ "$ACTION" = "plan" ]; then
-            terraform plan
+            terraform -chdir="$TF_DIR" plan
           else
-            terraform "$ACTION" -auto-approve
+            terraform -chdir="$TF_DIR" "$ACTION" -auto-approve
           fi
+
+      - name: Show outputs
+        if: ${{ inputs.action != 'destroy' }}
+        run: terraform -chdir="$TF_DIR" output

@@ -25,6 +25,18 @@ variable "droplet_name" {
   default     = "wellness-prod"
 }
 
+variable "sonar_droplet_size" {
+  description = "Droplet size slug for SonarQube Community Build. 4 GB is the practical minimum; 8 GB is smoother for indexing."
+  type        = string
+  default     = "s-2vcpu-4gb"
+}
+
+variable "sonar_droplet_name" {
+  description = "Name/hostname of the SonarQube droplet."
+  type        = string
+  default     = "wellness-sonar"
+}
+
 variable "project_name" {
   description = "DigitalOcean project that groups these resources."
   type        = string
@@ -46,6 +58,12 @@ variable "subdomain" {
   description = "Subdomain for the API host. The FQDN is <subdomain>.<domain>."
   type        = string
   default     = "api"
+}
+
+variable "sonar_subdomain" {
+  description = "Subdomain for the SonarQube dashboard. The FQDN is <sonar_subdomain>.<domain>."
+  type        = string
+  default     = "sonar"
 }
 
 variable "manage_dns" {
