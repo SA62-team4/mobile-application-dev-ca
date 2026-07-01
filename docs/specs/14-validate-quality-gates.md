@@ -36,7 +36,9 @@ Checklist:
 - Android UI PRs verify there are no overlapping labels, fields, cards, buttons, or navigation controls on compact `360dp` portrait layouts.
 - Tests match the changed subsystem.
 - SonarQube scan steps are present and either publish to the configured dashboard
-  or skip cleanly when `SONAR_HOST_URL`/`SONAR_TOKEN` are unavailable.
+  or skip cleanly when `SONAR_HOST_URL`/`SONAR_TOKEN` are unavailable. The
+  configured project set includes Spring, Android, Python, and the optional
+  `.NET Backup API`.
 - Security-sensitive PRs include Codex Security diff scan evidence according to `SECURITY.md`.
 - No paid/cloud LLM dependency is introduced.
 - No direct Android-to-MySQL or Android-to-Python path is introduced.
@@ -84,7 +86,8 @@ Checklist:
 - Seed data exists and shows meaningful trends.
 - Ollama models are pulled before demo.
 - Codex Security repository or scoped scans have been run for changed runtime components, with findings fixed or documented.
-- SonarQube dashboard evidence is captured for configured components, including
+- SonarQube dashboard evidence is captured at
+  `https://sa62wellness-sonar.duckdns.org` for configured components, including
   quality gate status and issue summary.
 - PlantUML diagrams render or exported images are available.
 - ERD matches implemented schema.
@@ -114,7 +117,8 @@ Checklist:
 - If SonarQube is deployed to DigitalOcean, the combined `infra.yml` provisions
   the dedicated Droplet and `deploy.yml` with `target=sonar` runs
   `site.yml --limit sonar`; the dashboard is reachable over HTTPS on
-  `sonar.<domain>`, team members have non-admin access, and port `9000` is not
+  `https://sa62wellness-sonar.duckdns.org`, team members have non-admin access
+  through local accounts or GitHub App-backed sign-in, and port `9000` is not
   publicly exposed.
 - Full Android flow works against the HTTPS domain; Droplet reboot restores the stack with models persisted.
 

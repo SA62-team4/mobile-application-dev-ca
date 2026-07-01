@@ -184,8 +184,8 @@ scanners.
 
 Deployment model:
 
-- Run SonarQube on a separate local host or DigitalOcean Droplet at
-  `https://sonar.<domain>`.
+- Run SonarQube on a separate local host or DigitalOcean Droplet. The current
+  team dashboard is `https://sa62wellness-sonar.duckdns.org`.
 - Use the combined `infra/terraform/` root to provision both the app Droplet and
   the dedicated SonarQube Droplet, reserved IPs, firewalls, and optional DNS
   records.
@@ -196,9 +196,11 @@ Deployment model:
   internal `9000` port stays behind Caddy.
 - Recommended Droplet size is 4 vCPU / 8 GB RAM. A 2 vCPU / 4 GB RAM Droplet is
   acceptable for light coursework use but may be slower during indexing.
-- Team members must have individual SonarQube accounts or GitHub-backed sign-in
-  and read access to the dashboard. The CI token must be separate from human
-  administrator accounts.
+- Team members must have individual SonarQube accounts or GitHub App-backed
+  sign-in and read access to the dashboard. The CI token must be separate from
+  human administrator accounts. SonarSource's Community Build documentation
+  deprecates OAuth App authentication for this purpose and recommends GitHub App
+  authentication/provisioning.
 
 CI integration:
 
@@ -209,10 +211,11 @@ CI integration:
 - `deploy.yml` supports a `target` input. `target=app` runs `site.yml`;
   `target=sonar` runs `site.yml --limit sonar` against `SONAR_DROPLET_HOST`.
 - `ci.yml` scans the implemented components as separate SonarQube projects:
-  `sa62-wellness-spring-backend`, `sa62-wellness-android`, and
-  `sa62-wellness-python-ai`.
-- Optional `.NET` dashboard projects may be added later using SonarScanner for
-  .NET if bonus-feature evidence is needed.
+  `sa62-wellness-spring-backend`, `sa62-wellness-android`,
+  `sa62-wellness-python-ai`, and `sa62-wellness-dotnet-backend`.
+- The optional `.NET Backup API` remains backup evidence only, but its CI job
+  also publishes SonarQube dashboard evidence when the shared SonarQube
+  repository variable and secret are configured.
 - Community Build branch and PR support is limited; final evidence should be
   captured from the canonical `develop` or `main` branch scan.
 
@@ -335,13 +338,13 @@ Add these SonarQube-specific values:
 | --- | --- | --- | --- |
 | `SONAR_DROPLET_SIZE` | Variable | `infra.yml` | DO size slug, e.g. `s-2vcpu-4gb` minimum or `s-4vcpu-8gb` smoother indexing |
 | `SONAR_SUBDOMAIN` | Variable | `infra.yml` | Optional when `MANAGE_DNS=false`; host label, normally `sonar`, only used for DO DNS records |
-| `SONAR_DOMAIN` | Variable | `deploy.yml` with `target=sonar`, CI scans as `SONAR_HOST_URL=https://...` | Full SonarQube dashboard FQDN, e.g. `sonar.example.com` |
+| `SONAR_DOMAIN` | Variable | `deploy.yml` with `target=sonar`, CI scans as `SONAR_HOST_URL=https://...` | Full SonarQube dashboard FQDN, currently `sa62wellness-sonar.duckdns.org` |
 | `SONAR_POSTGRES_DB` | Variable | `deploy.yml` with `target=sonar` | Usually `sonarqube` |
 | `SONAR_POSTGRES_USER` | Variable | `deploy.yml` with `target=sonar` | Usually `sonarqube` |
 | `SONAR_DROPLET_HOST` | Secret (production) | Ansible SSH target for `deploy.yml` with `target=sonar` | `terraform output sonar_reserved_ip` from `infra/terraform` |
 | `SONAR_POSTGRES_PASSWORD` | Secret (production) | Rendered into SonarQube `.env.sonar` | Generate: `openssl rand -base64 24` |
 | `SONAR_TOKEN` | Secret (repository-level) | `ci.yml` SonarQube analysis scans | SonarQube user token with execute-analysis permission; repository-level because CI does not use the `production` Environment |
-| `SONAR_HOST_URL` | Variable (repository-level) | `ci.yml` SonarQube analysis scans | `https://sonar.example.com`; repository-level because CI does not use the `production` Environment |
+| `SONAR_HOST_URL` | Variable (repository-level) | `ci.yml` SonarQube analysis scans | `https://sa62wellness-sonar.duckdns.org`; repository-level because CI does not use the `production` Environment |
 
 The built-in `GITHUB_TOKEN` (no setup) is used by `deploy.yml` to push images to
 GHCR. Never store any of these in the repo, Terraform state, or cloud-init.

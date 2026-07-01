@@ -11,10 +11,16 @@ but it is not part of the core Android/Spring/Python/Ollama demo path.
 Run SonarQube on a separate DigitalOcean Droplet or local quality host:
 
 ```text
-sonar.<domain>
+sa62wellness-sonar.duckdns.org
   Caddy HTTPS reverse proxy
   SonarQube Community Build
   PostgreSQL
+```
+
+Current team dashboard:
+
+```text
+https://sa62wellness-sonar.duckdns.org
 ```
 
 Recommended DigitalOcean size:
@@ -82,7 +88,7 @@ Add these SonarQube-only production Environment variables:
 
 ```text
 SONAR_DROPLET_SIZE=s-2vcpu-4gb
-SONAR_DOMAIN=<your-sonar-hostname>
+SONAR_DOMAIN=sa62wellness-sonar.duckdns.org
 SONAR_POSTGRES_DB=sonarqube
 SONAR_POSTGRES_USER=sonarqube
 ```
@@ -122,7 +128,7 @@ at **repository level** because `ci.yml` does not use the protected
 
 ```text
 Repository variable:
-SONAR_HOST_URL=https://<your-sonar-hostname>
+SONAR_HOST_URL=https://sa62wellness-sonar.duckdns.org
 
 Repository secret:
 SONAR_TOKEN=<SonarQube CI analysis token>
@@ -139,7 +145,7 @@ cp .env.sonar.example .env.sonar
 Set:
 
 ```text
-SONAR_DOMAIN=sonar.<domain>
+SONAR_DOMAIN=sa62wellness-sonar.duckdns.org
 SONAR_POSTGRES_PASSWORD=<strong random password>
 ```
 
@@ -152,7 +158,7 @@ docker compose --env-file .env.sonar -f docker-compose.sonar.yml up -d
 Open:
 
 ```text
-https://sonar.<domain>
+https://sa62wellness-sonar.duckdns.org
 ```
 
 The first login uses SonarQube's initial administrator flow. Change the default
@@ -174,9 +180,85 @@ See source code
 View issues
 ```
 
-Create one user per team member or configure GitHub authentication if the
-deployment owner wants account-based sign-in. Do not share the administrator
-account for normal review work.
+Create one user per team member or configure GitHub authentication for
+account-based sign-in. Do not share the administrator account for normal review
+work.
+
+## GitHub Authentication
+
+SonarSource's Community Build documentation recommends registering SonarQube as
+a **GitHub App** for GitHub authentication and provisioning. OAuth Apps are
+deprecated for this use and should not be used for the final team setup.
+
+Reference:
+
+```text
+https://docs.sonarsource.com/sonarqube-community-build/instance-administration/authentication/github
+```
+
+Before creating the GitHub App, set the SonarQube server base URL:
+
+```text
+Administration -> Configuration -> General -> General
+Server base URL = https://sa62wellness-sonar.duckdns.org
+```
+
+Create the GitHub App under the team/org owner that should authenticate users.
+Use:
+
+```text
+GitHub App name:
+SA62 Wellness SonarQube
+
+Homepage URL:
+https://sa62wellness-sonar.duckdns.org
+
+Callback URL:
+https://sa62wellness-sonar.duckdns.org
+
+Webhooks:
+Disabled
+```
+
+Set the minimum permissions needed for team sign-in:
+
+```text
+Organization permissions -> Members: Read-only
+Account permissions -> Email addresses: Read-only
+```
+
+If automatic provisioning of organization/repository permissions is enabled,
+also add the read-only administration permissions described in the SonarSource
+GitHub authentication documentation. Install the GitHub App on the `SA62-team4`
+organization.
+
+In SonarQube:
+
+```text
+Administration
+-> Configuration
+-> General Settings
+-> Authentication
+-> GitHub
+-> Create configuration
+```
+
+Enter the values from the GitHub App:
+
+```text
+Client ID
+Client Secret
+GitHub App ID
+Private Key
+API URL = https://api.github.com
+WEB URL = https://github.com
+Organizations = SA62-team4
+```
+
+Enable the configuration, enable just-in-time provisioning if team members
+should be created on first login, then click **Test configuration**. Keep the CI
+analysis token separate from GitHub login; GitHub Actions still uses the
+repository-level `SONAR_TOKEN` secret.
 
 ## CI Token
 
@@ -190,6 +272,7 @@ After the dashboard is reachable, create the CI token in SonarQube:
 sa62-wellness-spring-backend
 sa62-wellness-android
 sa62-wellness-python-ai
+sa62-wellness-dotnet-backend
 ```
 
 3. Create a dedicated CI user or service account.
@@ -198,7 +281,7 @@ sa62-wellness-python-ai
 
 ```text
 Repository variable:
-SONAR_HOST_URL=https://sonar.<domain>
+SONAR_HOST_URL=https://sa62wellness-sonar.duckdns.org
 
 Repository secret:
 SONAR_TOKEN=<ci analysis token>
@@ -215,10 +298,8 @@ The CI workflow scans the main implemented components separately:
 spring-backend      Maven Sonar scanner
 android-app         SonarQube scan action after Gradle build/test/lint
 python-ai-service   SonarQube scan action after Python compile check
+dotnet-backend      SonarScanner for .NET around dotnet test
 ```
-
-The optional `.NET` projects can be added later with SonarScanner for .NET if
-the team wants bonus-feature dashboard evidence.
 
 ## Marking Evidence
 

@@ -79,15 +79,41 @@ jobs:
 
   dotnet-backend:
     runs-on: ubuntu-latest
+    env:
+      SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
+      - uses: actions/setup-java@v4
+        if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        with:
+          distribution: temurin
+          java-version: "17"
       - name: Restore .NET backup backend tests
         run: dotnet restore dotnet-backend/tests/Wellness.Backup.Api.Tests/Wellness.Backup.Api.Tests.csproj
+      - name: Install SonarScanner for .NET
+        if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+      - name: Begin .NET backup backend SonarQube scan
+        if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        run: >
+          dotnet sonarscanner begin
+          /k:"sa62-wellness-dotnet-backend"
+          /n:"SA62 Wellness .NET Backup Backend"
+          /d:sonar.host.url="$SONAR_HOST_URL"
+          /d:sonar.token="$SONAR_TOKEN"
       - name: Test .NET backup backend
         run: dotnet test dotnet-backend/tests/Wellness.Backup.Api.Tests/Wellness.Backup.Api.Tests.csproj --no-restore
+      - name: End .NET backup backend SonarQube scan
+        if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
   python:
     runs-on: ubuntu-latest
