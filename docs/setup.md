@@ -248,6 +248,86 @@ WELLNESS_API_BASE_URL=https://sa62wellness.duckdns.org/ ./android-app/gradlew --
 Keep both the laptop and the emulator on the same network (the hotspot) for the demo, and
 cold-boot the emulator again if you switch networks.
 
+## Troubleshooting: first-time setup
+
+Common issues when standing up the app on a fresh machine. The app needs **two**
+things running: the Docker backend *and* an emulator/device. Android Studio's Run
+button starts only the emulator and app — it does not start the backend.
+
+### Backend keeps restarting / `curl localhost:8080` connection refused
+
+Symptom: `docker compose ps` shows `spring-backend` as `Restarting` (not `Up`), and
+`curl http://localhost:8080/actuator/health` fails with "connection refused". The
+logs show the real cause:
+
+```bash
+docker compose logs spring-backend | grep -iE "access denied|dialect"
+# Access denied for user 'wellness_user'@'...'
+# Unable to determine Dialect without JDBC metadata
+```
+
+Cause: MySQL applies `MYSQL_USER` / `MYSQL_PASSWORD` **only on the first
+initialization** of an empty data volume. If the `mysql-data` volume was first
+created with a different password than the one now in `.env`, MySQL keeps the
+original password and rejects the backend. Hibernate then cannot read the database
+and the container crash-loops before it can bind port 8080.
+
+Fix: reset just the MySQL volume so it re-initializes from the current `.env`.
+Other services keep their data, so Ollama models are not re-downloaded:
+
+```bash
+docker compose rm -sf mysql
+docker volume rm mobile-application-dev-ca_mysql-data   # confirm the name via: docker volume ls | grep mysql
+docker compose up -d
+curl http://localhost:8080/actuator/health              # expect {"status":"UP"}
+```
+
+### Gradle build fails: "SDK location not found"
+
+`android-app/local.properties` is per-machine and git-ignored, so it is absent on a
+fresh clone. Create it (or open the project once in Android Studio, which generates
+it automatically):
+
+```properties
+sdk.dir=/Users/<you>/Library/Android/sdk
+```
+
+### Run fails: "jlink executable ... does not exist" (wrong Java)
+
+Cause: the Gradle JDK is pointed at a **JRE** (for example the VS Code "Red Hat Java"
+extension's bundled runtime) or a JDK newer than the project targets. A JRE lacks
+developer tools such as `jlink`; this project builds on **JDK 17**.
+
+Fix: Android Studio → Settings → Build, Execution, Deployment → Build Tools → Gradle
+→ **Gradle JDK** → select a full **JDK 17** (Temurin 17). Do not select a "Daemon JVM
+criteria" / "Daemon toolchain" option.
+
+### Android Studio does not recognize the project, or the path is doubled
+
+Open the folder that contains `settings.gradle` and `gradlew` — that is
+**`android-app/`**, not the repository root (no `settings.gradle` there) and not
+`android-app/app/` (that is a module). If the path Gradle prints contains the project
+name twice (`.../mobile-application-dev-ca/mobile-application-dev-ca/...`), Android
+Studio has opened an accidental nested clone; open the top-level `android-app`
+instead, and remove the stale entry from the Welcome screen's recent-projects list.
+
+### `updateDaemonJvm` fails: "Toolchain download repositories have not been configured"
+
+Cause: a committed `android-app/gradle/gradle-daemon-jvm.properties` file (Gradle's
+"Daemon JVM criteria" feature) pins the daemon to a downloadable toolchain, which
+fights the local JDK 17 selection. This file must not be committed; it is now
+git-ignored.
+
+Fix: delete it so the daemon follows the Gradle JDK configured in the IDE/CLI:
+
+```bash
+rm -f android-app/gradle/gradle-daemon-jvm.properties
+```
+
+If a deleted duplicate clone keeps reappearing as an empty folder, quit Android
+Studio first — its Gradle daemon holds the path and recreates it — then delete.
+Stop any stray daemons with `./android-app/gradlew --stop`.
+
 ## Validation
 
 ```bash
