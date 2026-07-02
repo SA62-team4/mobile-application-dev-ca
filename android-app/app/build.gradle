@@ -6,7 +6,14 @@ plugins {
 def localProps = new Properties()
 def localPropsFile = rootProject.file('local.properties')
 if (localPropsFile.exists()) localProps.load(localPropsFile.newDataInputStream())
-def googleWebClientId = localProps.getProperty('GOOGLE_WEB_CLIENT_ID', '')
+
+// Google Web (server) OAuth client ID. Same value for every build/device; not a secret
+// (it ships inside the APK). Resolution order: local.properties override > env var >
+// committed gradle.properties default. Kept out of code so it is never empty at runtime,
+// which would crash Google sign-in setup on launch.
+def googleWebClientId = localProps.getProperty('GOOGLE_WEB_CLIENT_ID')
+        ?: System.getenv('GOOGLE_WEB_CLIENT_ID')
+        ?: providers.gradleProperty('GOOGLE_WEB_CLIENT_ID').getOrElse('')
 
 def defaultApiBaseUrl = "http://10.0.2.2:8080/"
 def apiBaseUrl = providers.gradleProperty("WELLNESS_API_BASE_URL")
@@ -30,6 +37,19 @@ android {
     namespace "sg.edu.nus.iss.wellness"
     compileSdk 35
 
+    // Shared debug keystore committed to the repo so every developer's debug build has the
+    // same signing SHA-1. Google Sign-In only works when the running APK's SHA-1 is registered
+    // on the Android OAuth client; a shared key means one SHA-1 to register for the whole team
+    // instead of each machine's unique ~/.android/debug.keystore (which causes error code 10).
+    signingConfigs {
+        debug {
+            storeFile file("shared-debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+    }
+
     defaultConfig {
         applicationId "sg.edu.nus.iss.wellness"
         minSdk 26
@@ -38,6 +58,12 @@ android {
         versionName "1.0"
         buildConfigField "String", "API_BASE_URL", "\"${apiBaseUrlForBuildConfig()}\""
         buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${googleWebClientId}\""
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
     }
 
     buildFeatures {

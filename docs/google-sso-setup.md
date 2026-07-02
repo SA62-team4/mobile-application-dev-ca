@@ -84,20 +84,30 @@ All subsequent API calls include: Authorization: Bearer <token>
 
 ### 2.4 Debug Keystore SHA-1 Fingerprint
 
-Used when creating the Android OAuth 2.0 client:
+The project uses a **shared debug keystore** committed at `android-app/app/shared-debug.keystore`
+(wired into `signingConfigs.debug` in `app/build.gradle`). Every developer's debug build is
+therefore signed with the same certificate, so only **one** SHA-1 needs to be registered on the
+Android OAuth client — this is what fixes Google Sign-In **error code 10 (`DEVELOPER_ERROR`)**
+on machines other than the original author's.
+
+Register this SHA-1 (package `sg.edu.nus.iss.wellness`) on the Android OAuth 2.0 client:
 
 ```
-66:86:D6:3A:FE:64:32:83:8D:21:78:1D:1E:1D:B5:1C:2B:12:2E:63
+D9:45:D1:1B:81:72:62:4E:C4:70:DD:11:9D:93:0F:CF:39:44:8C:8E
 ```
 
-Retrieve it with:
+Verify what your build actually signs with:
 ```bash
-keytool -keystore %USERPROFILE%\.android\debug.keystore ^
-        -list -v -alias androiddebugkey ^
-        -storepass android -keypass android
+cd android-app && ./gradlew :app:signingReport   # look under Variant: debug
 ```
 
-> For production, repeat with the release keystore and create a separate **Release** Android OAuth client ID.
+> The old SHA-1 `66:86:D6:3A:FE:64:32:83:8D:21:78:1D:1E:1D:B5:1C:2B:12:2E:63` was one machine's
+> personal `~/.android/debug.keystore` and only worked on that machine. It can stay registered
+> or be removed. The shared keystore uses the standard debug credentials
+> (alias `androiddebugkey`, store/key password `android`) and is intentionally **not** a secret.
+>
+> For production, register the **release** keystore's SHA-1 (or the Play App Signing SHA-1) on a
+> separate **Release** Android OAuth client ID.
 
 ---
 
@@ -506,22 +516,39 @@ Both files are **gitignored** and must be set up on each developer machine.
 
 ```properties
 sdk.dir=C:\Users\kumar\AppData\Local\Android\Sdk
-# Paste your Web OAuth 2.0 Client ID from Google Cloud Console here
+# Optional per-machine override of the Web OAuth 2.0 Client ID
 GOOGLE_WEB_CLIENT_ID=1018876301618-1t9tsadf4skn80s4itkgs8b5u93lgfco.apps.googleusercontent.com
 ```
 
 This value is baked into `BuildConfig.GOOGLE_WEB_CLIENT_ID` at compile time by Gradle.
 
+> **Same for every device, not a secret.** `GOOGLE_WEB_CLIENT_ID` identifies the
+> *backend/project*, not the phone — every build/device uses the identical value, and it
+> is already embedded in the shipped APK. Because a build with an **empty** value crashes
+> on launch (`requestIdToken("")` throws), a working default is committed in
+> `android-app/gradle.properties`. Resolution order:
+> `local.properties` > `GOOGLE_WEB_CLIENT_ID` env var > `gradle.properties` default.
+> You only need `local.properties` for `sdk.dir`; overriding the client ID there is optional.
+> See `android-app/local.properties.example`.
+
 ### 7.2 `.env` (project root)
 
 ```env
-# Google SSO — Web OAuth 2.0 Client ID (used by backend to validate Google ID tokens)
-GOOGLE_CLIENT_ID=1018876301618-1t9tsadf4skn80s4itkgs8b5u93lgfco.apps.googleusercontent.com
+# Google SSO — Web OAuth 2.0 Client ID (used by backend to validate Google ID tokens).
+# Must equal the app's GOOGLE_WEB_CLIENT_ID or /auth/google returns 401.
+GOOGLE_CLIENT_ID=554077955234-cvbtaidiru0t7ppu4lht6tt9gmgddu09.apps.googleusercontent.com
 ```
 
 Docker Compose reads this file automatically.
 
-> **Never commit either of these files.** Both are covered by `.gitignore`.
+> **`GOOGLE_CLIENT_ID` is not required for local dev.** The backend defaults `app.google.client-id`
+> to this same value in `application.yml`, so a local backend validates tokens out of the box. Set
+> it in `.env` only to override per environment. It must match the app's `GOOGLE_WEB_CLIENT_ID`
+> (§7.1) — a mismatch or empty value on the backend causes the `aud` check to fail with **401** on
+> `/auth/google`, even when Google Sign-In on the device succeeds.
+>
+> **`JWT_SECRET` and `INTERNAL_SERVICE_TOKEN` are secrets** — keep them in the gitignored `.env`
+> (or real secret storage) and never commit them.
 
 ---
 

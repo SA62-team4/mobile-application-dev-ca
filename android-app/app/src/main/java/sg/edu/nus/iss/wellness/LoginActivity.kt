@@ -28,7 +28,7 @@ class LoginActivity : Activity() {
 
     private val scope = MainScope()
     private lateinit var tokenStore: TokenStore
-    private lateinit var googleSignInClient: GoogleSignInClient
+    private var googleSignInClient: GoogleSignInClient? = null
     private lateinit var statusText: TextView
 
     companion object {
@@ -61,11 +61,21 @@ class LoginActivity : Activity() {
         val emailInput = findViewById<EditText>(R.id.emailInput)
         val passwordInput = findViewById<EditText>(R.id.passwordInput)
 
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(BuildConfig.GOOGLE_WEB_CLIENT_ID)
-            .requestEmail()
-            .build()
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
+        // Only configure Google Sign-In when a Web Client ID is provided. requestIdToken("")
+        // throws IllegalArgumentException and would crash the app on launch (e.g. builds without
+        // GOOGLE_WEB_CLIENT_ID in local.properties). When absent, disable the button instead.
+        val googleButton = findViewById<Button>(R.id.googleSignInButton)
+        val webClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
+        if (webClientId.isNotBlank()) {
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(webClientId)
+                .requestEmail()
+                .build()
+            googleSignInClient = GoogleSignIn.getClient(this, gso)
+        } else {
+            Log.w(TAG, "GOOGLE_WEB_CLIENT_ID not configured; Google sign-in disabled.")
+            googleButton.isEnabled = false
+        }
 
         findViewById<Button>(R.id.loginButton).setOnClickListener {
             val email = emailInput.text.toString().trim()
@@ -92,11 +102,16 @@ class LoginActivity : Activity() {
             }
         }
 
-        findViewById<Button>(R.id.googleSignInButton).setOnClickListener {
-            Log.d(TAG, "Google sign-in tapped; webClientId=${BuildConfig.GOOGLE_WEB_CLIENT_ID}")
+        googleButton.setOnClickListener {
+            val client = googleSignInClient
+            if (client == null) {
+                showStatus("Google sign-in is not configured in this build.", error = true)
+                return@setOnClickListener
+            }
+            Log.d(TAG, "Google sign-in tapped; webClientId=$webClientId")
             showStatus("Opening Google sign-in...")
             @Suppress("DEPRECATION")
-            startActivityForResult(googleSignInClient.signInIntent, RC_GOOGLE_SIGN_IN)
+            startActivityForResult(client.signInIntent, RC_GOOGLE_SIGN_IN)
         }
 
         findViewById<Button>(R.id.registerButton).setOnClickListener {
