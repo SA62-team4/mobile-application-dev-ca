@@ -170,6 +170,10 @@ Jobs:
   `SONAR_HOST_URL` and `SONAR_TOKEN` are configured. CI must skip these scan
   steps for forked pull requests or unconfigured repositories so ordinary
   coursework builds remain reproducible.
+- Spring Boot SonarQube scans must run after Maven `verify` so unit tests
+  execute and `target/site/jacoco/jacoco.xml` is generated. The Maven project
+  must configure JaCoCo XML reporting and pass that report path to SonarQube;
+  otherwise dashboard coverage is expected to show `0%` even when tests exist.
 - Supply chain lockfile verification: regenerates each committed lockfile and
   fails on drift so Semgrep Supply Chain (Managed Scans) can always resolve
   dependencies. See "Supply Chain Dependency Scanning" below.

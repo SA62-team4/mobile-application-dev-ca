@@ -60,6 +60,32 @@ If a future implementation request conflicts with the CA brief, preserve the CA 
 - Add author comments to classes or key methods during implementation, as required by the assignment.
 - Do not commit real secrets, tokens, database passwords, JWT signing keys, or API keys.
 
+## Author Attribution
+
+`REQ-18` requires author comments on classes or key methods. During implementation,
+automatically include an author field whenever creating a new class, component,
+test class, important script, or key method. Use the format from
+`docs/specs/03-clarify-decisions-and-edge-cases.md` unless the lecturer provides
+another one:
+
+```text
+@author Name
+```
+
+Author name selection rules:
+
+- Prefer an explicit author supplied by the user, task, issue, PR description, or
+  nearby existing file convention.
+- If no explicit author is provided, use local repository metadata only when it
+  clearly identifies the human contributor, for example `git config user.name`.
+- Do not infer the author from the AI tool, model name, shell username, email
+  prefix, or "who generated the code" unless the user explicitly says that is the
+  human author to record.
+- If the human author is still unclear, add a reviewable placeholder such as
+  `@author TODO` and mention it in the final response or PR notes.
+- If AI assistance should be disclosed, keep it separate from the human author
+  line, for example `Assisted by GenAI`, only when the team wants that wording.
+
 ## Planned Repository Layout
 
 The implementation phase should use this monorepo layout:

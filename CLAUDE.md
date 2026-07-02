@@ -29,6 +29,13 @@ This repository is in active implementation using specs as the contract. Read an
 - RAG uses a curated wellness knowledge base and a local vector store.
 - Python agentic AI retrieves user wellness records, analyses trends, generates recommendations, and saves them through the backend.
 - Docker is used for backend/runtime services where practical; Android remains outside Docker.
+- Automatically add `@author Name` comments to new classes, components, test
+  classes, important scripts, and key methods to satisfy `REQ-18`. Prefer an
+  explicit author from the user/task/nearby convention; otherwise use
+  `git config user.name` only if it clearly identifies the human contributor. Do
+  not guess the author from the AI tool, shell username, email prefix, or code
+  generation context. Use `@author TODO` and call it out if the human author is
+  unclear.
 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,

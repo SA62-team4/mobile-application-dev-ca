@@ -39,6 +39,8 @@ Checklist:
   or skip cleanly when `SONAR_HOST_URL`/`SONAR_TOKEN` are unavailable. The
   configured project set includes Spring, Android, Python, and the optional
   `.NET Backup API`.
+- Spring backend SonarQube evidence includes the JaCoCo XML report generated at
+  `spring-backend/target/site/jacoco/jacoco.xml` from a Maven `verify` run.
 - Security-sensitive PRs include Codex Security diff scan evidence according to `SECURITY.md`.
 - No paid/cloud LLM dependency is introduced.
 - No direct Android-to-MySQL or Android-to-Python path is introduced.
