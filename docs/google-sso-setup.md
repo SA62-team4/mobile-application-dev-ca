@@ -84,20 +84,30 @@ All subsequent API calls include: Authorization: Bearer <token>
 
 ### 2.4 Debug Keystore SHA-1 Fingerprint
 
-Used when creating the Android OAuth 2.0 client:
+The project uses a **shared debug keystore** committed at `android-app/app/shared-debug.keystore`
+(wired into `signingConfigs.debug` in `app/build.gradle`). Every developer's debug build is
+therefore signed with the same certificate, so only **one** SHA-1 needs to be registered on the
+Android OAuth client — this is what fixes Google Sign-In **error code 10 (`DEVELOPER_ERROR`)**
+on machines other than the original author's.
+
+Register this SHA-1 (package `sg.edu.nus.iss.wellness`) on the Android OAuth 2.0 client:
 
 ```
-66:86:D6:3A:FE:64:32:83:8D:21:78:1D:1E:1D:B5:1C:2B:12:2E:63
+D9:45:D1:1B:81:72:62:4E:C4:70:DD:11:9D:93:0F:CF:39:44:8C:8E
 ```
 
-Retrieve it with:
+Verify what your build actually signs with:
 ```bash
-keytool -keystore %USERPROFILE%\.android\debug.keystore ^
-        -list -v -alias androiddebugkey ^
-        -storepass android -keypass android
+cd android-app && ./gradlew :app:signingReport   # look under Variant: debug
 ```
 
-> For production, repeat with the release keystore and create a separate **Release** Android OAuth client ID.
+> The old SHA-1 `66:86:D6:3A:FE:64:32:83:8D:21:78:1D:1E:1D:B5:1C:2B:12:2E:63` was one machine's
+> personal `~/.android/debug.keystore` and only worked on that machine. It can stay registered
+> or be removed. The shared keystore uses the standard debug credentials
+> (alias `androiddebugkey`, store/key password `android`) and is intentionally **not** a secret.
+>
+> For production, register the **release** keystore's SHA-1 (or the Play App Signing SHA-1) on a
+> separate **Release** Android OAuth client ID.
 
 ---
 
