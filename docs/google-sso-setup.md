@@ -534,13 +534,21 @@ This value is baked into `BuildConfig.GOOGLE_WEB_CLIENT_ID` at compile time by G
 ### 7.2 `.env` (project root)
 
 ```env
-# Google SSO — Web OAuth 2.0 Client ID (used by backend to validate Google ID tokens)
-GOOGLE_CLIENT_ID=1018876301618-1t9tsadf4skn80s4itkgs8b5u93lgfco.apps.googleusercontent.com
+# Google SSO — Web OAuth 2.0 Client ID (used by backend to validate Google ID tokens).
+# Must equal the app's GOOGLE_WEB_CLIENT_ID or /auth/google returns 401.
+GOOGLE_CLIENT_ID=554077955234-cvbtaidiru0t7ppu4lht6tt9gmgddu09.apps.googleusercontent.com
 ```
 
 Docker Compose reads this file automatically.
 
-> **Never commit either of these files.** Both are covered by `.gitignore`.
+> **`GOOGLE_CLIENT_ID` is not required for local dev.** The backend defaults `app.google.client-id`
+> to this same value in `application.yml`, so a local backend validates tokens out of the box. Set
+> it in `.env` only to override per environment. It must match the app's `GOOGLE_WEB_CLIENT_ID`
+> (§7.1) — a mismatch or empty value on the backend causes the `aud` check to fail with **401** on
+> `/auth/google`, even when Google Sign-In on the device succeeds.
+>
+> **`JWT_SECRET` and `INTERNAL_SERVICE_TOKEN` are secrets** — keep them in the gitignored `.env`
+> (or real secret storage) and never commit them.
 
 ---
 
