@@ -25,7 +25,11 @@ import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 import sg.edu.nus.iss.wellness.repository.WellnessRecordRepository;
 import sg.edu.nus.iss.wellness.security.JwtService;
 
-// Written by Tang Chee Seng (with assistance from GenAI - Claude)
+/**
+ * Sets up tests for CRUD functionalities
+ *
+ * @author Tang Chee Seng (with assistance from GenAI - Claude)
+ */
 
 @SpringBootTest
 @AutoConfigureMockMvc
