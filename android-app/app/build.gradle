@@ -6,7 +6,14 @@ plugins {
 def localProps = new Properties()
 def localPropsFile = rootProject.file('local.properties')
 if (localPropsFile.exists()) localProps.load(localPropsFile.newDataInputStream())
-def googleWebClientId = localProps.getProperty('GOOGLE_WEB_CLIENT_ID', '')
+
+// Google Web (server) OAuth client ID. Same value for every build/device; not a secret
+// (it ships inside the APK). Resolution order: local.properties override > env var >
+// committed gradle.properties default. Kept out of code so it is never empty at runtime,
+// which would crash Google sign-in setup on launch.
+def googleWebClientId = localProps.getProperty('GOOGLE_WEB_CLIENT_ID')
+        ?: System.getenv('GOOGLE_WEB_CLIENT_ID')
+        ?: providers.gradleProperty('GOOGLE_WEB_CLIENT_ID').getOrElse('')
 
 def defaultApiBaseUrl = "http://10.0.2.2:8080/"
 def apiBaseUrl = providers.gradleProperty("WELLNESS_API_BASE_URL")

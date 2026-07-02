@@ -1,0 +1,15 @@
+# Copy this file to local.properties and fill in machine-specific values.
+# local.properties is gitignored and never committed.
+
+# Path to your local Android SDK (set automatically by Android Studio).
+sdk.dir=/path/to/your/Android/sdk
+
+# Optional: override the Google Web OAuth client ID for this machine only.
+# A committed default lives in gradle.properties, so this is usually not needed.
+# GOOGLE_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
+
+# Optional: point the app at a specific backend (must end with '/').
+# Defaults to http://10.0.2.2:8080/ (emulator -> host). For a real device use your
+# reachable backend, e.g. the production host. Can also be passed as
+# -PWELLNESS_API_BASE_URL=... or the WELLNESS_API_BASE_URL env var.
+# WELLNESS_API_BASE_URL=https://sa62wellness.duckdns.org/

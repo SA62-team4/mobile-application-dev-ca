@@ -506,11 +506,20 @@ Both files are **gitignored** and must be set up on each developer machine.
 
 ```properties
 sdk.dir=C:\Users\kumar\AppData\Local\Android\Sdk
-# Paste your Web OAuth 2.0 Client ID from Google Cloud Console here
+# Optional per-machine override of the Web OAuth 2.0 Client ID
 GOOGLE_WEB_CLIENT_ID=1018876301618-1t9tsadf4skn80s4itkgs8b5u93lgfco.apps.googleusercontent.com
 ```
 
 This value is baked into `BuildConfig.GOOGLE_WEB_CLIENT_ID` at compile time by Gradle.
+
+> **Same for every device, not a secret.** `GOOGLE_WEB_CLIENT_ID` identifies the
+> *backend/project*, not the phone — every build/device uses the identical value, and it
+> is already embedded in the shipped APK. Because a build with an **empty** value crashes
+> on launch (`requestIdToken("")` throws), a working default is committed in
+> `android-app/gradle.properties`. Resolution order:
+> `local.properties` > `GOOGLE_WEB_CLIENT_ID` env var > `gradle.properties` default.
+> You only need `local.properties` for `sdk.dir`; overriding the client ID there is optional.
+> See `android-app/local.properties.example`.
 
 ### 7.2 `.env` (project root)
 
