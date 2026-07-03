@@ -1,0 +1,142 @@
+# Dependabot configuration for the SA62 Wellness project.
+# Keeps dependencies patched across every ecosystem in the monorepo.
+# Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# @author zctiong-iss
+version: 2
+
+updates:
+  # --- CI / GitHub Actions ------------------------------------------------
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # --- Android (Gradle / Kotlin) -----------------------------------------
+  - package-ecosystem: "gradle"
+    directory: "/android-app"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "build(android)"
+    labels:
+      - "dependencies"
+      - "android"
+    groups:
+      android-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # --- Spring Boot backend (Maven) ---------------------------------------
+  - package-ecosystem: "maven"
+    directory: "/spring-backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "build(backend)"
+    labels:
+      - "dependencies"
+      - "backend"
+    groups:
+      spring-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # --- Python agentic AI service (pip) -----------------------------------
+  - package-ecosystem: "pip"
+    directory: "/python-ai-service"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "build(ai)"
+    labels:
+      - "dependencies"
+      - "python"
+    groups:
+      python-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # --- Desktop app + .NET backup API (NuGet) -----------------------------
+  - package-ecosystem: "nuget"
+    directories:
+      - "/desktop-app"
+      - "/dotnet-backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "build(dotnet)"
+    labels:
+      - "dependencies"
+      - "dotnet"
+    groups:
+      nuget-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # --- Container base images (Docker) ------------------------------------
+  - package-ecosystem: "docker"
+    directories:
+      - "/spring-backend"
+      - "/python-ai-service"
+      - "/dotnet-backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "build(docker)"
+    labels:
+      - "dependencies"
+      - "docker"
+    groups:
+      docker-images:
+        patterns:
+          - "*"
