@@ -10,7 +10,7 @@ This matrix links each requirement to the specs, implementation evidence, and te
 | --- | --- | --- | --- | --- |
 | REQ-01 | Android app uses Kotlin with XML layouts | `07-plan-android-ui-flows.md` | `android-app/` screens and layouts, Figma UI spec | Android build, manual UI demo, Figma-to-XML review |
 | REQ-02 | User can register, log in, and log out | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md` | Auth API, login/register/profile screens, Figma auth/profile frames | Auth tests, demo login/logout |
-| REQ-03 | JWT protects non-auth APIs | `06-plan-api-contracts.md`, `10-plan-docker-devops.md` | Spring Security config, token storage | Security tests, missing-token checks |
+| REQ-03 | JWT protects non-auth APIs | `06-plan-api-contracts.md`, `05-plan-backend-data-model-erd.md`, `10-plan-docker-devops.md` | Spring Security config with `hasRole(USER)` gate, `Role` enum (`USER`/`PREMIUM_USER`), `role` JWT claim, token storage | Security tests, missing-token checks, role/authority tests |
 | REQ-04 | User can create wellness records | `05-plan-backend-data-model-erd.md`, `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md` | Create API, form screen, MySQL row, Figma add/edit frame | Backend test, Android manual QA |
 | REQ-05 | User can retrieve current and historical wellness records | `05-plan-backend-data-model-erd.md`, `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md` | List/detail API, records screen, Figma records frame | Backend test, demo record list |
 | REQ-06 | User can update wellness records | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md` | Update API, edit screen, Figma add/edit frame | Backend test, demo edit |
