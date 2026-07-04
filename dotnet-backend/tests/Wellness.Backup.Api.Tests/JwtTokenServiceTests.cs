@@ -16,7 +16,7 @@ public sealed class JwtTokenServiceTests
     public void GenerateToken_UsesExpectedClaimsAndSubject()
     {
         var service = new JwtTokenService(Options());
-        var user = new AppUser(42, "demo@example.com", "hash", "Demo User", "USER", true, DateTime.UtcNow, DateTime.UtcNow);
+        var user = new AppUser(42, "demo@example.com", "hash", "Demo User", Role.User, true, DateTime.UtcNow, DateTime.UtcNow);
 
         var token = service.GenerateToken(user);
         var principal = service.ValidateToken(token);
@@ -24,7 +24,21 @@ public sealed class JwtTokenServiceTests
         Assert.Equal("demo@example.com", principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value);
         Assert.Equal("42", principal.FindFirst("uid")?.Value);
         Assert.Equal("Demo User", principal.FindFirst("name")?.Value);
+        Assert.Equal("USER", principal.FindFirst("role")?.Value);
         Assert.NotNull(principal.FindFirst(JwtRegisteredClaimNames.Iat));
+    }
+
+    [Theory]
+    [InlineData(Role.User, "USER")]
+    [InlineData(Role.PremiumUser, "PREMIUM_USER")]
+    public void GenerateToken_WritesEnumRoleAsCanonicalClaim(Role role, string expectedClaim)
+    {
+        var service = new JwtTokenService(Options());
+        var user = new AppUser(1, "demo@example.com", "hash", "Demo User", role, true, DateTime.UtcNow, DateTime.UtcNow);
+
+        var principal = service.ValidateToken(service.GenerateToken(user));
+
+        Assert.Equal(expectedClaim, principal.FindFirst("role")?.Value);
     }
 
     private static BackendOptions Options()
