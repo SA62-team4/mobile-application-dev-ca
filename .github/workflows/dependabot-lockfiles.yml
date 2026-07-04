@@ -1,0 +1,82 @@
+# Regenerates the committed supply-chain lockfiles on Dependabot PRs and pushes
+# them back to the PR branch, so the "Verify supply chain lockfiles" job in
+# ci.yml stays green. Dependabot only edits the manifests (pom.xml, build.gradle,
+# *.csproj); it never updates maven_dep_tree.txt, gradle.lockfile, or the
+# packages.lock.json files, so we do it here.
+#
+# The push uses DEPENDABOT_LOCKFILE_PAT (a Dependabot secret) instead of the
+# default GITHUB_TOKEN on purpose: a GITHUB_TOKEN push does NOT re-trigger
+# required checks on the new commit, which would leave the PR stuck. A PAT push
+# re-runs CI as a normal actor, so the ci.yml lockfiles job then verifies the
+# freshly-synced files.
+#
+# @author zctiong-iss
+name: Dependabot lockfiles
+
+on:
+  pull_request:
+
+# Only touch the branch this PR is built from.
+permissions:
+  contents: write
+
+concurrency:
+  group: dependabot-lockfiles-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync-lockfiles:
+    name: Sync lockfiles on Dependabot PRs
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.head_ref }}
+          # PAT so the follow-up push re-triggers required CI checks.
+          token: ${{ secrets.DEPENDABOT_LOCKFILE_PAT }}
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: "10.0.x"
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+
+      - name: Regenerate Maven dependency tree
+        working-directory: spring-backend
+        run: mvn -B dependency:tree -DoutputType=text -DoutputFile=maven_dep_tree.txt
+
+      - name: Regenerate Gradle lockfile
+        working-directory: android-app
+        run: ./gradlew --gradle-user-home ../.gradle-cache :app:dependencies --write-locks
+
+      - name: Regenerate .NET lockfiles
+        run: |
+          for proj in dotnet-backend/Wellness.Backup.Api.csproj \
+                      dotnet-backend/tests/Wellness.Backup.Api.Tests/Wellness.Backup.Api.Tests.csproj \
+                      desktop-app/src/WellnessDesktop/WellnessDesktop.csproj \
+                      desktop-app/tests/WellnessDesktop.Tests/WellnessDesktop.Tests.csproj; do
+            dotnet restore "$proj" --force-evaluate
+          done
+
+      - name: Commit and push refreshed lockfiles
+        run: |
+          git add \
+            spring-backend/maven_dep_tree.txt \
+            android-app/app/gradle.lockfile \
+            dotnet-backend/packages.lock.json \
+            dotnet-backend/tests/Wellness.Backup.Api.Tests/packages.lock.json \
+            desktop-app/src/WellnessDesktop/packages.lock.json \
+            desktop-app/tests/WellnessDesktop.Tests/packages.lock.json
+          if git diff --cached --quiet; then
+            echo "Lockfiles already in sync; nothing to commit."
+            exit 0
+          fi
+          git config user.name "dependabot[bot]"
+          git config user.email "49699333+dependabot[bot]@users.noreply.github.com"
+          git commit -m "build: sync supply chain lockfiles [dependabot skip]"
+          git push

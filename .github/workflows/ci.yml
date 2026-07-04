@@ -184,9 +184,12 @@ jobs:
         working-directory: infra/ansible
         run: ansible-lint
 
-  # Keep committed lockfiles in sync so Semgrep Supply Chain (Managed Scans) can resolve deps
+  # Keep committed lockfiles in sync so Semgrep Supply Chain (Managed Scans) can resolve deps.
+  # Skipped on Dependabot's own runs: the dependabot-lockfiles workflow regenerates and pushes
+  # the lockfiles, and that PAT push re-triggers this job as a normal actor to verify them.
   lockfiles:
     name: Verify supply chain lockfiles
+    if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
