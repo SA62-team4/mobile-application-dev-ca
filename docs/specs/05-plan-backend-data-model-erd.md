@@ -23,7 +23,7 @@ entity "USERS" as USERS {
   email : varchar <<UK>>
   password_hash : varchar
   display_name : varchar
-  role : varchar
+  role : varchar <<enum: USER, PREMIUM_USER>>
   enabled : boolean
   created_at : datetime
   updated_at : datetime
@@ -80,7 +80,7 @@ USERS ||--o{ RECOMMENDATIONS : owns
 - `email` must be unique and lowercased before persistence.
 - `password_hash` stores a BCrypt hash, never a plain password. It is **nullable**: Google SSO users (see [DEC-013/DEC-014](03-clarify-decisions-and-edge-cases.md)) have no local password and are persisted with `password_hash = NULL`.
 - Because `password_hash` is nullable, the email/password login path must treat a null hash as a non-matching credential (BCrypt match fails), so SSO accounts cannot be logged into with a password.
-- `role` can default to `USER`.
+- `role` is stored as a SCREAMING_SNAKE_CASE string mapped from a backend `Role` enum. Defined values are `USER` and `PREMIUM_USER`; new registrations default to `USER`. Unknown or blank stored values are read back as `USER` so legacy rows never break login. `PREMIUM_USER` is declared for forward compatibility only — it is not yet granted or enforced anywhere in the authentication/authorization flow. Both the Spring Boot and .NET Backup backends must use identical enum names so the shared `users.role` column and the JWT `role` claim stay interoperable.
 - `enabled` allows future account disabling.
 
 > **Migration note:** Existing databases created before `password_hash` became nullable still carry a `NOT NULL` constraint, and `hibernate.ddl-auto: update` does not relax it. Run `ALTER TABLE users MODIFY password_hash VARCHAR(255) NULL;` (or recreate the volume) before enabling SSO. See the troubleshooting table in `docs/local-sso-quickstart.md`.

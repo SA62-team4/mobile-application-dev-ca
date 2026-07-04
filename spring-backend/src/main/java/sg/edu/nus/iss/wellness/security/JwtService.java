@@ -1,23 +1,27 @@
 package sg.edu.nus.iss.wellness.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.stereotype.Service;
-import sg.edu.nus.iss.wellness.config.AppProperties;
-import sg.edu.nus.iss.wellness.model.AppUser;
-
-import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 
+import javax.crypto.SecretKey;
+
+import org.springframework.stereotype.Service;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import sg.edu.nus.iss.wellness.config.AppProperties;
+import sg.edu.nus.iss.wellness.model.AppUser;
+import sg.edu.nus.iss.wellness.model.Role;
+
 /**
  * Creates and validates JWT access tokens.
  *
  * @author SA62 Team
+ * @author JustinChua97
  */
 @Service
 public class JwtService {
@@ -31,7 +35,7 @@ public class JwtService {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(user.getEmail())
-                .claims(Map.of("uid", user.getId(), "name", user.getDisplayName()))
+                .claims(Map.of("uid", user.getId(), "name", user.getDisplayName(), "role", user.getRole().name()))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(properties.getJwt().getExpirySeconds())))
                 .signWith(secretKey())
@@ -50,6 +54,12 @@ public class JwtService {
     public long expirySeconds() {
         return properties.getJwt().getExpirySeconds();
     }
+    
+    public Role extractRole(String token) {
+        Object claim = claims(token).get("role");
+        return Role.fromValue(claim != null ? claim.toString() : null);
+    }
+
 
     private Claims claims(String token) {
         return Jwts.parser().verifyWith(secretKey()).build().parseSignedClaims(token).getPayload();

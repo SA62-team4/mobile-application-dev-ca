@@ -10,7 +10,7 @@ namespace Wellness.Backup.Api.Services;
 /// <summary>
 /// Creates and validates Spring-compatible JWT access tokens.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author SA62 Team, JustinChua97</remarks>
 public sealed class JwtTokenService
 {
     private readonly BackendOptions _options;
@@ -31,6 +31,10 @@ public sealed class JwtTokenService
             new(JwtRegisteredClaimNames.Sub, user.Email),
             new("uid", user.Id.ToString(), ClaimValueTypes.Integer64),
             new("name", user.DisplayName),
+            // Canonical enum name ("USER"), matching the Spring backend's "role" claim.
+            // Informational only: enforcement reloads the user from the database so a
+            // stale token can never elevate privileges.
+            new("role", user.Role.ToDbValue()),
             new(JwtRegisteredClaimNames.Iat, now.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
         };
 

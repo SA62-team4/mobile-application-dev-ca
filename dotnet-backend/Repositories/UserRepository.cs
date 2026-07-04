@@ -8,7 +8,7 @@ namespace Wellness.Backup.Api.Repositories;
 /// <summary>
 /// Reads and writes users in the shared `users` table.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author SA62 Team, JustinChua97</remarks>
 public sealed class UserRepository
 {
     private readonly MySqlConnectionFactory _connections;
@@ -55,13 +55,15 @@ public sealed class UserRepository
         await using var command = new MySqlCommand(
             """
             INSERT INTO users (email, password_hash, display_name, role, enabled, created_at, updated_at)
-            VALUES (@email, @passwordHash, @displayName, 'USER', TRUE, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
+            VALUES (@email, @passwordHash, @displayName, @role, TRUE, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
             SELECT LAST_INSERT_ID();
             """,
             connection);
         command.Parameters.AddWithValue("@email", email);
         command.Parameters.AddWithValue("@passwordHash", passwordHash);
         command.Parameters.AddWithValue("@displayName", displayName);
+        // New registrations default to the USER role, driven by the enum rather than a literal.
+        command.Parameters.AddWithValue("@role", Role.User.ToDbValue());
         var id = Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken));
         return await FindByIdAsync(id, cancellationToken)
                ?? throw new InvalidOperationException("Created user could not be reloaded");
@@ -74,7 +76,7 @@ public sealed class UserRepository
             reader.GetRequiredString("email"),
             reader.GetRequiredString("password_hash"),
             reader.GetRequiredString("display_name"),
-            reader.GetRequiredString("role"),
+            RoleExtensions.FromDbValue(reader.GetRequiredString("role")),
             reader.GetBooleanValue("enabled"),
             reader.GetUtcDateTime("created_at"),
             reader.GetUtcDateTime("updated_at"));

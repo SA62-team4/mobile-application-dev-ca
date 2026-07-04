@@ -30,6 +30,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import sg.edu.nus.iss.wellness.error.GlobalExceptionHandler;
+import sg.edu.nus.iss.wellness.model.Role;
 import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 import sg.edu.nus.iss.wellness.security.JwtAuthenticationFilter;
 
@@ -37,6 +38,7 @@ import sg.edu.nus.iss.wellness.security.JwtAuthenticationFilter;
  * Security configuration for JWT-protected REST APIs.
  *
  * @author SA62 Team
+ * @author JustinChua97
  */
 @Configuration
 @EnableWebSecurity
@@ -56,7 +58,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/", "/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/api/auth/**", "/api/internal/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().hasRole(Role.USER.name())
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authEx) -> {
                     response.setStatus(HttpStatus.UNAUTHORIZED.value());

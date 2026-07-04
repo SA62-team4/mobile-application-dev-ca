@@ -1,18 +1,29 @@
 package sg.edu.nus.iss.wellness.model;
 
-import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 /**
  * Application user account.
  *
  * @author SA62 Team
+ * @author JustinChua97
  */
 @Entity
 @Table(name = "users", indexes = @Index(name = "idx_users_email", columnList = "email", unique = true))
@@ -30,8 +41,9 @@ public class AppUser implements UserDetails {
     @Column(nullable = false, name = "display_name")
     private String displayName;
 
-    @Column(nullable = false)
-    private String role = "USER";
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private Role role = Role.USER;
 
     @Column(nullable = false)
     private boolean enabled = true;
@@ -44,7 +56,8 @@ public class AppUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
+        // PREMIUM_USER are intentionally not expanded into USER until premium auth is wired up.
+        return List.of(new SimpleGrantedAuthority(role.authority()));
     }
 
     @Override
@@ -85,8 +98,12 @@ public class AppUser implements UserDetails {
         this.displayName = displayName;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role != null ? role : Role.USER;
     }
 
     public boolean isEnabled() {
@@ -106,4 +123,3 @@ public class AppUser implements UserDetails {
         updatedAt = Instant.now();
     }
 }
-
