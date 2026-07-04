@@ -10,7 +10,7 @@ namespace Wellness.Backup.Api.Services;
 /// <summary>
 /// Creates and validates Spring-compatible JWT access tokens.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author SA62 Team, JustinChua97</remarks>
 public sealed class JwtTokenService
 {
     private readonly BackendOptions _options;

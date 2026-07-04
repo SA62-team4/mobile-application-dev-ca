@@ -9,7 +9,7 @@ namespace Wellness.Backup.Api.Tests;
 /// <summary>
 /// Verifies JWT claims required for Spring-compatible backup authentication.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author SA62 Team, JustinChua97</remarks>
 public sealed class JwtTokenServiceTests
 {
     [Fact]

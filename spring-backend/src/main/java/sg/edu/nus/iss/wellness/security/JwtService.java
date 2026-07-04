@@ -21,6 +21,7 @@ import sg.edu.nus.iss.wellness.model.Role;
  * Creates and validates JWT access tokens.
  *
  * @author SA62 Team
+ * @author JustinChua97
  */
 @Service
 public class JwtService {

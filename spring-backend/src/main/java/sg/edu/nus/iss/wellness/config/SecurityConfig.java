@@ -38,6 +38,7 @@ import sg.edu.nus.iss.wellness.security.JwtAuthenticationFilter;
  * Security configuration for JWT-protected REST APIs.
  *
  * @author SA62 Team
+ * @author JustinChua97
  */
 @Configuration
 @EnableWebSecurity

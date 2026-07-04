@@ -23,6 +23,7 @@ import jakarta.persistence.Table;
  * Application user account.
  *
  * @author SA62 Team
+ * @author JustinChua97
  */
 @Entity
 @Table(name = "users", indexes = @Index(name = "idx_users_email", columnList = "email", unique = true))

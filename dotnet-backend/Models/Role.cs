@@ -13,7 +13,7 @@ namespace Wellness.Backup.Api.Models;
 /// <see cref="PremiumUser"/> is declared for forward compatibility only; it is not
 /// yet granted or checked anywhere in the authentication/authorization flow.
 /// </para>
-/// @author SA62 Team
+/// @author JustinChua97
 /// </remarks>
 public enum Role
 {
@@ -25,7 +25,7 @@ public enum Role
 /// Maps <see cref="Role"/> to and from its canonical storage/wire string and
 /// Spring-style authority ("ROLE_USER").
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author JustinChua97</remarks>
 public static class RoleExtensions
 {
     /// <summary>Spring Security prefixes role authorities with <c>ROLE_</c>.</summary>

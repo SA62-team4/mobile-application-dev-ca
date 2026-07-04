@@ -1,5 +1,10 @@
 package sg.edu.nus.iss.wellness.model;
 
+/**
+ * Account roles used for authentication and authorization.
+ *
+ * @author JustinChua97
+ */
 public enum Role {
     USER,
     PREMIUM_USER;
