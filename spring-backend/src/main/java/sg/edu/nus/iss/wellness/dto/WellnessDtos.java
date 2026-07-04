@@ -1,26 +1,44 @@
 package sg.edu.nus.iss.wellness.dto;
 
-import jakarta.validation.constraints.*;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * DTOs for wellness record endpoints.
  *
  * @author SA62 Team
  */
-public final class WellnessDtos {
-    private WellnessDtos() {
-    }
+        public final class WellnessDtos {
+        private WellnessDtos() {
+        }
 
-    public record WellnessRecordRequest(
-            @NotNull LocalDate recordDate,
-            @NotNull @DecimalMin("0.0") @DecimalMax("24.0") BigDecimal sleepHours,
+        public record WellnessRecordRequest(
+            @NotNull(message = "is required")
+            LocalDate recordDate,
+
+            @NotNull(message = "is required")
+            @DecimalMin(value = "0.0", message = "must be between 0 and 24")
+            @DecimalMax(value = "24.0", message = "must be between 0 and 24")
+            BigDecimal sleepHours,
+
             String exerciseType,
-            @NotNull @Min(0) Integer exerciseMinutes,
-            @NotNull @Min(1) @Max(5) Integer moodScore,
+
+            @NotNull(message = "is required")
+            @Min(value = 0, message = "must be 0 or greater")
+            Integer exerciseMinutes,
+
+            @NotNull(message = "is required")
+            @Min(value = 1, message = "must be between 1 and 5")
+            @Max(value = 5, message = "must be between 1 and 5")
+            Integer moodScore,
+
             String notes
     ) {
     }
