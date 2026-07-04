@@ -18,7 +18,8 @@ public static class EndpointAuthorization
         HttpContext context,
         UserRepository users,
         JwtTokenService jwtTokenService,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Role requiredRole = Role.User)
     {
         var header = context.Request.Headers.Authorization.ToString();
         if (string.IsNullOrWhiteSpace(header) || !header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
@@ -51,6 +52,15 @@ public static class EndpointAuthorization
         if (user is null || !user.Enabled)
         {
             throw ApiException.Unauthorized("Authenticated user not found");
+        }
+
+        // Authorization gate: the database-loaded role (source of truth) must satisfy the
+        // required role. Defaults to Role.User, mirroring Spring's hasRole(USER) on every
+        // protected route. PREMIUM_USER is intentionally not enforced anywhere yet; when
+        // premium features arrive, pass requiredRole: Role.PremiumUser on those endpoints.
+        if (!user.HasRole(requiredRole))
+        {
+            throw ApiException.Forbidden($"Requires the {requiredRole.ToDbValue()} role");
         }
 
         return user;
