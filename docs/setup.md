@@ -57,6 +57,19 @@ Run backup mode with the Compose override:
 docker compose -f docker-compose.yml -f docker-compose.dotnet-backup.yml up --build dotnet-backend python-ai-service mysql ollama
 ```
 
+**Switching back to the Spring demo (important):** this override repoints `python-ai-service`
+at `dotnet-backend`. After a backup rehearsal you must realign the stack to the canonical base
+compose, or the AI recommendation endpoint fails with `503 "AI recommendation service is
+unavailable"` (Spring logs show `AiServiceClient ... Name or service not known`) while chat and
+CRUD keep working. Reset with:
+
+```bash
+docker compose up -d --remove-orphans
+```
+
+Confirm the AI service targets Spring — `docker compose exec python-ai-service env | grep BACKEND_BASE_URL`
+should print `http://spring-backend:8080` (not `http://dotnet-backend:8080`).
+
 Smoke-test either backend with the same contract script:
 
 ```bash
