@@ -15,7 +15,6 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import sg.edu.nus.iss.wellness.config.AppProperties;
 import sg.edu.nus.iss.wellness.model.AppUser;
-import sg.edu.nus.iss.wellness.model.Role;
 
 /**
  * Creates and validates JWT access tokens.
@@ -53,11 +52,6 @@ public class JwtService {
 
     public long expirySeconds() {
         return properties.getJwt().getExpirySeconds();
-    }
-    
-    public Role extractRole(String token) {
-        Object claim = claims(token).get("role");
-        return Role.fromValue(claim != null ? claim.toString() : null);
     }
 
 

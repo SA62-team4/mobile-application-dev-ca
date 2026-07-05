@@ -1,26 +1,22 @@
 using System.Text.Json;
-using Wellness.Backup.Api.Configuration;
 using Wellness.Backup.Api.Errors;
-using Wellness.Backup.Api.Security;
 
 namespace Wellness.Backup.Api.Middleware;
 
 /// <summary>
 /// Converts .NET exceptions into the same JSON error response shape used by Spring.
 /// </summary>
-/// <remarks>@author SA62 Team, JustinChua97</remarks>
+/// <remarks>@author SA62 Team</remarks>
 public sealed class ApiErrorMiddleware
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly RequestDelegate _next;
     private readonly ILogger<ApiErrorMiddleware> _logger;
-    private readonly BackendOptions _options;
 
-    public ApiErrorMiddleware(RequestDelegate next, ILogger<ApiErrorMiddleware> logger, BackendOptions options)
+    public ApiErrorMiddleware(RequestDelegate next, ILogger<ApiErrorMiddleware> logger)
     {
         _next = next;
         _logger = logger;
-        _options = options;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -28,15 +24,6 @@ public sealed class ApiErrorMiddleware
         try
         {
             await _next(context);
-        }
-        catch (LoginRedirectException)
-        {
-            // Expired / missing / malformed token: force the client to the login page via 302.
-            if (!context.Response.HasStarted)
-            {
-                context.Response.Clear();
-                await LoginRedirect.BuildRedirect(LoginRedirect.ResolveLoginUrl(_options)).ExecuteAsync(context);
-            }
         }
         catch (ApiException exception)
         {

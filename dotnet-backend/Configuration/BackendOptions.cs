@@ -11,7 +11,6 @@ public sealed class BackendOptions
     public required long JwtExpirySeconds { get; init; }
     public required string AiServiceUrl { get; init; }
     public required string InternalServiceToken { get; init; }
-    public string? LoginRedirectUrl { get; init; }
 
     public static BackendOptions FromConfiguration(IConfiguration configuration)
     {
@@ -35,10 +34,7 @@ public sealed class BackendOptions
                            ?? "http://localhost:8000").TrimEnd('/'),
             InternalServiceToken = FirstNonBlank(
                 configuration["INTERNAL_SERVICE_TOKEN"],
-                configuration["BackupBackend:InternalServiceToken"]) ?? "dev_internal_token",
-            LoginRedirectUrl = FirstNonBlank(
-                configuration["LOGIN_REDIRECT_URL"],
-                configuration["BackupBackend:LoginRedirectUrl"])
+                configuration["BackupBackend:InternalServiceToken"]) ?? "dev_internal_token"
         };
     }
 

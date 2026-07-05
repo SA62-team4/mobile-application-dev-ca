@@ -383,8 +383,7 @@ public class WellnessRecordControllerTest {
         assertThat(savedEntry).hasSize(1);
     }
 
-    // Test 14 - Valid log entry, but no authorisation header/token. Expected 302
-    // Redirect.
+    // Test 14 - Valid log entry, but no authorisation header/token. Expected 401 Unauthorised error.
     @Test
     void UnauthorizedEntryValidBodyNoToken() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest(
@@ -398,14 +397,13 @@ public class WellnessRecordControllerTest {
         mockMvc.perform(post("/api/wellness-records")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newEntryDetails)))
-                .andExpect(status().isFound()); // Changed from isUnauthorized() to isFound() for 302
+                .andExpect(status().isUnauthorized());
 
         var savedEntry = records.findByUserOrderByRecordDateDesc(testUser);
         assertThat(savedEntry).isEmpty();
     }
 
-    // Test 15 - Valid log entry, but malformed authorisation header/token. Expected
-    // 302 Redirect.
+    // Test 15 - Valid log entry, but malformed authorisation header/token. Expected 401 Unauthorised error.
     @Test
     void create_withMalformedToken_returnsUnauthorized() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest(
@@ -420,7 +418,7 @@ public class WellnessRecordControllerTest {
                 .header("Authorization", "Bearer not-a-real-jwt")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(newEntryDetails)))
-                .andExpect(status().isFound()); // Changed from isUnauthorized() to isFound() for 302
+                .andExpect(status().isUnauthorized());
 
         assertThat(records.findByUserOrderByRecordDateDesc(testUser)).isEmpty();
     }
