@@ -9,4 +9,14 @@
     <string name="records_mood_format">Mood: %d/5</string>
     <string name="cd_edit_record">Edit record</string>
     <string name="cd_delete_record">Delete record</string>
+
+    <!-- Sample / layout helper strings -->
+    <string name="record_sample_date">2026-07-05</string>
+    <string name="record_sample_sleep">Sleep: 7.5 hours</string>
+    <string name="record_sample_exercise">Exercise: Running • 30 min</string>
+    <string name="record_sample_mood">Mood: 4/5</string>
+    <string name="record_sample_notes">Notes go here</string>
+
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
 </resources>
