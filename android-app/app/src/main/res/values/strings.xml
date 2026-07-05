@@ -19,4 +19,15 @@
 
     <string name="action_edit">Edit</string>
     <string name="action_delete">Delete</string>
+
+    <!-- Form strings for RecordFormActivity -->
+    <string name="record_date_required">Record date is required</string>
+    <string name="error_sleep_range">Sleep hours must be 0–24</string>
+    <string name="error_exercise_minutes">Exercise minutes must be 0 or more</string>
+    <string name="error_mood_range">Mood score must be 1–5</string>
+    <string name="toast_record_saved">Record saved</string>
+    <string name="toast_save_failed">Save failed. Check backend connection.</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="cd_record_date">Record date</string>
 </resources>
