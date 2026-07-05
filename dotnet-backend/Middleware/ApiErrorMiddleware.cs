@@ -44,7 +44,7 @@ public sealed class ApiErrorMiddleware
         }
         catch (BadHttpRequestException exception)
         {
-            _logger.LogWarning("Invalid API request: {Message}", exception.Message);
+            _logger.LogWarning(exception, "Invalid API request: {Message}", exception.Message);
             await WriteErrorAsync(context, StatusCodes.Status400BadRequest, "Invalid request body");
         }
         catch (Exception exception)
