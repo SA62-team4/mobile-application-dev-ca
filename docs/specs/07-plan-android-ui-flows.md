@@ -32,6 +32,10 @@ All phone frames use `360 x 800dp` as the compact Android portrait reference siz
 - Kotlin Android app.
 - XML layouts, not Jetpack Compose.
 - Retrofit for backend REST calls.
+- `AppCompatActivity` as the base class for every screen (not the bare `android.app.Activity`).
+- View Binding (`viewBinding true`) generates typed layout accessors; do not use `findViewById`.
+- Explicit-`Intent` navigation between screens (`startActivity(Intent(this, TargetActivity::class.java))`) — no Fragments, no Navigation Component; this course's syllabus doesn't cover them.
+- `ListView` with a custom `ArrayAdapter` (`getView` + view-holder pattern) for records, chat history, and recommendation lists — not `RecyclerView`.
 - API client read/call timeouts must allow slow local Ollama responses for chatbot and recommendation generation.
 - ViewModel and LiveData or StateFlow for screen state.
 - Secure token storage for JWT.
@@ -105,8 +109,8 @@ The Figma file defines reusable local components for Android implementation:
 
 Android XML should map these to reusable layouts/styles where practical:
 
-- Use a bottom navigation component or equivalent XML layout for authenticated tabs.
-- Use `RecyclerView` item layouts for records, chat history, and recommendations.
+- Use a shared bottom-navigation XML bar, included in every authenticated `Activity`'s layout, whose buttons fire explicit `Intent`s to the corresponding screen — not a single-Activity tab/fragment host.
+- Use `ListView` with a custom `ArrayAdapter` (row layout `row_*.xml`, view-holder pattern) for records, chat history, and recommendations — not `RecyclerView`.
 - Use reusable card/item XML layouts instead of programmatically adding plain `TextView` rows.
 - Use Material Components for text fields, buttons, cards, and bottom navigation if the dependency is added.
 
@@ -136,30 +140,25 @@ After login:
 @startuml
 left to right direction
 
-rectangle "Home Shell" as Home
 rectangle "Dashboard" as Dashboard
 rectangle "Add/Edit Record" as Record
 rectangle "Chatbot" as Chat
 rectangle "Recommendations" as Recs
 rectangle "Profile" as Profile
 
-Home --> Dashboard
-Home --> Chat
-Home --> Recs
-Home --> Profile
+Dashboard <--> Chat
+Dashboard <--> Recs
+Dashboard <--> Profile
+Chat <--> Recs
+Chat <--> Profile
+Recs <--> Profile
 Dashboard --> Record
 Dashboard --> Recs
 @enduml
 ```
 
-Use bottom navigation for the authenticated area:
+Each authenticated screen (`DashboardActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`) is a separate `AppCompatActivity` including the same shared bottom-navigation XML bar. Tapping a bar item fires an explicit `Intent` to the corresponding Activity — there is no single "Home Shell" hosting fragments or swapped views. The Dashboard screen is the landing screen: it surfaces today's snapshot, weekly trends, and the historical records list. The AI insight teaser on the Dashboard deep-links into the Recommendations screen, and the add/edit record flow is opened from within the Dashboard's records section.
 
-- Dashboard
-- Chat
-- Recommendations
-- Profile
-
-The Dashboard tab is the landing view. It surfaces today's snapshot, weekly trends, and the historical records list. The AI insight teaser on the Dashboard deep-links into the Recommendations tab, and the add/edit record flow is opened from within the Dashboard's records section.
 
 ## Screens
 
@@ -421,7 +420,8 @@ Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color
 
 - `DashboardDataHelper`: pure-Kotlin helper for aggregation, date grouping, badge thresholds, and date filtering. Having no Android SDK dependency, it is unit-testable on the local JVM.
 - `SparklineView`: lightweight custom `View` that overrides `onDraw` to render lines, round-rect bars, and axis labels on the native `Canvas`.
-- `HomeActivity`: hosts the dashboard as the landing tab, loads wellness records and recommendations concurrently, and builds the UI programmatically.
+- `DashboardActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`: one `AppCompatActivity` per authenticated screen, each inflating its own XML layout via View Binding. `DashboardActivity` is the landing screen and loads wellness records and recommendations concurrently.
+
 
 ### Dashboard Tests
 

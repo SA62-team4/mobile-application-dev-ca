@@ -44,8 +44,8 @@ Do not execute these tasks until the implementation phase is explicitly requeste
 | Task ID | Requirement IDs | Task | Owner | Depends On | Done When |
 | --- | --- | --- | --- | --- | --- |
 | T-301 | REQ-04, REQ-05, REQ-06, REQ-07 | Implement wellness CRUD APIs | Member 5 | T-202, T-203 | API tests pass |
-| T-302 | REQ-01, REQ-02 | Implement Android login/register/logout | Member 1 | T-203 | Auth works from app |
-| T-303 | REQ-04 through REQ-07 | Implement Android wellness screens | Member 2 | T-301, T-302 | CRUD works end to end |
+| T-302 | REQ-01, REQ-02 | Implement Android login/register/logout (realigned to AppCompatActivity + View Binding, T-701) | Member 1 | T-203 | Auth works from app |
+| T-303 | REQ-04 through REQ-07 | Implement Android wellness screens (realigned to AppCompatActivity + View Binding + ListView/ArrayAdapter, T-701)| Member 2 | T-301, T-302 | CRUD works end to end |
 
 ## Phase 4: RAG Chatbot
 
@@ -55,7 +55,7 @@ Do not execute these tasks until the implementation phase is explicitly requeste
 | T-402 | REQ-11 | Create curated wellness KB | Member 6 | T-401 | KB files load and chunk |
 | T-403 | REQ-11, REQ-12 | Implement Chroma indexing and Ollama embedding | Member 6 | T-402 | RAG indexing test passes |
 | T-404 | REQ-10, REQ-11 | Implement backend chat orchestration | Member 5 | T-301, T-403 | Chat API stores answer and sources |
-| T-405 | REQ-10 | Implement Android chatbot screen | Member 3 | T-404 | Chat works from app |
+| T-405 | REQ-10 | Implement Android chatbot screen (realigned to AppCompatActivity + View Binding + ListView/ArrayAdapter, T-701)| Member 3 | T-404 | Chat works from app |
 
 ## Phase 5: Agentic AI
 
@@ -64,7 +64,7 @@ Do not execute these tasks until the implementation phase is explicitly requeste
 | T-501 | REQ-13 | Implement backend internal record/recommendation APIs | Member 5 | T-301 | Python can retrieve/save through backend |
 | T-502 | REQ-13 | Implement agent deterministic trend rules | Member 7 | T-501 | Agent rule tests pass |
 | T-503 | REQ-13 | Implement RAG-assisted recommendation generation | Member 7 | T-403, T-502 | Recommendation saved through backend |
-| T-504 | REQ-13 | Implement Android recommendations screen | Member 3 | T-503 | Recommendation visible in app |
+| T-504 | REQ-13 | Implement Android recommendations screen (realigned to AppCompatActivity + View Binding + ListView/ArrayAdapter, T-701)| Member 3 | T-503 | Recommendation visible in app |
 
 ## Phase 6: Docker, CI, And Demo
 
