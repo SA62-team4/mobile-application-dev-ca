@@ -22,6 +22,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/wellness-records")
 public class WellnessRecordController {
+    private static final String RECORD_NOT_FOUND = "Wellness record not found";
+
     private final WellnessRecordRepository records;
     private final CurrentUserService currentUserService;
 
@@ -34,10 +36,10 @@ public class WellnessRecordController {
     @ResponseStatus(HttpStatus.CREATED)
     public WellnessDtos.WellnessRecordResponse create(@Valid @RequestBody WellnessDtos.WellnessRecordRequest request) {
         AppUser user = currentUserService.requireCurrentUser();
-        WellnessRecord record = new WellnessRecord();
-        record.setUser(user);
-        apply(record, request);
-        return DtoMapper.wellness(records.save(record));
+        WellnessRecord wellnessRecord = new WellnessRecord();
+        wellnessRecord.setUser(user);
+        apply(wellnessRecord, request);
+        return DtoMapper.wellness(records.save(wellnessRecord));
     }
 
     @GetMapping
@@ -55,35 +57,35 @@ public class WellnessRecordController {
         AppUser user = currentUserService.requireCurrentUser();
         return records.findByIdAndUser(id, user)
                 .map(DtoMapper::wellness)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Wellness record not found"));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, RECORD_NOT_FOUND));
     }
 
     @PutMapping("/{id}")
     public WellnessDtos.WellnessRecordResponse update(@PathVariable Long id,
                                                       @Valid @RequestBody WellnessDtos.WellnessRecordRequest request) {
         AppUser user = currentUserService.requireCurrentUser();
-        WellnessRecord record = records.findByIdAndUser(id, user)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Wellness record not found"));
-        apply(record, request);
-        return DtoMapper.wellness(records.save(record));
+        WellnessRecord wellnessRecord = records.findByIdAndUser(id, user)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, RECORD_NOT_FOUND));
+        apply(wellnessRecord, request);
+        return DtoMapper.wellness(records.save(wellnessRecord));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         AppUser user = currentUserService.requireCurrentUser();
-        WellnessRecord record = records.findByIdAndUser(id, user)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Wellness record not found"));
-        records.delete(record);
+        WellnessRecord wellnessRecord = records.findByIdAndUser(id, user)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, RECORD_NOT_FOUND));
+        records.delete(wellnessRecord);
     }
 
-    private void apply(WellnessRecord record, WellnessDtos.WellnessRecordRequest request) {
-        record.setRecordDate(request.recordDate());
-        record.setSleepHours(request.sleepHours());
-        record.setExerciseType(request.exerciseType());
-        record.setExerciseMinutes(request.exerciseMinutes());
-        record.setMoodScore(request.moodScore());
-        record.setNotes(request.notes());
+    private void apply(WellnessRecord wellnessRecord, WellnessDtos.WellnessRecordRequest request) {
+        wellnessRecord.setRecordDate(request.recordDate());
+        wellnessRecord.setSleepHours(request.sleepHours());
+        wellnessRecord.setExerciseType(request.exerciseType());
+        wellnessRecord.setExerciseMinutes(request.exerciseMinutes());
+        wellnessRecord.setMoodScore(request.moodScore());
+        wellnessRecord.setNotes(request.notes());
     }
 }
 

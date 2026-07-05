@@ -1,7 +1,6 @@
 package sg.edu.nus.iss.wellness.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import sg.edu.nus.iss.wellness.config.AppProperties;
@@ -16,6 +15,7 @@ import sg.edu.nus.iss.wellness.repository.WellnessRecordRepository;
 import sg.edu.nus.iss.wellness.service.DtoMapper;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 /**
@@ -47,7 +47,7 @@ public class InternalController {
                                                              @RequestParam(defaultValue = "14") int days) {
         requireInternalToken(token);
         AppUser user = requireUser(userId);
-        LocalDate from = LocalDate.now().minusDays(days);
+        LocalDate from = LocalDate.now(ZoneId.systemDefault()).minusDays(days);
         return wellnessRecords.findByUserAndRecordDateAfterOrderByRecordDateDesc(user, from).stream()
                 .map(DtoMapper::wellness)
                 .toList();

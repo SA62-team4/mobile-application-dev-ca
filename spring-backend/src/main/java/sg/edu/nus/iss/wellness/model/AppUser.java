@@ -67,7 +67,7 @@ public class AppUser implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email;
+        return getEmail();
     }
 
     public Long getId() {
@@ -106,6 +106,7 @@ public class AppUser implements UserDetails {
         this.role = role != null ? role : Role.USER;
     }
 
+    @Override
     public boolean isEnabled() {
         return enabled;
     }
