@@ -15,6 +15,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
         with:
+          # Full history so OpenWiki can diff against the gitHead recorded in
+          # .last-update.json; a shallow clone hides it and yields no updates.
+          fetch-depth: 0
           persist-credentials: true
 
       - name: Set up Node.js
