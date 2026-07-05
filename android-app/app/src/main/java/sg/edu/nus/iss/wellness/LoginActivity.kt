@@ -5,9 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -18,18 +16,21 @@ import kotlinx.coroutines.launch
 import sg.edu.nus.iss.wellness.api.ApiClient
 import sg.edu.nus.iss.wellness.api.GoogleAuthRequest
 import sg.edu.nus.iss.wellness.api.LoginRequest
+import sg.edu.nus.iss.wellness.databinding.ActivityLoginBinding
 
 /**
- * Login screen — supports email/password and Google SSO.
- *
- * @author Surya Kumaraguru
+ * 1) Login screen — supports email/password and Google SSO.
+ *    Done by @author Surya Kumaraguru
+
+ * 2) Refactor UI to Android methods taught in class
+ *    Done by @author Tang Chee Seng
  */
-class LoginActivity : Activity() {
+class LoginActivity : AppCompatActivity() {
 
     private val scope = MainScope()
     private lateinit var tokenStore: TokenStore
     private var googleSignInClient: GoogleSignInClient? = null
-    private lateinit var statusText: TextView
+    private lateinit var binding: ActivityLoginBinding
 
     companion object {
         private const val RC_GOOGLE_SIGN_IN = 9001
@@ -37,11 +38,11 @@ class LoginActivity : Activity() {
     }
 
     private fun showStatus(message: String, error: Boolean = false) {
-        statusText.visibility = View.VISIBLE
-        statusText.setBackgroundResource(
+        binding.statusText.visibility = View.VISIBLE
+        binding.statusText.setBackgroundResource(
             if (error) R.drawable.bg_status_error else R.drawable.bg_status_success
         )
-        statusText.text = message
+        binding.statusText.text = message
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,17 +55,14 @@ class LoginActivity : Activity() {
             return
         }
 
-        setContentView(R.layout.activity_login)
-        EdgeToEdge.apply(this, findViewById(R.id.rootContainer))
-
-        statusText = findViewById(R.id.statusText)
-        val emailInput = findViewById<EditText>(R.id.emailInput)
-        val passwordInput = findViewById<EditText>(R.id.passwordInput)
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        EdgeToEdge.apply(this, binding.root)
 
         // Only configure Google Sign-In when a Web Client ID is provided. requestIdToken("")
         // throws IllegalArgumentException and would crash the app on launch (e.g. builds without
         // GOOGLE_WEB_CLIENT_ID in local.properties). When absent, disable the button instead.
-        val googleButton = findViewById<Button>(R.id.googleSignInButton)
+        val googleButton = binding.googleSignInButton        
         val webClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID
         if (webClientId.isNotBlank()) {
             val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -77,27 +75,27 @@ class LoginActivity : Activity() {
             googleButton.isEnabled = false
         }
 
-        findViewById<Button>(R.id.loginButton).setOnClickListener {
-            val email = emailInput.text.toString().trim()
-            val password = passwordInput.text.toString()
+        binding.loginButton.setOnClickListener {
+            val email = binding.emailInput.text.toString().trim()
+            val password = binding.passwordInput.text.toString()
             if (email.isBlank() || password.isBlank()) {
-                statusText.visibility = View.VISIBLE
-                statusText.setBackgroundResource(R.drawable.bg_status_error)
-                statusText.text = "Email and password are required."
+                binding.statusText.visibility = View.VISIBLE
+                binding.statusText.setBackgroundResource(R.drawable.bg_status_error)
+                binding.statusText.text = "Email and password are required."
                 return@setOnClickListener
             }
             scope.launch {
                 runCatching {
-                    statusText.visibility = View.VISIBLE
-                    statusText.setBackgroundResource(R.drawable.bg_status_success)
-                    statusText.text = "Logging in..."
+                    binding.statusText.visibility = View.VISIBLE
+                    binding.statusText.setBackgroundResource(R.drawable.bg_status_success)
+                    binding.statusText.text = "Logging in..."
                     ApiClient.create(tokenStore).login(LoginRequest(email, password))
                 }.onSuccess { response ->
                     onLoginSuccess(response.token, response.user.displayName, response.user.email)
                 }.onFailure {
-                    statusText.visibility = View.VISIBLE
-                    statusText.setBackgroundResource(R.drawable.bg_status_error)
-                    statusText.text = "Login failed. Check your credentials or backend connection."
+                    binding.statusText.visibility = View.VISIBLE
+                    binding.statusText.setBackgroundResource(R.drawable.bg_status_error)
+                    binding.statusText.text = "Login failed. Check your credentials or backend connection."
                 }
             }
         }
@@ -114,7 +112,7 @@ class LoginActivity : Activity() {
             startActivityForResult(client.signInIntent, RC_GOOGLE_SIGN_IN)
         }
 
-        findViewById<Button>(R.id.registerButton).setOnClickListener {
+        binding.registerButton.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
     }

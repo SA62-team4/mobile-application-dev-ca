@@ -3,73 +3,77 @@ package sg.edu.nus.iss.wellness
 import android.app.Activity
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import sg.edu.nus.iss.wellness.api.ApiClient
 import sg.edu.nus.iss.wellness.api.RegisterRequest
+import sg.edu.nus.iss.wellness.databinding.ActivityRegisterBinding
 
 /**
- * Account registration screen.
- *
- * @author SA62 Team
+ * 1) Account registration screen.
+ *    @author SA62 Team
+
+ * 2) Refactor UI to Android methods taught in class
+ *    Done by @author Tang Chee Seng
  */
-class RegisterActivity : Activity() {
+class RegisterActivity : AppCompatActivity() {
     private val scope = MainScope()
+    private lateinit var binding: ActivityRegisterBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_register)
-        EdgeToEdge.apply(this, findViewById(R.id.rootContainer))
+        binding = ActivityRegisterBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        EdgeToEdge.apply(this, binding.root)
 
-        val displayNameInput = findViewById<EditText>(R.id.displayNameInput)
-        val emailInput = findViewById<EditText>(R.id.emailInput)
-        val passwordInput = findViewById<EditText>(R.id.passwordInput)
-        val confirmPasswordInput = findViewById<EditText>(R.id.confirmPasswordInput)
-        val statusText = findViewById<TextView>(R.id.statusText)
+        val emailInput = binding.emailInput
+        val passwordInput = binding.passwordInput
+        val confirmPasswordInput = binding.confirmPasswordInput
+        val statusText = binding.statusText
         val tokenStore = TokenStore(this)
 
-        findViewById<Button>(R.id.createButton).setOnClickListener {
-            val displayName = displayNameInput.text.toString().trim()
-            val email = emailInput.text.toString().trim()
-            val password = passwordInput.text.toString()
-            val confirmPassword = confirmPasswordInput.text.toString()
+        binding.createButton.setOnClickListener {
+            val displayName = binding.displayNameInput.text.toString().trim()
+            val email = binding.emailInput.text.toString().trim()
+            val password = binding.passwordInput.text.toString()
+            val confirmPassword = binding.confirmPasswordInput.text.toString()
 
             if (displayName.isBlank() || email.isBlank() || password.length < 8) {
-                statusText.visibility = View.VISIBLE
-                statusText.setBackgroundResource(R.drawable.bg_status_error)
-                statusText.text = "Name, valid email, and 8 character password are required."
+                binding.statusText.visibility = View.VISIBLE
+                binding.statusText.setBackgroundResource(R.drawable.bg_status_error)
+                binding.statusText.text = "Name, valid email, and 8 character password are required."
                 return@setOnClickListener
             }
             if (password != confirmPassword) {
-                statusText.visibility = View.VISIBLE
-                statusText.setBackgroundResource(R.drawable.bg_status_error)
-                statusText.text = "Passwords do not match."
+                binding.statusText.visibility = View.VISIBLE
+                binding.statusText.setBackgroundResource(R.drawable.bg_status_error)
+                binding.statusText.text = "Passwords do not match."
                 return@setOnClickListener
             }
 
             scope.launch {
                 runCatching {
-                    statusText.visibility = View.VISIBLE
-                    statusText.setBackgroundResource(R.drawable.bg_status_success)
-                    statusText.text = "Creating account..."
+                    binding.statusText.visibility = View.VISIBLE
+                    binding.statusText.setBackgroundResource(R.drawable.bg_status_success)
+                    binding.statusText.text = "Creating account..."
                     ApiClient.create(tokenStore).register(RegisterRequest(displayName, email, password))
                 }.onSuccess {
-                    statusText.visibility = View.VISIBLE
-                    statusText.setBackgroundResource(R.drawable.bg_status_success)
-                    statusText.text = "Account created. Return to login."
+                    binding.statusText.visibility = View.VISIBLE
+                    binding.statusText.setBackgroundResource(R.drawable.bg_status_success)
+                    binding.statusText.text = "Account created. Return to login."
                 }.onFailure {
-                    statusText.visibility = View.VISIBLE
-                    statusText.setBackgroundResource(R.drawable.bg_status_error)
-                    statusText.text = "Registration failed. Try a different email."
+                    binding.statusText.visibility = View.VISIBLE
+                    binding.statusText.setBackgroundResource(R.drawable.bg_status_error)
+                    binding.statusText.text = "Registration failed. Try a different email."
                 }
             }
         }
 
-        findViewById<Button>(R.id.backButton).setOnClickListener { finish() }
+        binding.backButton.setOnClickListener { 
+            finish() 
+            }
     }
 
     override fun onDestroy() {
