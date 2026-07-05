@@ -1,4 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Wellness App</string>
-</resources>
 
+    <!-- Records strings for T-303 -->
+    <string name="records_sleep_format">Sleep: %s hours</string>
+    <string name="records_exercise_none">Exercise: —</string>
+    <string name="records_exercise_format">Exercise: %1$s • %2$d min</string>
+    <string name="records_mood_format">Mood: %d/5</string>
+    <string name="cd_edit_record">Edit record</string>
+    <string name="cd_delete_record">Delete record</string>
+</resources>
