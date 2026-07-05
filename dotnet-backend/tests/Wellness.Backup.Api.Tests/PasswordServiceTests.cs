@@ -4,9 +4,10 @@ using Xunit;
 namespace Wellness.Backup.Api.Tests;
 
 /// <summary>
-/// Verifies BCrypt behavior required for Spring Security password compatibility.
+/// Verifies BCrypt behavior required for Spring Security password compatibility, and that
+/// registration stores a salted hash rather than the raw password (E1 Auth &amp; Security).
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author SA62 Team, JustinChua97</remarks>
 public sealed class PasswordServiceTests
 {
     [Fact]
@@ -27,5 +28,29 @@ public sealed class PasswordServiceTests
 
         Assert.True(service.Verify("Password123!", springHash));
         Assert.False(service.Verify("WrongPassword123!", springHash));
+    }
+
+    [Fact]
+    public void Hash_DoesNotReturnPlaintext_AndUsesBcryptFormat()
+    {
+        var service = new PasswordService();
+
+        var hash = service.Hash("Password123!");
+
+        Assert.NotEqual("Password123!", hash);
+        Assert.StartsWith("$2", hash); // BCrypt hashes begin with $2a/$2b/$2y
+    }
+
+    [Fact]
+    public void Hash_ProducesDifferentHashesForSamePassword()
+    {
+        var service = new PasswordService();
+
+        var first = service.Hash("Password123!");
+        var second = service.Hash("Password123!");
+
+        Assert.NotEqual(first, second);              // random per-hash salt
+        Assert.True(service.Verify("Password123!", first));
+        Assert.True(service.Verify("Password123!", second));
     }
 }
