@@ -11,6 +11,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,6 +38,8 @@ public class LoginRedirectAuthenticationEntryPoint implements AuthenticationEntr
     public LoginRedirectAuthenticationEntryPoint(AppProperties properties, ObjectMapper objectMapper) {
         this.loginRedirectUrl = properties.getAuth().getLoginRedirectUrl();
         this.objectMapper = objectMapper;
+        // Register JavaTimeModule to handle java.time types (e.g., Instant)
+        this.objectMapper.registerModule(new JavaTimeModule());
     }
 
     @Override
