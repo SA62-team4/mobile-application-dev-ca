@@ -2,6 +2,7 @@ package sg.edu.nus.iss.wellness.controller;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +40,7 @@ import sg.edu.nus.iss.wellness.security.JwtService;
 @AutoConfigureMockMvc
 @Transactional
 
-public class WellnessRecordControllerTest {
+class WellnessRecordControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -82,15 +83,15 @@ public class WellnessRecordControllerTest {
 
     // Helper to seed a dummy wellness entry into the database
     private WellnessRecord seedRecord(AppUser owner, LocalDate date, int moodScore) {
-        WellnessRecord record = new WellnessRecord();
-        record.setUser(owner);
-        record.setRecordDate(date);
-        record.setSleepHours(new BigDecimal("7.0"));
-        record.setExerciseType("Walking");
-        record.setExerciseMinutes(30);
-        record.setMoodScore(moodScore);
-        record.setNotes("Feels good building");
-        return records.save(record);
+        WellnessRecord wellnessRecord = new WellnessRecord();
+        wellnessRecord.setUser(owner);
+        wellnessRecord.setRecordDate(date);
+        wellnessRecord.setSleepHours(new BigDecimal("7.0"));
+        wellnessRecord.setExerciseType("Walking");
+        wellnessRecord.setExerciseMinutes(30);
+        wellnessRecord.setMoodScore(moodScore);
+        wellnessRecord.setNotes("Feels good building");
+        return records.save(wellnessRecord);
     }
 
 // --- CREATE Tests ---
@@ -98,7 +99,7 @@ public class WellnessRecordControllerTest {
     @Test
     void successfulLogEntryCreationAndPersists() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
             "Walking", //ExerciseType
             30, //ExerciseMinutes
@@ -125,7 +126,7 @@ public class WellnessRecordControllerTest {
     @Test
     void logEntryWithMoodScoreAbove5_returnsError() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
             "Walking", //ExerciseType
             30, //ExerciseMinutes
@@ -146,7 +147,7 @@ public class WellnessRecordControllerTest {
     @Test
     void logEntryWithMoodScoreBelow1_returnsError() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
             "Walking", //ExerciseType
             30, //ExerciseMinutes
@@ -167,7 +168,7 @@ public class WellnessRecordControllerTest {
     @Test
     void logEntryWithSleepHoursAbove24_returnsError() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("24.01"), //SleepHours
             "Walking", //ExerciseType
             30, //ExerciseMinutes
@@ -188,7 +189,7 @@ public class WellnessRecordControllerTest {
     @Test
     void logEntryWithSleepHoursBelowZero_returnsError() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("-1"), //SleepHours
             "Walking", //ExerciseType
             30, //ExerciseMinutes
@@ -209,7 +210,7 @@ public class WellnessRecordControllerTest {
     @Test
     void logEntryWithExerciseMinsBelowZero_returnsError() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("8"), //SleepHours
             "NIL", //ExerciseType
             -1, //ExerciseMinutes
@@ -251,7 +252,7 @@ public class WellnessRecordControllerTest {
     @Test
     void logEntryWithoutSleepHours_returnsError() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             null, //SleepHours
             "Walking", //ExerciseType
             30, //ExerciseMinutes
@@ -272,7 +273,7 @@ public class WellnessRecordControllerTest {
     @Test
     void logEntryWithoutMoodScore_returnsError() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
             "Walking", //ExerciseType
             30, //ExerciseMinutes
@@ -293,7 +294,7 @@ public class WellnessRecordControllerTest {
     @Test
     void logEntryWithoutExerciseMinutes_returnsError() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
             "Walking", //ExerciseType
             null, //ExerciseMinutes
@@ -314,7 +315,7 @@ public class WellnessRecordControllerTest {
     @Test
     void logEntryWithLowerBoundaryValues_succeeds() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("0.0"), //SleepHours (lower bound)
             "Walking", //ExerciseType
             0, //ExerciseMinutes (lower bound)
@@ -337,7 +338,7 @@ public class WellnessRecordControllerTest {
     @Test
     void logEntryWithUpperBoundaryValues_succeeds() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("24.0"), //SleepHours (upper bound)
             "Walking", //ExerciseType
             120, //ExerciseMinutes
@@ -359,7 +360,7 @@ public class WellnessRecordControllerTest {
     @Test
     void logEntryWithoutOptionalFields_succeeds() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
             null, //ExerciseType (optional)
             30, //ExerciseMinutes
@@ -381,7 +382,7 @@ public class WellnessRecordControllerTest {
     @Test
     void UnauthorizedEntryValidBodyNoToken() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
             "Walking", //ExerciseType
             30, //ExerciseMinutes
@@ -401,7 +402,7 @@ public class WellnessRecordControllerTest {
     @Test
     void create_withMalformedToken_returnsUnauthorized() throws Exception {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest(
-            LocalDate.of(2026, 6, 30),
+            LocalDate.of(2026, Month.JUNE, 30),
             new BigDecimal("7.5"),
             "Walking",
             30,
@@ -424,7 +425,7 @@ public class WellnessRecordControllerTest {
         // Sets up testUser2 profile, but the test loads testUser's authorisation token instead.
 
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, 6, 30), //RecordDate
+            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
             "Taking over the world", //ExerciseType
             30, //ExerciseMinutes
@@ -450,7 +451,7 @@ public class WellnessRecordControllerTest {
     // Test 1 - User can read their own record. Expected 200 OK.
     @Test
     void getById_returnsOwnRecord() throws Exception {
-        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, 6, 30), 4);
+        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, Month.JUNE, 30), 4);
 
         mockMvc.perform(get("/api/wellness-records/{id}", seededBob.getId())
                         .header("Authorization", "Bearer " + token))
@@ -462,11 +463,11 @@ public class WellnessRecordControllerTest {
     // Test 2 - User reads only their own records (another user exists in the DB): two testUser entries, newest date first. Expected 200 OK.
     @Test
     void list_returnsOnlyOwnRecords_newestFirst() throws Exception {
-        WellnessRecord seededBobDayOne = seedRecord(testUser, LocalDate.of(2026, 6, 30), 4);
-        WellnessRecord seededBobDayTwo = seedRecord(testUser, LocalDate.of(2026, 7, 1), 5);
+        WellnessRecord seededBobDayOne = seedRecord(testUser, LocalDate.of(2026, Month.JUNE, 30), 4);
+        WellnessRecord seededBobDayTwo = seedRecord(testUser, LocalDate.of(2026, Month.JULY, 1), 5);
 
         setUpTester2();
-        seedRecord(testUser2, LocalDate.of(2026, 7, 1), 5);
+        seedRecord(testUser2, LocalDate.of(2026, Month.JULY, 1), 5);
 
         mockMvc.perform(get("/api/wellness-records")
                         .header("Authorization", "Bearer " + token))
@@ -481,14 +482,14 @@ public class WellnessRecordControllerTest {
     // Test 3 - Retrieve testUser records within a date range (2026-07-01 to 2026-07-03), excluding dates outside it. Expected 200 OK.
     @Test
     void list_withDateRange_filtersByDate() throws Exception {
-        seedRecord(testUser, LocalDate.of(2026, 6, 30), 4);
-        WellnessRecord seededBobDayTwo = seedRecord(testUser, LocalDate.of(2026, 7, 1), 1);
-        WellnessRecord seededBobDayThree = seedRecord(testUser, LocalDate.of(2026, 7, 2), 2);
-        WellnessRecord seededBobDayFour = seedRecord(testUser, LocalDate.of(2026, 7, 3), 3);
-        seedRecord(testUser, LocalDate.of(2026, 7, 4), 5);
+        seedRecord(testUser, LocalDate.of(2026, Month.JUNE, 30), 4);
+        WellnessRecord seededBobDayTwo = seedRecord(testUser, LocalDate.of(2026, Month.JULY, 1), 1);
+        WellnessRecord seededBobDayThree = seedRecord(testUser, LocalDate.of(2026, Month.JULY, 2), 2);
+        WellnessRecord seededBobDayFour = seedRecord(testUser, LocalDate.of(2026, Month.JULY, 3), 3);
+        seedRecord(testUser, LocalDate.of(2026, Month.JULY, 4), 5);
 
         setUpTester2();
-        seedRecord(testUser2, LocalDate.of(2026, 7, 1), 5);
+        seedRecord(testUser2, LocalDate.of(2026, Month.JULY, 1), 5);
 
         mockMvc.perform(get("/api/wellness-records")
                         .header("Authorization", "Bearer " + token)
@@ -527,10 +528,10 @@ public class WellnessRecordControllerTest {
     // Test 6 - Pulling another user's record returns 404 Not Found.
     @Test
     void getById_otherUsersRecord_returnsNotFound() throws Exception {
-        seedRecord(testUser, LocalDate.of(2026, 7, 1), 5);
+        seedRecord(testUser, LocalDate.of(2026, Month.JULY, 1), 5);
 
         setUpTester2();
-        WellnessRecord seededGru = seedRecord(testUser2, LocalDate.of(2026, 7, 1), 5);
+        WellnessRecord seededGru = seedRecord(testUser2, LocalDate.of(2026, Month.JULY, 1), 5);
 
         mockMvc.perform(get("/api/wellness-records/{id}", seededGru.getId())
                 .header("Authorization", "Bearer " + token))
@@ -541,10 +542,10 @@ public class WellnessRecordControllerTest {
     // Test 1 - testUser makes a valid edit to an old entry, expected 200 OK, and the change is persisted.
     @Test
     void update_withValidChanges() throws Exception {
-        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, 6, 30), 3);
+        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, Month.JUNE, 30), 3);
 
         var changes = new WellnessDtos.WellnessRecordRequest(
-                LocalDate.of(2026, 6, 30), new BigDecimal("8.0"), "Running", 45, 5, "Good day!");
+                LocalDate.of(2026, Month.JUNE, 30), new BigDecimal("8.0"), "Running", 45, 5, "Good day!");
 
         mockMvc.perform(put("/api/wellness-records/{id}", seededBob.getId())
                         .header("Authorization", "Bearer " + token)
@@ -564,10 +565,10 @@ public class WellnessRecordControllerTest {
     // Test 2 - testUser makes an invalid edit, expected 400 Bad Request, the change is rejected and old data still persists.
     @Test
     void update_withInvalidMoodScore_returnsError() throws Exception {
-        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, 6, 30), 3);
+        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, Month.JUNE, 30), 3);
 
         var moodScoreChange = new WellnessDtos.WellnessRecordRequest(
-                LocalDate.of(2026, 6, 30), new BigDecimal("8.0"), "Running", 45, 10, "Best day ever!");
+                LocalDate.of(2026, Month.JUNE, 30), new BigDecimal("8.0"), "Running", 45, 10, "Best day ever!");
 
         mockMvc.perform(put("/api/wellness-records/{id}", seededBob.getId())
                         .header("Authorization", "Bearer " + token)
@@ -585,13 +586,13 @@ public class WellnessRecordControllerTest {
     // Test 3 - Attempting to update another user's record returns 404 Not Found, and neither record changes.
     @Test
     void update_otherUsersRecord_returnsNotFound() throws Exception {
-        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, 7, 1), 3);
+        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, Month.JULY, 1), 3);
 
         setUpTester2();
-        WellnessRecord seededGru = seedRecord(testUser2, LocalDate.of(2026, 7, 1), 5);
+        WellnessRecord seededGru = seedRecord(testUser2, LocalDate.of(2026, Month.JULY, 1), 5);
 
         var moodScoreChange = new WellnessDtos.WellnessRecordRequest(
-                LocalDate.of(2026, 6, 30), new BigDecimal("8.0"), "Running", 45, 3, "Best day ever!");
+                LocalDate.of(2026, Month.JUNE, 30), new BigDecimal("8.0"), "Running", 45, 3, "Best day ever!");
 
         mockMvc.perform(put("/api/wellness-records/{id}", seededGru.getId())
                     .header("Authorization", "Bearer " + token)
@@ -614,7 +615,7 @@ public class WellnessRecordControllerTest {
     // Test 1 - Delete your own record. Expected 204 No Content, and the row is gone.
     @Test
     void delete_ownRecord_returnsNoContentAndRemovesRow() throws Exception {
-        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, 6, 30), 4);
+        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, Month.JUNE, 30), 4);
 
         mockMvc.perform(delete("/api/wellness-records/{id}", seededBob.getId())
                         .header("Authorization", "Bearer " + token))
@@ -626,7 +627,7 @@ public class WellnessRecordControllerTest {
     // Test 2 - Delete a non-existent id. Expected 404 Not Found, and nothing is deleted.
     @Test
     void delete_nonExistentID_returnsNotFound() throws Exception {
-        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, 6, 30), 4);
+        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, Month.JUNE, 30), 4);
 
         mockMvc.perform(delete("/api/wellness-records/999999")
                 .header("Authorization", "Bearer " + token))
@@ -641,10 +642,10 @@ public class WellnessRecordControllerTest {
     // Test 3 - Delete another user's entry. Expected 404 Not Found, and nothing is deleted.
     @Test
     void delete_otherUsersRecord_returnsNotFound() throws Exception {
-        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, 6, 30), 4);
+        WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, Month.JUNE, 30), 4);
 
         setUpTester2();
-        WellnessRecord seededGru = seedRecord(testUser2, LocalDate.of(2026, 7, 1), 5);
+        WellnessRecord seededGru = seedRecord(testUser2, LocalDate.of(2026, Month.JULY, 1), 5);
 
         mockMvc.perform(delete("/api/wellness-records/{id}", seededGru.getId())
                 .header("Authorization", "Bearer " + token))

@@ -7,12 +7,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import sg.edu.nus.iss.wellness.client.AiServiceClient;
 import sg.edu.nus.iss.wellness.dto.ChatDtos;
 import sg.edu.nus.iss.wellness.model.AppUser;
 import sg.edu.nus.iss.wellness.model.WellnessRecord;
@@ -23,8 +25,11 @@ import sg.edu.nus.iss.wellness.security.JwtService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -61,6 +66,10 @@ public class ChatControllerTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    // Stubbed so tests never call the external Python RAG service (which would otherwise return 503).
+    @MockBean
+    private AiServiceClient aiServiceClient;
+
     private AppUser testUser;
     private String token;
 
@@ -72,6 +81,12 @@ public class ChatControllerTest {
         testUser.setDisplayName("Alice");
         testUser = users.save(testUser);
         token = jwtService.generateToken(testUser);
+
+        when(aiServiceClient.chat(any())).thenReturn(new ChatDtos.AiChatResponse(
+                "Try keeping a consistent sleep schedule and winding down before bed.",
+                List.of(new ChatDtos.SourceSnippet("Sleep Guide", "Good sleep hygiene improves rest.")),
+                "llama3.2:3b"
+        ));
 
         seedWellnessRecords();
     }
