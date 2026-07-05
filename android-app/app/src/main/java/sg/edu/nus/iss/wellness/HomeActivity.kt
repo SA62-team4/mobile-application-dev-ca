@@ -41,6 +41,12 @@ import java.io.IOException
 import java.time.LocalDate
 import java.util.Calendar
 
+// Imports added for records UI
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import sg.edu.nus.iss.wellness.records.RecordFormActivity
+import sg.edu.nus.iss.wellness.records.RecordsAdapter
+
 /**
  * Authenticated app shell with a wellness dashboard, chatbot, recommendations, and profile.
  *
@@ -61,6 +67,7 @@ class HomeActivity : Activity() {
     private var cachedRecords: List<WellnessRecordResponse> = emptyList()
     private var cachedRecommendations: List<RecommendationResponse> = emptyList()
     private var recordsSection: LinearLayout? = null
+    private val recordFormRequestCode = 303
     private val sessionExpired = java.util.concurrent.atomic.AtomicBoolean(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -164,13 +171,13 @@ class HomeActivity : Activity() {
         tilesRow.layoutParams = (tilesRow.layoutParams as LinearLayout.LayoutParams)
             .apply { bottomMargin = dp(4) }
 
-        tilesRow.addView(snapshotTile("💤", "${snapshot.sleepHours}h", "Sleep"))
-        tilesRow.addView(snapshotTile("🏃", "${snapshot.exerciseMinutes}min", "Activity"))
-        tilesRow.addView(snapshotTile("😊", "${snapshot.moodScore}/5", "Mood"))
+        tilesRow.addView(snapshotTile("💤", "${'$'}{snapshot.sleepHours}h", "Sleep"))
+        tilesRow.addView(snapshotTile("🏃", "${'$'}{snapshot.exerciseMinutes}min", "Activity"))
+        tilesRow.addView(snapshotTile("😊", "${'$'}{snapshot.moodScore}/5", "Mood"))
         content.addView(tilesRow)
 
         if (!snapshot.isToday) {
-            content.addView(caption("Showing ${snapshot.date}  ·  No entry today").centered()
+            content.addView(caption("Showing ${'$'}{snapshot.date}  ·  No entry today").centered()
                 .apply { setPadding(0, 0, 0, dp(12)) })
         }
     }
@@ -264,9 +271,9 @@ class HomeActivity : Activity() {
     }
 
     private fun summaryLine(summary: WeeklyMetricSummary, metric: MetricType): String = when (metric) {
-        MetricType.SLEEP -> "Avg ${summary.averageSleepHours} h · ${summary.recordCount} days logged"
-        MetricType.ACTIVITY -> "${summary.exerciseDays} active days · ${summary.totalExerciseMinutes} min total"
-        MetricType.MOOD -> "Avg mood ${summary.averageMoodScore} / 5"
+        MetricType.SLEEP -> "Avg ${'$'}{summary.averageSleepHours} h · ${'$'}{summary.recordCount} days logged"
+        MetricType.ACTIVITY -> "${'$'}{summary.exerciseDays} active days · ${'$'}{summary.totalExerciseMinutes} min total"
+        MetricType.MOOD -> "Avg mood ${'$'}{summary.averageMoodScore} / 5"
     }
 
     // AI wellness insight teaser card
@@ -310,7 +317,7 @@ class HomeActivity : Activity() {
         // Active filter chip
         activeFilter?.let { filter ->
             val chip = TextView(this).apply {
-                text = "Filtered: ${filter.from} – ${filter.to}  ✕"
+                text = "Filtered: ${'$'}{filter.from} – ${'$'}{filter.to}  ✕"
                 textSize = 13f
                 setTextColor(getColor(R.color.primary_dark))
                 setPadding(dp(12), dp(6), dp(12), dp(6))
@@ -340,7 +347,7 @@ class HomeActivity : Activity() {
             else -> filtered.forEach { record ->
                 val recordCard = card()
                 recordCard.addView(title(record.recordDate, 16))
-                recordCard.addView(accent("Sleep ${record.sleepHours}h | ${record.exerciseType ?: "No exercise"} ${record.exerciseMinutes}min | Mood ${record.moodScore}/5"))
+                recordCard.addView(accent("Sleep ${'$'}{record.sleepHours}h | ${'$'}{record.exerciseType ?: "No exercise"} ${'$'}{record.exerciseMinutes}min | Mood ${'$'}{record.moodScore}/5"))
                 recordCard.addView(body(record.notes.orEmpty().ifBlank { "No notes added." }))
                 val actions = horizontal()
                 actions.addView(smallButton("Edit", ButtonStyle.SECONDARY) { openRecordDialog(record) })
@@ -405,24 +412,6 @@ class HomeActivity : Activity() {
         val mood = input("Mood score 1-5", record?.moodScore?.toString() ?: "3", InputType.TYPE_CLASS_NUMBER)
         val notes = input("Notes", record?.notes ?: "")
         listOf(date, sleep, exerciseType, exerciseMinutes, mood, notes).forEach(view::addView)
-
-        AlertDialog.Builder(this)
-            .setTitle(if (record == null) "Add record" else "Edit record")
-            .setView(view)
-            .setPositiveButton("Save") { _, _ ->
-                val request = WellnessRecordRequest(
-                    recordDate = date.text.toString(),
-                    sleepHours = sleep.text.toString().toDoubleOrNull() ?: 0.0,
-                    exerciseType = exerciseType.text.toString(),
-                    exerciseMinutes = exerciseMinutes.text.toString().toIntOrNull() ?: 0,
-                    moodScore = mood.text.toString().toIntOrNull() ?: 3,
-                    notes = notes.text.toString()
-                )
-                saveRecord(record?.id, request)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
 
     private fun saveRecord(id: Long?, request: WellnessRecordRequest) {
         reset()
@@ -504,7 +493,7 @@ class HomeActivity : Activity() {
         content.addView(chatBubble("Assistant", message.answer, false))
         val sources = message.sources.orEmpty()
         if (sources.isNotEmpty()) {
-            content.addView(caption("Sources: ${sources.joinToString { it.title }}"))
+            content.addView(caption("Sources: ${'$'}{sources.joinToString { it.title }}"))
         }
     }
 
@@ -785,10 +774,10 @@ class HomeActivity : Activity() {
             is HttpException -> when (throwable.code()) {
                 401, 403 -> "$prefix. Please log out and log in again."
                 503 -> "$prefix. Check Python AI service and Ollama."
-                else -> "$prefix. Backend returned HTTP ${throwable.code()}."
+                else -> "$prefix. Backend returned HTTP ${'$'}{throwable.code()}."
             }
             is IOException -> "$prefix. Check that the backend is reachable from the emulator."
-            else -> "$prefix. ${throwable.javaClass.simpleName}."
+            else -> "$prefix. ${'$'}{throwable.javaClass.simpleName}."
         }
     }
 
