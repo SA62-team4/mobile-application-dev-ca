@@ -130,6 +130,14 @@ jobs:
       - name: Compile Python service
         working-directory: python-ai-service
         run: python -m compileall app
+      - name: Install Python test dependencies
+        working-directory: python-ai-service
+        run: pip install -r requirements-dev.txt
+      - name: Run RAG indexing + retrieval smoke tests
+        working-directory: python-ai-service
+        # Excludes the opt-in live Ollama integration tests (marked "integration").
+        # Emits coverage.xml for SonarQube (imported via sonar.python.coverage.reportPaths).
+        run: pytest -m "not integration" --cov=app --cov-report=xml -q
       - name: Scan Python AI service with SonarQube
         if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8.2.0
