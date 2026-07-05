@@ -15,6 +15,12 @@
     </PackageReference>
   </ItemGroup>
 
+  <!-- Needed for HttpContext/DefaultHttpContext in EndpointAuthorizationTests. Shared frameworks
+       are not tracked in packages.lock.json, so this does not affect locked-mode restore. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="../../Wellness.Backup.Api.csproj" />
   </ItemGroup>
