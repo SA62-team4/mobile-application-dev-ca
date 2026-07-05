@@ -25,17 +25,17 @@ public final class DtoMapper {
         return new AuthDtos.UserResponse(user.getId(), user.getDisplayName(), user.getEmail());
     }
 
-    public static WellnessDtos.WellnessRecordResponse wellness(WellnessRecord record) {
+    public static WellnessDtos.WellnessRecordResponse wellness(WellnessRecord wellnessRecord) {
         return new WellnessDtos.WellnessRecordResponse(
-                record.getId(),
-                record.getRecordDate(),
-                record.getSleepHours(),
-                record.getExerciseType(),
-                record.getExerciseMinutes(),
-                record.getMoodScore(),
-                record.getNotes(),
-                record.getCreatedAt(),
-                record.getUpdatedAt()
+                wellnessRecord.getId(),
+                wellnessRecord.getRecordDate(),
+                wellnessRecord.getSleepHours(),
+                wellnessRecord.getExerciseType(),
+                wellnessRecord.getExerciseMinutes(),
+                wellnessRecord.getMoodScore(),
+                wellnessRecord.getNotes(),
+                wellnessRecord.getCreatedAt(),
+                wellnessRecord.getUpdatedAt()
         );
     }
 
