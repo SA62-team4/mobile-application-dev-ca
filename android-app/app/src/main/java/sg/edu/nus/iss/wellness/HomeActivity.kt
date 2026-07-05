@@ -41,7 +41,7 @@ import java.io.IOException
 import java.time.LocalDate
 import java.util.Calendar
 
-// Imports added for records UI
+// Imports for records list/form
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import sg.edu.nus.iss.wellness.records.RecordFormActivity
@@ -295,67 +295,117 @@ class HomeActivity : Activity() {
     }
 
     // Records section with date-range filter
-    private fun buildRecordsSection(section: LinearLayout, allRecords: List<WellnessRecordResponse>) {
+    private fun buildRecordsSection(
+        section: LinearLayout,
+        allRecords: List<WellnessRecordResponse>
+    ) {
         section.removeAllViews()
 
-        // Header row: title · Filter · Add
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             ).withBottomMargin(dp(10))
         }
+
         header.addView(title("Recent Records", 16).apply {
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1f
+            )
             setPadding(0, 0, 0, 0)
         })
-        header.addView(headerIconButton("📅 Filter", ButtonStyle.SECONDARY) { showDateRangeFilterDialog() })
-        header.addView(headerIconButton("+ Add", ButtonStyle.PRIMARY) { openRecordDialog(null) })
+
+        header.addView(
+            headerIconButton("📅 Filter", ButtonStyle.SECONDARY) {
+                showDateRangeFilterDialog()
+            }
+        )
+
+        header.addView(
+            headerIconButton("+ Add", ButtonStyle.PRIMARY) {
+                openRecordForm(null)
+            }
+        )
+
         section.addView(header)
 
-        // Active filter chip
         activeFilter?.let { filter ->
             val chip = TextView(this).apply {
                 text = "Filtered: ${'$'}{filter.from} – ${'$'}{filter.to}  ✕"
                 textSize = 13f
                 setTextColor(getColor(R.color.primary_dark))
                 setPadding(dp(12), dp(6), dp(12), dp(6))
-                background = rounded(getColor(R.color.bg_subtle), dp(16), getColor(R.color.primary))
-                setOnClickListener { clearFilter() }
+                background = rounded(
+                    getColor(R.color.bg_subtle),
+                    dp(16),
+                    getColor(R.color.primary)
+                )
+                setOnClickListener {
+                    clearFilter()
+                }
                 layoutParams = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
                 ).withBottomMargin(dp(10))
             }
+
             section.addView(chip)
         }
 
-        // Record cards
-        val filtered = DashboardDataHelper.applyDateFilter(allRecords, activeFilter)
+        val recordsView = layoutInflater.inflate(
+            R.layout.view_records_section,
+            section,
+            false
+        )
+
+        val recyclerView = recordsView.findViewById<RecyclerView>(R.id.recordsRecycler)
+        val emptyView = recordsView.findViewById<TextView>(R.id.recordsEmpty)
+        val loadingView = recordsView.findViewById<View>(R.id.recordsLoading)
+
+        loadingView.visibility = View.GONE
+
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        val adapter = RecordsAdapter(
+            onEdit = { record ->
+                openRecordForm(record)
+            },
+            onDelete = { record ->
+                confirmDelete(record.id)
+            }
+        )
+
+        recyclerView.adapter = adapter
+
+        val filteredRecords = DashboardDataHelper
+            .applyDateFilter(allRecords, activeFilter)
+            .sortedByDescending { it.recordDate }
+
         when {
             allRecords.isEmpty() -> {
-                section.addView(infoCard("No records yet", "Add your first wellness log to start seeing history."))
+                recyclerView.visibility = View.GONE
+                emptyView.visibility = View.VISIBLE
+                emptyView.text = getString(R.string.records_empty_message)
             }
-            filtered.isEmpty() -> {
-                section.addView(body("No records in this date range."))
-                section.addView(headerIconButton("Clear filter", ButtonStyle.SECONDARY) { clearFilter() }.apply {
-                    layoutParams = LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, dp(44)
-                    ).withBottomMargin(dp(8))
-                })
+
+            filteredRecords.isEmpty() -> {
+                recyclerView.visibility = View.GONE
+                emptyView.visibility = View.VISIBLE
+                emptyView.text = "No records in this date range. Tap the filter chip to clear."
             }
-            else -> filtered.forEach { record ->
-                val recordCard = card()
-                recordCard.addView(title(record.recordDate, 16))
-                recordCard.addView(accent("Sleep ${'$'}{record.sleepHours}h | ${'$'}{record.exerciseType ?: "No exercise"} ${'$'}{record.exerciseMinutes}min | Mood ${'$'}{record.moodScore}/5"))
-                recordCard.addView(body(record.notes.orEmpty().ifBlank { "No notes added." }))
-                val actions = horizontal()
-                actions.addView(smallButton("Edit", ButtonStyle.SECONDARY) { openRecordDialog(record) })
-                actions.addView(smallButton("Delete", ButtonStyle.DESTRUCTIVE) { confirmDelete(record.id) })
-                recordCard.addView(actions)
-                section.addView(recordCard)
+
+            else -> {
+                emptyView.visibility = View.GONE
+                recyclerView.visibility = View.VISIBLE
+                adapter.submitList(filteredRecords)
             }
         }
+
+        section.addView(recordsView)
     }
 
     private fun showDateRangeFilterDialog() {
@@ -398,6 +448,25 @@ class HomeActivity : Activity() {
         refreshRecordsList()
     }
 
+    // New: open RecordFormActivity for result
+    private fun openRecordForm(record: WellnessRecordResponse?) {
+        val intent = Intent(this, RecordFormActivity::class.java)
+        // Optionally pass record details via extras if needed later
+        startActivityForResult(intent, recordFormRequestCode)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == recordFormRequestCode && resultCode == Activity.RESULT_OK) {
+            // Refresh from backend to show newly added/edited record
+            scope.launch {
+                val records = runCatching { api.records() }.getOrDefault(emptyList())
+                cachedRecords = records
+                refreshRecordsList()
+            }
+        }
+    }
+
     // Wellness Record Management (CRUD)
 
     private fun openRecordDialog(record: WellnessRecordResponse?) {
@@ -412,6 +481,24 @@ class HomeActivity : Activity() {
         val mood = input("Mood score 1-5", record?.moodScore?.toString() ?: "3", InputType.TYPE_CLASS_NUMBER)
         val notes = input("Notes", record?.notes ?: "")
         listOf(date, sleep, exerciseType, exerciseMinutes, mood, notes).forEach(view::addView)
+
+        AlertDialog.Builder(this)
+            .setTitle(if (record == null) "Add record" else "Edit record")
+            .setView(view)
+            .setPositiveButton("Save") { _, _ ->
+                val request = WellnessRecordRequest(
+                    recordDate = date.text.toString(),
+                    sleepHours = sleep.text.toString().toDoubleOrNull() ?: 0.0,
+                    exerciseType = exerciseType.text.toString(),
+                    exerciseMinutes = exerciseMinutes.text.toString().toIntOrNull() ?: 0,
+                    moodScore = mood.text.toString().toIntOrNull() ?: 3,
+                    notes = notes.text.toString()
+                )
+                saveRecord(record?.id, request)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
 
     private fun saveRecord(id: Long?, request: WellnessRecordRequest) {
         reset()

@@ -5,11 +5,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import sg.edu.nus.iss.wellness.api.WellnessRecordResponse
 
 /**
- * Minimal RecordsAdapter stub so the project compiles. Replace with real binding/logic later.
+ * Simple RecordsAdapter to display WellnessRecordResponse items with edit/delete callbacks.
  */
-class RecordsAdapter(private val items: List<Any> = emptyList()) : RecyclerView.Adapter<RecordsAdapter.ViewHolder>() {
+class RecordsAdapter(
+    private val onEdit: (WellnessRecordResponse) -> Unit = {},
+    private val onDelete: (WellnessRecordResponse) -> Unit = {}
+) : RecyclerView.Adapter<RecordsAdapter.ViewHolder>() {
+
+    private var items: List<WellnessRecordResponse> = emptyList()
+
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView? = view.findViewById(android.R.id.text1)
     }
@@ -20,8 +27,19 @@ class RecordsAdapter(private val items: List<Any> = emptyList()) : RecyclerView.
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        (holder.title)?.text = items[position].toString()
+        val record = items[position]
+        holder.title?.text = "${record.recordDate} — Mood ${record.moodScore}/5"
+        holder.itemView.setOnClickListener { onEdit(record) }
+        holder.itemView.setOnLongClickListener {
+            onDelete(record)
+            true
+        }
     }
 
     override fun getItemCount(): Int = items.size
+
+    fun submitList(list: List<WellnessRecordResponse>) {
+        items = list
+        notifyDataSetChanged()
+    }
 }
