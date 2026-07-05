@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
     private Jwt jwt = new Jwt();
+    private Auth auth = new Auth();
     private String aiServiceUrl;
     private String internalServiceToken;
     private Google google = new Google();
@@ -20,6 +21,14 @@ public class AppProperties {
 
     public void setJwt(Jwt jwt) {
         this.jwt = jwt;
+    }
+
+    public Auth getAuth() {
+        return auth;
+    }
+
+    public void setAuth(Auth auth) {
+        this.auth = auth;
     }
 
     public String getAiServiceUrl() {
@@ -64,6 +73,29 @@ public class AppProperties {
 
         public void setExpirySeconds(long expirySeconds) {
             this.expirySeconds = expirySeconds;
+        }
+    }
+
+    /**
+     * Authentication-flow settings.
+     *
+     * @author JustinChua97
+     */
+    public static class Auth {
+        /**
+         * URL the security layer redirects to (HTTP 302) when a request carries an expired,
+         * missing, or malformed JWT. Bound from {@code app.auth.login-redirect-url}, which the
+         * bundled application.yml maps to the {@code LOGIN_REDIRECT_URL} environment variable.
+         * Defaults to the login endpoint so the app works without extra configuration.
+         */
+        private String loginRedirectUrl = "/api/auth/login";
+
+        public String getLoginRedirectUrl() {
+            return loginRedirectUrl;
+        }
+
+        public void setLoginRedirectUrl(String loginRedirectUrl) {
+            this.loginRedirectUrl = loginRedirectUrl;
         }
     }
 

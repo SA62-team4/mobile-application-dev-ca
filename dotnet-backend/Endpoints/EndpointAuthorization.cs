@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Wellness.Backup.Api.Errors;
 using Wellness.Backup.Api.Models;
 using Wellness.Backup.Api.Repositories;
+using Wellness.Backup.Api.Security;
 using Wellness.Backup.Api.Services;
 
 namespace Wellness.Backup.Api.Endpoints;
@@ -22,11 +23,15 @@ public static class EndpointAuthorization
         Role requiredRole = Role.User)
     {
         var header = context.Request.Headers.Authorization.ToString();
-        if (string.IsNullOrWhiteSpace(header) || !header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+
+        // Expired / missing / malformed token: hand off to the security layer, which redirects
+        // the client to the login page (HTTP 302) so they can re-authenticate.
+        if (LoginRedirect.RequiresLoginRedirect(LoginRedirect.Classify(header, jwtTokenService)))
         {
-            throw ApiException.Unauthorized("Authentication required");
+            throw new LoginRedirectException();
         }
 
+        // Past the redirect gate the token is structurally valid and unexpired.
         var token = header["Bearer ".Length..].Trim();
         ClaimsPrincipal principal;
         try

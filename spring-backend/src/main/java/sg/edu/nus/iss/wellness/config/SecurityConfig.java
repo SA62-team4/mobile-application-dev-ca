@@ -1,14 +1,11 @@
 package sg.edu.nus.iss.wellness.config;
 
-import java.time.Instant;
 import java.util.List;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -27,12 +24,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import sg.edu.nus.iss.wellness.error.GlobalExceptionHandler;
 import sg.edu.nus.iss.wellness.model.Role;
 import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 import sg.edu.nus.iss.wellness.security.JwtAuthenticationFilter;
+import sg.edu.nus.iss.wellness.security.LoginRedirectAuthenticationEntryPoint;
 
 /**
  * Security configuration for JWT-protected REST APIs.
@@ -48,7 +43,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             JwtAuthenticationFilter jwtAuthenticationFilter,
                                             AuthenticationProvider authenticationProvider,
-                                            ObjectMapper objectMapper) throws Exception {
+                                            LoginRedirectAuthenticationEntryPoint loginRedirectEntryPoint) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -60,13 +55,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().hasRole(Role.USER.name())
                 )
-                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authEx) -> {
-                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                    var body = new GlobalExceptionHandler.ErrorResponse(
-                        Instant.now(), 401, "Unauthorized", "Authentication required", request.getRequestURI());
-                    objectMapper.writeValue(response.getWriter(), body);
-                    }))
+                // On an expired / missing / malformed token, this entry point issues a 302
+                // redirect to the login URL; other auth failures still return 401 JSON.
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(loginRedirectEntryPoint))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
