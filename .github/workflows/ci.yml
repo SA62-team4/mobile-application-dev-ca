@@ -136,7 +136,8 @@ jobs:
       - name: Run RAG indexing + retrieval smoke tests
         working-directory: python-ai-service
         # Excludes the opt-in live Ollama integration tests (marked "integration").
-        run: pytest -m "not integration" -q
+        # Emits coverage.xml for SonarQube (imported via sonar.python.coverage.reportPaths).
+        run: pytest -m "not integration" --cov=app --cov-report=xml -q
       - name: Scan Python AI service with SonarQube
         if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8.2.0

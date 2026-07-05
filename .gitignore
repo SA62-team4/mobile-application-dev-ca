@@ -20,6 +20,8 @@ __pycache__/
 .venv/
 venv/
 *.pyc
+.coverage
+coverage.xml
 chroma-data/
 mysql-data/
 ollama-data/
