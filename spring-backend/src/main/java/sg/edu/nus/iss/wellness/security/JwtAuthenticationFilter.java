@@ -18,6 +18,11 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Reads bearer tokens and creates authenticated Spring Security principals.
  *
+ * <p>Any token problem (missing, expired, malformed, or referencing an unknown account)
+ * leaves the request unauthenticated, so the security layer returns a 401 for protected
+ * endpoints. Authorities are derived from the freshly loaded user's Role enum, keeping the
+ * database as the single source of truth.</p>
+ *
  * @author SA62 Team
  */
 @Component
@@ -45,15 +50,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails user = userDetailsService.loadUserByUsername(email);
                 if (jwtService.isValid(token, user.getUsername())) {
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
         } catch (Exception ex) {
             SecurityContextHolder.clearContext();
         }
         filterChain.doFilter(request, response);
-        }
     }
+}

@@ -61,6 +61,7 @@ class HomeActivity : Activity() {
     private var cachedRecords: List<WellnessRecordResponse> = emptyList()
     private var cachedRecommendations: List<RecommendationResponse> = emptyList()
     private var recordsSection: LinearLayout? = null
+    private val sessionExpired = java.util.concurrent.atomic.AtomicBoolean(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +70,7 @@ class HomeActivity : Activity() {
             goToLogin()
             return
         }
-        api = ApiClient.create(tokenStore)
+        api = ApiClient.create(tokenStore) { handleSessionExpired() }
         setContentView(R.layout.activity_home)
         EdgeToEdge.apply(this, findViewById(R.id.rootContainer))
 
@@ -96,13 +97,11 @@ class HomeActivity : Activity() {
         reset()
         addStateBlock("Loading dashboard", "Fetching your latest wellness data.", "...")
         scope.launch {
-            val records = runCatching { api.records() }.getOrElse { err ->
-                if (err is HttpException && err.code() in listOf(401, 403)) {
-                    tokenStore.clear()
-                    goToLogin()
-                } else {
-                    showError("Could not load dashboard.", "Check that the backend is reachable from the emulator.")
-                }
+            val records = runCatching { api.records() }.getOrElse {
+                // 401/403 is handled centrally by the API client (clears token + returns
+                // to login); showError() no-ops while that navigation is in flight, so we
+                // only surface a connectivity error for genuine non-auth failures.
+                showError("Could not load dashboard.", "Check that the backend is reachable from the emulator.")
                 return@launch
             }
             val recommendations = runCatching { api.recommendations() }.getOrDefault(emptyList())
@@ -582,6 +581,9 @@ class HomeActivity : Activity() {
     }
 
     private fun showError(title: String, detail: String) {
+        // While we are navigating to login (session expired), suppress error UI so the
+        // user does not see a misleading "backend unreachable" flash for an auth failure.
+        if (sessionExpired.get()) return
         reset()
         addStateBlock(title, detail, "!", true)
     }
@@ -787,6 +789,21 @@ class HomeActivity : Activity() {
             }
             is IOException -> "$prefix. Check that the backend is reachable from the emulator."
             else -> "$prefix. ${throwable.javaClass.simpleName}."
+        }
+    }
+
+    /**
+     * Invoked by the API client's interceptor (on a background thread) when any call
+     * returns 401/403. The token has already been cleared; here we navigate back to
+     * login exactly once, on the main thread.
+     */
+    private fun handleSessionExpired() {
+        if (sessionExpired.compareAndSet(false, true)) {
+            runOnUiThread {
+                if (!isFinishing && !isDestroyed) {
+                    goToLogin()
+                }
+            }
         }
     }
 

@@ -37,6 +37,10 @@ import sg.edu.nus.iss.wellness.security.JwtAuthenticationFilter;
 /**
  * Security configuration for JWT-protected REST APIs.
  *
+ * <p>Protected endpoints require the USER role. Unauthenticated requests (missing,
+ * expired, or malformed token) receive a 401 JSON response per the API contract; the
+ * native clients react to that status code and route the user to their login screen.</p>
+ *
  * @author SA62 Team
  * @author JustinChua97
  */

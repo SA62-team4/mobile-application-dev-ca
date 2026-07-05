@@ -11,10 +11,22 @@ import java.util.concurrent.TimeUnit
 /**
  * Creates Retrofit services with JWT authentication.
  *
- * @author SA62 Team
+ * A single response interceptor centralises session-expiry handling: any 401
+ * (expired / malformed / missing token) or 403 clears the stored token and
+ * signals the app to return to the login screen, so every API call is covered
+ * uniformly rather than each screen re-implementing the check.
+ *
+ * @author SA62 Team, JustinChua97
  */
 object ApiClient {
-    fun create(tokenStore: TokenStore): ApiService {
+    /**
+     * @param tokenStore stored credentials; cleared automatically on 401/403.
+     * @param onSessionExpired invoked (on an OkHttp background thread) when a call
+     *   returns 401/403, after the token is cleared. Callers should marshal any
+     *   navigation onto the main thread. May be null for unauthenticated screens
+     *   (login/register) that handle auth failures inline.
+     */
+    fun create(tokenStore: TokenStore, onSessionExpired: (() -> Unit)? = null): ApiService {
         val logger = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BASIC
         }
@@ -23,6 +35,11 @@ object ApiClient {
             .writeTimeout(30, TimeUnit.SECONDS)
             .readTimeout(150, TimeUnit.SECONDS)
             .callTimeout(180, TimeUnit.SECONDS)
+            // This is a JSON API client: never silently follow a 3xx redirect. Auth
+            // failures must surface as 401/403 status codes the app can act on, not be
+            // swallowed by the HTTP stack chasing a Location header.
+            .followRedirects(false)
+            .followSslRedirects(false)
             .addInterceptor { chain ->
                 val token = tokenStore.token()
                 val request = if (token.isNullOrBlank()) {
@@ -33,6 +50,14 @@ object ApiClient {
                         .build()
                 }
                 chain.proceed(request)
+            }
+            .addInterceptor { chain ->
+                val response = chain.proceed(chain.request())
+                if (response.code == 401 || response.code == 403) {
+                    tokenStore.clear()
+                    onSessionExpired?.invoke()
+                }
+                response
             }
             .addInterceptor(logger)
             .build()
