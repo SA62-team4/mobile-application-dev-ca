@@ -467,13 +467,9 @@ class HomeActivity : Activity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == recordFormRequestCode && resultCode == Activity.RESULT_OK) {
-            // Refresh from backend to show newly added/edited record
-            scope.launch {
-                val records = runCatching { api.records() }.getOrDefault(emptyList())
-                cachedRecords = records
-                refreshRecordsList()
-            }
+
+        if (requestCode == recordFormRequestCode && resultCode == RESULT_OK) {
+            showDashboard()
         }
     }
 
@@ -491,6 +487,9 @@ class HomeActivity : Activity() {
         val mood = input("Mood score 1-5", record?.moodScore?.toString() ?: "3", InputType.TYPE_CLASS_NUMBER)
         val notes = input("Notes", record?.notes ?: "")
         listOf(date, sleep, exerciseType, exerciseMinutes, mood, notes).forEach(view::addView)
+
+    private fun SaveRecordRemovedForPatch_REM() {
+    }
 
     private fun saveRecord(id: Long?, request: WellnessRecordRequest) {
         reset()
