@@ -20,6 +20,25 @@
     <string name="action_edit">Edit</string>
     <string name="action_delete">Delete</string>
 
+    <!-- Labels & hints used by RecordFormActivity -->
+    <string name="label_record_date">Record date</string>
+    <string name="hint_pick_date">Tap to pick date</string>
+
+    <string name="label_sleep_hours">Sleep hours (0–24)</string>
+    <string name="hint_sleep_hours">Example: 7.5</string>
+
+    <string name="label_exercise_type">Exercise type</string>
+    <string name="hint_exercise_type">Example: Running</string>
+
+    <string name="label_exercise_minutes">Exercise minutes</string>
+    <string name="hint_exercise_minutes">Example: 30</string>
+
+    <string name="label_mood_score">Mood (1–5)</string>
+    <string name="hint_mood_score">Example: 4</string>
+
+    <string name="label_notes">Notes</string>
+    <string name="hint_notes">Optional notes</string>
+
     <!-- Form strings for RecordFormActivity -->
     <string name="record_date_required">Record date is required</string>
     <string name="error_sleep_range">Sleep hours must be 0–24</string>
