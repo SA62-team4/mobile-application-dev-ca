@@ -1,7 +1,11 @@
-"""Agentic recommendation workflow.
+"""Agentic recommendation workflow using LangChain.
 
 @author SA62 Team
 """
+
+from langchain_ollama import OllamaLLM
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 from app.backend_client import BackendClient
 from app.models import InternalRecommendationRequest, RecommendationResponse
@@ -15,13 +19,14 @@ class AgentService:
         self.rag = rag
         self.ollama = ollama
 
-    async def generate_recommendation(self, user_id: int) -> RecommendationResponse:
-        records = await self.backend.recent_records(user_id)
-        focus = self._choose_focus(records)
-        trend_summary = self._trend_summary(records, focus)
-        chunks = await self.rag.retrieve(focus)
-        context = "\n\n".join(f"{chunk.title}: {chunk.snippet}" for chunk in chunks)
-        prompt = f"""Generate a short personalised wellness recommendation.
+        self.llm = OllamaLLM(
+            base_url=self.ollama.settings.ollama_base_url,
+            model=self.ollama.settings.generation_model,
+            temperature=0.3
+        )
+
+        self.prompt_template = PromptTemplate.from_template(
+            """Generate a short personalised wellness recommendation.
 The recommendation must be educational, practical, and non-medical.
 
 Focus: {focus}
@@ -35,9 +40,24 @@ Recommendation:
 Action items:
 - item 1
 - item 2
-- item 3
-"""
-        generated = await self.ollama.generate(prompt, num_predict=160)
+- item 3"""
+        )
+
+        self.chain = self.prompt_template | self.llm | StrOutputParser()
+
+    async def generate_recommendation(self, user_id: int) -> RecommendationResponse:
+        records = await self.backend.recent_records(user_id)
+        focus = self._choose_focus(records)
+        trend_summary = self._trend_summary(records, focus)
+        chunks = await self.rag.retrieve(focus)
+        context = "\n\n".join(f"{chunk.title}: {chunk.snippet}" for chunk in chunks)
+
+        generated = await self.chain.ainvoke({
+            "focus": focus,
+            "trend_summary": trend_summary,
+            "context": context
+        })
+
         title, recommendation_text, action_items = self._parse_generated(generated, focus)
         saved = await self.backend.save_recommendation(
             user_id,

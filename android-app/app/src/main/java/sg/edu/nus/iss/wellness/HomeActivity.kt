@@ -15,10 +15,12 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import sg.edu.nus.iss.wellness.api.ApiClient
@@ -545,12 +547,102 @@ class HomeActivity : Activity() {
 
     private fun generateRecommendation() {
         reset()
-        addStateBlock("Generating recommendation", "Local AI may take up to a minute. Duplicate submissions are disabled.", "AI")
+        val loading = addLoadingBlock("Generating recommendation", "Accessing your 14-day logs...", "AI")
+        val detailsView = loading.first
+        val progressBar = loading.second.first
+        val percentView = loading.second.second
+        
+        val statusJob = scope.launch {
+            val stages = listOf(
+                "Analyzing sleep, activity, and mood patterns...",
+                "Querying vector database for expert wellness guidelines...",
+                "Local LLM is writing your custom wellness guide (usually takes 15-40s)...",
+                "Almost ready! Structuring personalized action items...",
+                "Completing final formatting and saving to backend...",
+                "Still thinking... Local Ollama is heavily processing, thanks for your patience!"
+            )
+            for (message in stages) {
+                delay(4000)
+                detailsView.text = message
+            }
+        }
+
+        val progressJob = scope.launch {
+            var currentProgress = 0
+            while (currentProgress < 95) {
+                delay(300)
+                currentProgress++
+                progressBar.progress = currentProgress
+                percentView.text = "$currentProgress%"
+                
+                if (currentProgress > 75) {
+                    delay(200)
+                }
+                if (currentProgress > 88) {
+                    delay(400)
+                }
+            }
+        }
+
         scope.launch {
             runCatching { api.generateRecommendation() }
-                .onSuccess { showRecommendations() }
-                .onFailure { showError(apiErrorMessage("Could not generate recommendation", it), "Do not pretend a recommendation was saved. Retry after services recover.") }
+                .onSuccess {
+                    statusJob.cancel()
+                    progressJob.cancel()
+                    progressBar.progress = 100
+                    percentView.text = "100%"
+                    delay(300)
+                    showRecommendations()
+                }
+                .onFailure {
+                    statusJob.cancel()
+                    progressJob.cancel()
+                    showError(apiErrorMessage("Could not generate recommendation", it), "Do not pretend a recommendation was saved. Retry after services recover.")
+                }
         }
+    }
+
+    private fun addLoadingBlock(title: String, detail: String, icon: String): Pair<TextView, Pair<ProgressBar, TextView>> {
+        val block = card(
+            fillColor = getColor(R.color.bg_surface),
+            stroke = getColor(R.color.border_default)
+        )
+        block.gravity = Gravity.CENTER_HORIZONTAL
+        val mark = TextView(this).apply {
+            text = icon
+            textSize = 20f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            background = rounded(getColor(R.color.primary), dp(32))
+            layoutParams = LinearLayout.LayoutParams(dp(64), dp(64)).withBottomMargin(dp(10))
+        }
+        block.addView(mark)
+        block.addView(title(title, 20).centered())
+        val detailView = body(detail).centered().apply {
+            setPadding(0, 0, 0, dp(12))
+        }
+        block.addView(detailView)
+        
+        val progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+            max = 100
+            progress = 0
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(8)).apply {
+                bottomMargin = dp(6)
+                leftMargin = dp(24)
+                rightMargin = dp(24)
+            }
+        }
+        block.addView(progressBar)
+        
+        val percentView = caption("0%").centered().apply {
+            setTextColor(getColor(R.color.primary))
+            typeface = Typeface.DEFAULT_BOLD
+        }
+        block.addView(percentView)
+        
+        content.addView(block)
+        return Pair(detailView, Pair(progressBar, percentView))
     }
 
     // User Profile
@@ -588,7 +680,7 @@ class HomeActivity : Activity() {
         addStateBlock(title, detail, "!", true)
     }
 
-    private fun addStateBlock(title: String, detail: String, icon: String, error: Boolean = false) {
+    private fun addStateBlock(title: String, detail: String, icon: String, error: Boolean = false): TextView {
         val block = card(
             fillColor = if (error) Color.rgb(254, 242, 242) else getColor(R.color.bg_surface),
             stroke = if (error) Color.rgb(254, 202, 202) else getColor(R.color.border_default)
@@ -605,8 +697,10 @@ class HomeActivity : Activity() {
         }
         block.addView(mark)
         block.addView(title(title, 20).centered())
-        block.addView(body(detail).centered())
+        val detailView = body(detail).centered()
+        block.addView(detailView)
         content.addView(block)
+        return detailView
     }
 
     private fun infoCard(heading: String, detail: String): LinearLayout =
