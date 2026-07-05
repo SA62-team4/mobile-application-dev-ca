@@ -49,4 +49,8 @@
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="cd_record_date">Record date</string>
+
+    <!-- Additional strings for records list -->
+    <string name="records_empty_message">No records yet — try adding one</string>
+    <string name="cd_records_loading">Loading wellness records</string>
 </resources>
