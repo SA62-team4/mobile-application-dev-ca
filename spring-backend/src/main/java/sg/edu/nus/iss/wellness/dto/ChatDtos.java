@@ -1,6 +1,7 @@
 package sg.edu.nus.iss.wellness.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 import java.util.List;
@@ -14,7 +15,11 @@ public final class ChatDtos {
     private ChatDtos() {
     }
 
-    public record ChatRequest(@NotBlank String question) {
+    public record ChatRequest(
+            @NotBlank(message = "Question cannot be empty")
+            @Size(max = 1000, message = "Question must be less than 1000 characters")
+            String question
+    ) {
     }
 
     public record SourceSnippet(String title, String snippet) {
