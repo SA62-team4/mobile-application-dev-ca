@@ -451,7 +451,17 @@ class HomeActivity : Activity() {
     // New: open RecordFormActivity for result
     private fun openRecordForm(record: WellnessRecordResponse?) {
         val intent = Intent(this, RecordFormActivity::class.java)
-        // Optionally pass record details via extras if needed later
+
+        if (record != null) {
+            intent.putExtra(RecordFormActivity.EXTRA_RECORD_ID, record.id)
+            intent.putExtra(RecordFormActivity.EXTRA_RECORD_DATE, record.recordDate)
+            intent.putExtra(RecordFormActivity.EXTRA_SLEEP, record.sleepHours)
+            intent.putExtra(RecordFormActivity.EXTRA_EXERCISE_TYPE, record.exerciseType)
+            intent.putExtra(RecordFormActivity.EXTRA_EXERCISE_MINUTES, record.exerciseMinutes)
+            intent.putExtra(RecordFormActivity.EXTRA_MOOD, record.moodScore)
+            intent.putExtra(RecordFormActivity.EXTRA_NOTES, record.notes)
+        }
+
         startActivityForResult(intent, recordFormRequestCode)
     }
 
@@ -481,24 +491,6 @@ class HomeActivity : Activity() {
         val mood = input("Mood score 1-5", record?.moodScore?.toString() ?: "3", InputType.TYPE_CLASS_NUMBER)
         val notes = input("Notes", record?.notes ?: "")
         listOf(date, sleep, exerciseType, exerciseMinutes, mood, notes).forEach(view::addView)
-
-        AlertDialog.Builder(this)
-            .setTitle(if (record == null) "Add record" else "Edit record")
-            .setView(view)
-            .setPositiveButton("Save") { _, _ ->
-                val request = WellnessRecordRequest(
-                    recordDate = date.text.toString(),
-                    sleepHours = sleep.text.toString().toDoubleOrNull() ?: 0.0,
-                    exerciseType = exerciseType.text.toString(),
-                    exerciseMinutes = exerciseMinutes.text.toString().toIntOrNull() ?: 0,
-                    moodScore = mood.text.toString().toIntOrNull() ?: 3,
-                    notes = notes.text.toString()
-                )
-                saveRecord(record?.id, request)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
 
     private fun saveRecord(id: Long?, request: WellnessRecordRequest) {
         reset()
@@ -565,12 +557,12 @@ class HomeActivity : Activity() {
         scope.launch {
             runCatching { api.chatHistory() }
                 .onSuccess { messages ->
-                    if (messages.isEmpty()) {
-                        addStateBlock("No chat yet", "Ask a wellness habit question to start a RAG-backed conversation.", "?")
-                    } else {
-                        messages.forEach(::addChatPair)
-                    }
+                if (messages.isEmpty()) {
+                    addStateBlock("No chat yet", "Ask a wellness habit question to start a RAG-backed conversation.", "?")
+                } else {
+                    messages.forEach(::addChatPair)
                 }
+            }
                 .onFailure { addStateBlock("Could not load chat history", "You can still retry after checking backend connectivity.", "!") }
         }
     }
@@ -842,31 +834,31 @@ class HomeActivity : Activity() {
         }
 
     private fun TextView.centered(): TextView = apply {
-        gravity = Gravity.CENTER
-        textAlignment = View.TEXT_ALIGNMENT_CENTER
-    }
+            gravity = Gravity.CENTER
+            textAlignment = View.TEXT_ALIGNMENT_CENTER
+        }
 
     private fun LinearLayout.LayoutParams.withBottomMargin(value: Int): LinearLayout.LayoutParams = apply {
-        bottomMargin = value
-    }
+            bottomMargin = value
+        }
 
     private fun LinearLayout.LayoutParams.withEndMargin(value: Int): LinearLayout.LayoutParams = apply {
-        marginEnd = value
-    }
+            marginEnd = value
+        }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     private fun apiErrorMessage(prefix: String, throwable: Throwable): String {
-        return when (throwable) {
-            is HttpException -> when (throwable.code()) {
-                401, 403 -> "$prefix. Please log out and log in again."
-                503 -> "$prefix. Check Python AI service and Ollama."
-                else -> "$prefix. Backend returned HTTP ${'$'}{throwable.code()}."
+            return when (throwable) {
+                is HttpException -> when (throwable.code()) {
+                    401, 403 -> "$prefix. Please log out and log in again."
+                    503 -> "$prefix. Check Python AI service and Ollama."
+                    else -> "$prefix. Backend returned HTTP ${'$'}{throwable.code()}."
+                }
+                is IOException -> "$prefix. Check that the backend is reachable from the emulator."
+                else -> "$prefix. ${'$'}{throwable.javaClass.simpleName}."
             }
-            is IOException -> "$prefix. Check that the backend is reachable from the emulator."
-            else -> "$prefix. ${'$'}{throwable.javaClass.simpleName}."
         }
-    }
 
     /**
      * Invoked by the API client's interceptor (on a background thread) when any call

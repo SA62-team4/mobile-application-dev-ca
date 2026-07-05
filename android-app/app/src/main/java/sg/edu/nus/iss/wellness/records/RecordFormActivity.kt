@@ -10,6 +10,17 @@ import android.widget.FrameLayout
  * This activity will return RESULT_OK when the "Save (stub)" button is pressed.
  */
 class RecordFormActivity : Activity() {
+
+    companion object {
+        const val EXTRA_RECORD_ID = "extra_record_id"
+        const val EXTRA_RECORD_DATE = "extra_record_date"
+        const val EXTRA_SLEEP = "extra_sleep"
+        const val EXTRA_EXERCISE_TYPE = "extra_exercise_type"
+        const val EXTRA_EXERCISE_MINUTES = "extra_exercise_minutes"
+        const val EXTRA_MOOD = "extra_mood"
+        const val EXTRA_NOTES = "extra_notes"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
