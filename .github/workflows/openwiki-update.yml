@@ -33,10 +33,9 @@ jobs:
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENWIKI_MODEL_ID: z-ai/glm-5.2
-          # LangSmith tracing disabled: the tracer emits harmless but noisy
-          # "No LLM/tool run to end" callback-mismatch errors. Re-enable by
-          # restoring these vars and setting LANGCHAIN_TRACING_V2 to "true".
-          LANGCHAIN_TRACING_V2: "false"
+          LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+          LANGCHAIN_PROJECT: openwiki
+          LANGCHAIN_TRACING_V2: "true"
 
       - name: Create OpenWiki update pull request
         uses: peter-evans/create-pull-request@v8
