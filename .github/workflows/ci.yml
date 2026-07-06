@@ -4,8 +4,10 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [ main, develop ]
-  push:
-    branches: [ main, develop ]
+  # Push trigger removed to save GitHub Actions minutes; CI runs on PRs only.
+  # To restore, re-add:
+  #   push:
+  #     branches: [ main, develop ]
 
 jobs:
   docs:
