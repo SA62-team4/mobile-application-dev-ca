@@ -1,7 +1,7 @@
 # ── Stage 1: Build ───────────────────────────────────────────────────────────
 # We use the full Maven image so it has everything needed to compile Java code.
 # eclipse-temurin:17 is the community build of OpenJDK 17 from Adoptium.
-FROM maven:3.9-eclipse-temurin-17 AS build
+FROM maven:3-eclipse-temurin-26 AS build
 WORKDIR /app
 
 # Copy the dependency manifest first. Docker caches each instruction as a
@@ -18,7 +18,7 @@ RUN mvn -q -DskipTests package
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
 # We switch to a much smaller JRE-only image. The build tools (Maven, javac)
 # are NOT included, which shrinks the final image and reduces the attack surface.
-FROM eclipse-temurin:17-jre AS runtime
+FROM eclipse-temurin:25-jre AS runtime
 WORKDIR /app
 
 # Install curl so the HEALTHCHECK command below can reach the Spring Actuator
