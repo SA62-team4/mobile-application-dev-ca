@@ -11,6 +11,7 @@
         <activity android:name=".ChatActivity" />
         <activity android:name=".RecommendationsActivity" />
         <activity android:name=".DashboardActivity" />
+        <activity android:name=".RecordFormActivity" />
         <activity
             android:name=".LoginActivity"
             android:exported="true">

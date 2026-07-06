@@ -1,6 +1,7 @@
 package sg.edu.nus.iss.wellness.ui
 
 import android.app.Activity
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -12,7 +13,12 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import retrofit2.HttpException
+import sg.edu.nus.iss.wellness.ChatActivity
+import sg.edu.nus.iss.wellness.DashboardActivity
+import sg.edu.nus.iss.wellness.ProfileActivity
 import sg.edu.nus.iss.wellness.R
+import sg.edu.nus.iss.wellness.RecommendationsActivity
+import sg.edu.nus.iss.wellness.databinding.BottomNavBarBinding
 import java.io.IOException
 
 /**
@@ -225,6 +231,23 @@ fun Activity.highlightTab(buttons: List<Button>, selected: Button) {
         button.setBackgroundResource(if (button == selected) R.drawable.bg_button_secondary else android.R.color.transparent)
         button.setTextColor(if (button == selected) getColor(R.color.primary) else getColor(R.color.text_secondary))
         button.isAllCaps = false
+    }
+}
+
+fun Activity.wireBottomNav(bottomNav: BottomNavBarBinding, current: Class<out Activity>) {
+    val targets = linkedMapOf(
+        bottomNav.dashboardButton to DashboardActivity::class.java,
+        bottomNav.chatButton to ChatActivity::class.java,
+        bottomNav.recommendationsButton to RecommendationsActivity::class.java,
+        bottomNav.profileButton to ProfileActivity::class.java
+    )
+    targets.forEach { (button, target) ->
+        button.setOnClickListener {
+            if (target != current) {
+                startActivity(Intent(this, target))
+                finish()
+            }
+        }
     }
 }
 

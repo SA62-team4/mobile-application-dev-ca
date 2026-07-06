@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import sg.edu.nus.iss.wellness.api.ApiClient
 import sg.edu.nus.iss.wellness.databinding.ActivityProfileBinding
 import sg.edu.nus.iss.wellness.ui.highlightTab
+import sg.edu.nus.iss.wellness.ui.wireBottomNav
 
 /**
  * Displays the signed-in user's profile and handles logout.
@@ -44,6 +45,7 @@ class ProfileActivity : AppCompatActivity() {
             ),
             binding.bottomNav.profileButton
         )
+        wireBottomNav(binding.bottomNav, ProfileActivity::class.java)
 
         binding.logoutButton.setOnClickListener {
             scope.launch {

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.MainScope
@@ -18,6 +19,7 @@ import sg.edu.nus.iss.wellness.ui.addStateBlock
 import sg.edu.nus.iss.wellness.ui.apiErrorMessage
 import sg.edu.nus.iss.wellness.ui.highlightTab
 import sg.edu.nus.iss.wellness.ui.showError
+import sg.edu.nus.iss.wellness.ui.wireBottomNav
 
 /**
  * RAG chatbot screen: ask a wellness question and view chat history.
@@ -30,6 +32,8 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var tokenStore: TokenStore
     private lateinit var api: ApiService
     private lateinit var questionInput: EditText
+    private lateinit var sendButton: Button
+    private lateinit var statusContainer: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,10 +57,13 @@ class ChatActivity : AppCompatActivity() {
             ),
             binding.bottomNav.chatButton
         )
+        wireBottomNav(binding.bottomNav, ChatActivity::class.java)
 
         val headerView = layoutInflater.inflate(R.layout.header_chat_input, binding.chatListView, false)
         questionInput = headerView.findViewById(R.id.questionInput)
-        headerView.findViewById<Button>(R.id.sendButton).setOnClickListener {
+        sendButton = headerView.findViewById(R.id.sendButton)
+        statusContainer = headerView.findViewById(R.id.statusContainer)
+        sendButton.setOnClickListener {
             val text = questionInput.text.toString().trim()
             if (text.isBlank()) {
                 Toast.makeText(this, "Enter a wellness question before sending.", Toast.LENGTH_SHORT).show()
@@ -65,25 +72,27 @@ class ChatActivity : AppCompatActivity() {
             }
         }
         binding.chatListView.addHeaderView(headerView)
-        binding.chatListView.emptyView = binding.emptyStateContainer
+        binding.chatListView.adapter = ChatAdapter(this, emptyList())
 
         loadChatHistory()
     }
 
     private fun sendChat(question: String) {
-        binding.emptyStateContainer.removeAllViews()
-        addStateBlock(binding.emptyStateContainer, "Thinking", "Local RAG and Ollama may take a little while.", "AI")
-        binding.chatListView.adapter = ChatAdapter(this, emptyList())
+        statusContainer.removeAllViews()
+        addStateBlock(statusContainer, "Thinking", "Local RAG and Ollama may take a little while.", "AI")
+        sendButton.isEnabled = false
         scope.launch {
             runCatching { api.sendChat(ChatRequest(question)) }
                 .onSuccess {
+                    sendButton.isEnabled = true
                     questionInput.setText("")
                     loadChatHistory()
                 }
                 .onFailure {
-                    binding.emptyStateContainer.removeAllViews()
+                    sendButton.isEnabled = true
+                    statusContainer.removeAllViews()
                     showError(
-                        binding.emptyStateContainer,
+                        statusContainer,
                         apiErrorMessage("Chatbot unavailable", it),
                         "Keep your question and retry when services are running."
                     )
@@ -92,18 +101,18 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun loadChatHistory() {
-        binding.emptyStateContainer.removeAllViews()
         scope.launch {
             runCatching { api.chatHistory() }
                 .onSuccess { messages ->
+                    statusContainer.removeAllViews()
                     if (messages.isEmpty()) {
-                        addStateBlock(binding.emptyStateContainer, "No chat yet", "Ask a wellness habit question to start a RAG-backed conversation.", "?")
+                        addStateBlock(statusContainer, "No chat yet", "Ask a wellness habit question to start a RAG-backed conversation.", "?")
                     }
                     binding.chatListView.adapter = ChatAdapter(this@ChatActivity, messages)
                 }
                 .onFailure {
-                    showError(binding.emptyStateContainer, "Could not load chat history", "You can still retry after checking backend connectivity.")
-                    binding.chatListView.adapter = ChatAdapter(this@ChatActivity, emptyList())
+                    statusContainer.removeAllViews()
+                    showError(statusContainer, "Could not load chat history", "You can still retry after checking backend connectivity.")
                 }
         }
     }

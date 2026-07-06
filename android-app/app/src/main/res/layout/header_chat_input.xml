@@ -25,4 +25,10 @@
         android:textAllCaps="false"
         android:textColor="@color/text_on_primary"
         android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/statusContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
 </LinearLayout>

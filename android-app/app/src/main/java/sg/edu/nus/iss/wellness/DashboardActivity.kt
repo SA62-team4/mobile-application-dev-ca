@@ -6,7 +6,6 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
-import android.text.InputType
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +13,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -23,7 +23,6 @@ import sg.edu.nus.iss.wellness.adapter.RecordsAdapter
 import sg.edu.nus.iss.wellness.api.ApiClient
 import sg.edu.nus.iss.wellness.api.ApiService
 import sg.edu.nus.iss.wellness.api.RecommendationResponse
-import sg.edu.nus.iss.wellness.api.WellnessRecordRequest
 import sg.edu.nus.iss.wellness.api.WellnessRecordResponse
 import sg.edu.nus.iss.wellness.dashboard.DailySnapshot
 import sg.edu.nus.iss.wellness.dashboard.DashboardDataHelper
@@ -60,6 +59,12 @@ class DashboardActivity : AppCompatActivity() {
     private var cachedRecords: List<WellnessRecordResponse> = emptyList()
     private var cachedRecommendations: List<RecommendationResponse> = emptyList()
 
+    private val recordFormLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            loadDashboard()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         tokenStore = TokenStore(this)
@@ -82,6 +87,7 @@ class DashboardActivity : AppCompatActivity() {
             ),
             binding.bottomNav.dashboardButton
         )
+        wireBottomNav(binding.bottomNav, DashboardActivity::class.java)
 
         val snapshotHeader = layoutInflater.inflate(R.layout.header_dashboard_snapshot, binding.dashboardListView, false)
         snapshotContainer = snapshotHeader.findViewById(R.id.snapshotContainer)
@@ -99,11 +105,11 @@ class DashboardActivity : AppCompatActivity() {
         filterChip = recordsHeader.findViewById(R.id.filterChip)
         recordsEmptyContainer = recordsHeader.findViewById(R.id.recordsEmptyContainer)
         recordsHeader.findViewById<Button>(R.id.filterButton).setOnClickListener { showDateRangeFilterDialog() }
-        recordsHeader.findViewById<Button>(R.id.addRecordButton).setOnClickListener { openRecordDialog(null) }
+        recordsHeader.findViewById<Button>(R.id.addRecordButton).setOnClickListener { openRecordForm(null) }
         filterChip.setOnClickListener { clearFilter() }
         binding.dashboardListView.addHeaderView(recordsHeader)
 
-        binding.dashboardListView.adapter = RecordsAdapter(this, emptyList(), ::openRecordDialog) { confirmDelete(it.id) }
+        binding.dashboardListView.adapter = RecordsAdapter(this, emptyList(), ::openRecordForm) { confirmDelete(it.id) }
 
         loadDashboard()
     }
@@ -172,7 +178,10 @@ class DashboardActivity : AppCompatActivity() {
         metricsContainer.addView(buildMetricCard("Mood", "😊", summary, moodSeries, summary.moodBadge, MetricType.MOOD))
 
         val teaser = DashboardDataHelper.buildInsightTeaser(recommendations)
-        renderInsightCard(teaser) { /* T-701G: navigate to RecommendationsActivity */ }
+        renderInsightCard(teaser) {
+            startActivity(Intent(this, RecommendationsActivity::class.java))
+            finish()
+        }
 
         renderRecordsList(records)
     }
@@ -330,7 +339,7 @@ class DashboardActivity : AppCompatActivity() {
             else -> Unit
         }
 
-        binding.dashboardListView.adapter = RecordsAdapter(this, filtered, ::openRecordDialog) { confirmDelete(it.id) }
+        binding.dashboardListView.adapter = RecordsAdapter(this, filtered, ::openRecordForm) { confirmDelete(it.id) }
     }
 
     private fun showDateRangeFilterDialog() {
@@ -372,48 +381,18 @@ class DashboardActivity : AppCompatActivity() {
         refreshRecordsList()
     }
 
-    private fun openRecordDialog(record: WellnessRecordResponse?) {
-        val view = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(8), dp(20), 0)
+    private fun openRecordForm(record: WellnessRecordResponse?) {
+        val intent = Intent(this, RecordFormActivity::class.java)
+        if (record != null) {
+            intent.putExtra(Constants.EXTRA_RECORD_ID, record.id)
+            intent.putExtra(Constants.EXTRA_RECORD_DATE, record.recordDate)
+            intent.putExtra(Constants.EXTRA_RECORD_SLEEP_HOURS, record.sleepHours)
+            intent.putExtra(Constants.EXTRA_RECORD_EXERCISE_TYPE, record.exerciseType)
+            intent.putExtra(Constants.EXTRA_RECORD_EXERCISE_MINUTES, record.exerciseMinutes)
+            intent.putExtra(Constants.EXTRA_RECORD_MOOD_SCORE, record.moodScore)
+            intent.putExtra(Constants.EXTRA_RECORD_NOTES, record.notes)
         }
-        val date = input("Date YYYY-MM-DD", record?.recordDate ?: LocalDate.now().toString(), InputType.TYPE_CLASS_DATETIME)
-        val sleep = input("Sleep hours", record?.sleepHours?.toString() ?: "7.0", InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
-        val exerciseType = input("Exercise type", record?.exerciseType ?: "Walking")
-        val exerciseMinutes = input("Exercise minutes", record?.exerciseMinutes?.toString() ?: "20", InputType.TYPE_CLASS_NUMBER)
-        val mood = input("Mood score 1-5", record?.moodScore?.toString() ?: "3", InputType.TYPE_CLASS_NUMBER)
-        val notes = input("Notes", record?.notes ?: "")
-        listOf(date, sleep, exerciseType, exerciseMinutes, mood, notes).forEach(view::addView)
-
-        AlertDialog.Builder(this)
-            .setTitle(if (record == null) "Add record" else "Edit record")
-            .setView(view)
-            .setPositiveButton("Save") { _, _ ->
-                val request = WellnessRecordRequest(
-                    recordDate = date.text.toString(),
-                    sleepHours = sleep.text.toString().toDoubleOrNull() ?: 0.0,
-                    exerciseType = exerciseType.text.toString(),
-                    exerciseMinutes = exerciseMinutes.text.toString().toIntOrNull() ?: 0,
-                    moodScore = mood.text.toString().toIntOrNull() ?: 3,
-                    notes = notes.text.toString()
-                )
-                saveRecord(record?.id, request)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun saveRecord(id: Long?, request: WellnessRecordRequest) {
-        showLoading("Saving record", "Sending your wellness log to the backend.")
-        scope.launch {
-            runCatching {
-                if (id == null) api.createRecord(request) else api.updateRecord(id, request)
-            }.onSuccess {
-                loadDashboard()
-            }.onFailure {
-                showFetchError("Could not save record.", "Check fields and backend connection.")
-            }
-        }
+        recordFormLauncher.launch(intent)
     }
 
     private fun confirmDelete(id: Long) {
