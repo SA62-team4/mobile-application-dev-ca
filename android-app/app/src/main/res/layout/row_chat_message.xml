@@ -6,7 +6,7 @@
 
     <LinearLayout
         android:id="@+id/userBubble"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="@drawable/bg_chat_user_bubble"
@@ -17,7 +17,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="You"
-            android:textSize="12sp"
+            android:textSize="16sp"
+            android:textStyle="bold|italic"
             android:textColor="@android:color/white"
             android:paddingBottom="4dp" />
 
@@ -31,17 +32,19 @@
 
     <LinearLayout
         android:id="@+id/assistantBubble"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@drawable/bg_app_card">
+        android:background="@drawable/bg_app_card"
+        android:layout_marginBottom="8dp">
 
         <TextView
             android:id="@+id/assistantLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Assistant"
-            android:textSize="12sp"
+            android:textSize="16sp"
+            android:textStyle="bold|italic"
             android:textColor="@color/text_secondary"
             android:paddingBottom="4dp" />
 
