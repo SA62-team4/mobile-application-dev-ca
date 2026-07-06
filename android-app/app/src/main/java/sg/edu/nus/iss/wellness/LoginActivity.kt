@@ -50,7 +50,7 @@ class LoginActivity : AppCompatActivity() {
         tokenStore = TokenStore(this)
 
         if (!tokenStore.token().isNullOrBlank()) {
-            startActivity(Intent(this, HomeActivity::class.java))
+            startActivity(Intent(this, DashboardActivity::class.java))
             finish()
             return
         }
@@ -155,7 +155,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun onLoginSuccess(token: String, displayName: String, email: String) {
         tokenStore.save(token, displayName, email)
-        startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
+        startActivity(Intent(this@LoginActivity, DashboardActivity::class.java))
         finish()
     }
 
