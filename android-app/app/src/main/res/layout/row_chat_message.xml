@@ -10,13 +10,15 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="@drawable/bg_chat_user_bubble"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="8dp"
+        android:layout_gravity="end">
 
         <TextView
             android:id="@+id/userLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="You"
+            android:gravity="right"
             android:textSize="16sp"
             android:textStyle="bold|italic"
             android:textColor="@android:color/white"
