@@ -108,6 +108,12 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           INTERNAL_SERVICE_TOKEN: ${{ secrets.INTERNAL_SERVICE_TOKEN }}
+          # LangSmith tracing: the API key is a secret; the rest are non-sensitive
+          # config with safe defaults, so tracing stays off unless both are set.
+          LANGSMITH_TRACING: ${{ vars.LANGSMITH_TRACING }}
+          LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+          LANGSMITH_PROJECT: ${{ vars.LANGSMITH_PROJECT }}
+          LANGSMITH_ENDPOINT: ${{ vars.LANGSMITH_ENDPOINT }}
           # Context data goes through env vars (not the run: script) so untrusted
           # input cannot be injected into the shell.
           API_DOMAIN: ${{ vars.API_DOMAIN }}

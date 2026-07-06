@@ -144,6 +144,25 @@ Spring Boot saves:
 | Question outside wellness scope | Python responds that the chatbot only supports wellness habit questions |
 | Timeout | Backend returns controlled timeout error to Android |
 
+## Observability (LangSmith Tracing)
+
+The RAG chat path is instrumented for optional tracing so runs can be inspected
+during development and the demo. This is an observability layer only — it does
+not perform inference — so the non-negotiable local/free AI constraint is
+preserved: with tracing disabled (the default) the service runs fully
+local/offline, and Ollama remains the only LLM runtime.
+
+- Instrumented steps use LangSmith's `@traceable` decorator:
+  - `rag.chat` (chain), `rag.retrieve` (retriever)
+  - `ollama.embed` (embedding) and `ollama.generate` (llm)
+- The bound service instance is stripped from traced inputs so runs stay
+  readable and never serialise Chroma/HTTP clients.
+- Configuration is env-driven and off by default:
+  - `LANGSMITH_TRACING` (default `false`), `LANGSMITH_API_KEY`,
+    `LANGSMITH_PROJECT` (default `wellness-agentic-ai`), `LANGSMITH_ENDPOINT`.
+  - Startup no-ops (with a warning) if tracing is enabled without an API key.
+- Deploy wiring for these variables is defined in `10-plan-docker-devops.md`.
+
 ## RAG Acceptance Criteria
 
 - RAG index can be built from curated KB files.
@@ -151,3 +170,5 @@ Spring Boot saves:
 - Responses include source titles or snippets.
 - Ollama is the only LLM runtime used.
 - Chat works through Spring Boot, not directly from Android to Python.
+- Tracing is disabled by default; when enabled, RAG chat, retrieval, and Ollama
+  calls appear as a LangSmith run tree without changing chat behavior.

@@ -69,6 +69,11 @@ services:
       KNOWLEDGE_BASE_DIR: /app/rag-knowledge-base
       BACKEND_BASE_URL: http://spring-backend:8080
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-replace_with_internal_token}
+      # LangSmith tracing (optional). Off by default so the service runs offline.
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-wellness-agentic-ai}
+      LANGSMITH_ENDPOINT: ${LANGSMITH_ENDPOINT:-https://api.smith.langchain.com}
     ports:
       - "${AI_SERVICE_HOST_PORT:-8000}:8000"
     volumes:
