@@ -92,7 +92,12 @@ class ChatStreamClient(private val tokenStore: TokenStore) {
                     if (!line.startsWith("data:")) continue
                     val payload = line.substring("data:".length).trim()
                     if (payload.isEmpty()) continue
-                    parse(payload)?.let { emit(onEvent, it) }
+                    val event = parse(payload) ?: continue
+                    emit(onEvent, event)
+                    // Stop once a terminal frame is delivered. Reading past it would block on
+                    // the server closing the stream and can throw on the close, which would
+                    // otherwise surface as a spurious error after a successful answer.
+                    if (event is ChatStreamEvent.Done || event is ChatStreamEvent.Error) break
                 }
             }
         }

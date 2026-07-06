@@ -114,6 +114,9 @@ class ChatActivity : AppCompatActivity() {
 
         val answer = StringBuilder()
         var sources: List<SourceSnippet> = emptyList()
+        // Once a terminal frame (done/error) is handled, the answer is settled. Any later
+        // exception from closing the stream must not flash an error over the finished reply.
+        var terminal = false
 
         scope.launch {
             runCatching {
@@ -130,12 +133,14 @@ class ChatActivity : AppCompatActivity() {
                             updatePending(pendingIndex, question, answer.toString(), sources)
                         }
                         is ChatStreamEvent.Done -> {
+                            terminal = true
                             binding.sendButton.isEnabled = true
                             // Replace the pending row with the persisted server copy (correct
                             // id, timestamp, and stored sources) by reloading history.
                             loadChatHistory()
                         }
                         is ChatStreamEvent.Error -> {
+                            terminal = true
                             binding.sendButton.isEnabled = true
                             dropPendingMessages()
                             showError(
@@ -147,6 +152,7 @@ class ChatActivity : AppCompatActivity() {
                     }
                 }
             }.onFailure {
+                if (terminal) return@onFailure
                 binding.sendButton.isEnabled = true
                 dropPendingMessages()
                 showError(
