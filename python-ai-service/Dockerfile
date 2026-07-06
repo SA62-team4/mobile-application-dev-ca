@@ -1,6 +1,6 @@
 # python:3.12-slim is Debian-based but strips non-essential packages, giving us
 # a much smaller image than the full python:3.12 image (~50 MB vs ~1 GB).
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 WORKDIR /app
 
 # These two environment variables improve Python behaviour inside containers:
