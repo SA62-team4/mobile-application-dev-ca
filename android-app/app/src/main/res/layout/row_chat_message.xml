@@ -53,11 +53,10 @@
             android:textColor="@color/text_primary" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/sourcesCaption"
+    <!-- T-405: source snippets rendered as Material chips (title per chip). -->
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/sourceChips"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="12sp"
-        android:textColor="@color/text_secondary"
         android:paddingTop="4dp" />
 </LinearLayout>
