@@ -2,19 +2,20 @@ package sg.edu.nus.iss.wellness
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import sg.edu.nus.iss.wellness.adapter.ChatAdapter
 import sg.edu.nus.iss.wellness.api.ApiClient
 import sg.edu.nus.iss.wellness.api.ApiService
 import sg.edu.nus.iss.wellness.api.ChatRequest
-import sg.edu.nus.iss.wellness.api.ChatResponse
 import sg.edu.nus.iss.wellness.databinding.ActivityChatBinding
 import sg.edu.nus.iss.wellness.ui.addStateBlock
 import sg.edu.nus.iss.wellness.ui.apiErrorMessage
-import sg.edu.nus.iss.wellness.ui.caption
-import sg.edu.nus.iss.wellness.ui.chatBubble
 import sg.edu.nus.iss.wellness.ui.highlightTab
 import sg.edu.nus.iss.wellness.ui.showError
 
@@ -28,6 +29,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
     private lateinit var tokenStore: TokenStore
     private lateinit var api: ApiService
+    private lateinit var questionInput: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,27 +54,36 @@ class ChatActivity : AppCompatActivity() {
             binding.bottomNav.chatButton
         )
 
-        binding.sendButton.setOnClickListener {
-            val text = binding.questionInput.text.toString().trim()
+        val headerView = layoutInflater.inflate(R.layout.header_chat_input, binding.chatListView, false)
+        questionInput = headerView.findViewById(R.id.questionInput)
+        headerView.findViewById<Button>(R.id.sendButton).setOnClickListener {
+            val text = questionInput.text.toString().trim()
             if (text.isBlank()) {
-                addStateBlock(binding.chatMessagesContainer, "Question required", "Enter a wellness question before sending.", "!")
+                Toast.makeText(this, "Enter a wellness question before sending.", Toast.LENGTH_SHORT).show()
             } else {
                 sendChat(text)
             }
         }
+        binding.chatListView.addHeaderView(headerView)
+        binding.chatListView.emptyView = binding.emptyStateContainer
 
         loadChatHistory()
     }
 
     private fun sendChat(question: String) {
-        binding.chatMessagesContainer.removeAllViews()
-        addStateBlock(binding.chatMessagesContainer, "Thinking", "Local RAG and Ollama may take a little while.", "AI")
+        binding.emptyStateContainer.removeAllViews()
+        addStateBlock(binding.emptyStateContainer, "Thinking", "Local RAG and Ollama may take a little while.", "AI")
+        binding.chatListView.adapter = ChatAdapter(this, emptyList())
         scope.launch {
             runCatching { api.sendChat(ChatRequest(question)) }
-                .onSuccess { loadChatHistory() }
+                .onSuccess {
+                    questionInput.setText("")
+                    loadChatHistory()
+                }
                 .onFailure {
+                    binding.emptyStateContainer.removeAllViews()
                     showError(
-                        binding.chatMessagesContainer,
+                        binding.emptyStateContainer,
                         apiErrorMessage("Chatbot unavailable", it),
                         "Keep your question and retry when services are running."
                     )
@@ -81,28 +92,19 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun loadChatHistory() {
-        binding.chatMessagesContainer.removeAllViews()
+        binding.emptyStateContainer.removeAllViews()
         scope.launch {
             runCatching { api.chatHistory() }
                 .onSuccess { messages ->
                     if (messages.isEmpty()) {
-                        addStateBlock(binding.chatMessagesContainer, "No chat yet", "Ask a wellness habit question to start a RAG-backed conversation.", "?")
-                    } else {
-                        messages.forEach(::addChatPair)
+                        addStateBlock(binding.emptyStateContainer, "No chat yet", "Ask a wellness habit question to start a RAG-backed conversation.", "?")
                     }
+                    binding.chatListView.adapter = ChatAdapter(this@ChatActivity, messages)
                 }
                 .onFailure {
-                    showError(binding.chatMessagesContainer, "Could not load chat history", "You can still retry after checking backend connectivity.")
+                    showError(binding.emptyStateContainer, "Could not load chat history", "You can still retry after checking backend connectivity.")
+                    binding.chatListView.adapter = ChatAdapter(this@ChatActivity, emptyList())
                 }
-        }
-    }
-
-    private fun addChatPair(message: ChatResponse) {
-        binding.chatMessagesContainer.addView(chatBubble("You", message.question, true))
-        binding.chatMessagesContainer.addView(chatBubble("Assistant", message.answer, false))
-        val sources = message.sources.orEmpty()
-        if (sources.isNotEmpty()) {
-            binding.chatMessagesContainer.addView(caption("Sources: ${sources.joinToString { it.title }}"))
         }
     }
 
