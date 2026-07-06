@@ -112,6 +112,25 @@ The saved recommendation should include:
 | Save fails | Return error and do not pretend recommendation was saved |
 | Timeout | Android shows friendly retry message |
 
+## Observability (LangSmith Tracing)
+
+The recommendation workflow is built with LangChain (a
+`PromptTemplate | OllamaLLM | StrOutputParser` chain), so its generation step is
+traced to LangSmith automatically when tracing is enabled. The shared
+`rag.retrieve` step (see `08-plan-rag-ai-design.md`) is instrumented with
+`@traceable`, so a generated recommendation produces a single run tree covering
+retrieval and generation.
+
+- Tracing is an observability layer only and does not perform inference, so the
+  local/free AI constraint holds: with tracing disabled (the default) the agent
+  runs fully local/offline on Ollama.
+- Configuration is env-driven and off by default (`LANGSMITH_TRACING`,
+  `LANGSMITH_API_KEY`, `LANGSMITH_PROJECT`, `LANGSMITH_ENDPOINT`); startup
+  no-ops with a warning if enabled without an API key.
+- The deterministic decision rules run before the LLM and are not affected by
+  tracing, so the workflow stays explainable for marking.
+- Deploy wiring for these variables is defined in `10-plan-docker-devops.md`.
+
 ## Acceptance Criteria
 
 - Agent retrieves recent records instead of relying only on the user's prompt.
@@ -120,3 +139,5 @@ The saved recommendation should include:
 - Agent uses RAG context and Ollama locally.
 - Recommendation is saved in MySQL through Spring Boot.
 - Android can display generated recommendations.
+- Tracing is disabled by default; when enabled, a generated recommendation
+  appears as a LangSmith run tree without changing the saved output.
