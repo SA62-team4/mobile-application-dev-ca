@@ -2,8 +2,10 @@ name: OpenWiki Update
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 16 * * *"
+  # Daily schedule disabled to save GitHub Actions minutes. Run manually via
+  # the Actions tab when an OpenWiki refresh is needed. To restore, uncomment:
+  # schedule:
+  #   - cron: "0 16 * * *"
 
 permissions:
   contents: write

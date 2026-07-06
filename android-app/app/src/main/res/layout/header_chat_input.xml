@@ -1,0 +1,28 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/questionInput"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_text_field"
+        android:hint="Ask a wellness question"
+        android:inputType="text"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_secondary"
+        android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/sendButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="14dp"
+        android:background="@drawable/bg_button_primary"
+        android:text="Send"
+        android:textAllCaps="false"
+        android:textColor="@color/text_on_primary"
+        android:textStyle="bold" />
+</LinearLayout>
