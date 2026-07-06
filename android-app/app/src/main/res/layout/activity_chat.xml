@@ -18,29 +18,16 @@
         android:textSize="22sp"
         android:textStyle="bold" />
 
-    <FrameLayout
+    <ListView
+        android:id="@+id/chatListView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <ListView
-            android:id="@+id/chatListView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:divider="@null"
-            android:dividerHeight="0dp"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="16dp"
-            android:clipToPadding="false" />
-
-        <LinearLayout
-            android:id="@+id/emptyStateContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top"
-            android:orientation="vertical"
-            android:padding="16dp" />
-    </FrameLayout>
+        android:layout_weight="1"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="16dp"
+        android:clipToPadding="false" />
 
     <include
         android:id="@+id/bottomNav"

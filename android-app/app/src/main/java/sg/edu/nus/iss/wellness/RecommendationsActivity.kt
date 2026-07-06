@@ -2,7 +2,9 @@ package sg.edu.nus.iss.wellness
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -15,7 +17,9 @@ import sg.edu.nus.iss.wellness.databinding.ActivityRecommendationsBinding
 import sg.edu.nus.iss.wellness.ui.addStateBlock
 import sg.edu.nus.iss.wellness.ui.apiErrorMessage
 import sg.edu.nus.iss.wellness.ui.highlightTab
+import sg.edu.nus.iss.wellness.ui.infoCard
 import sg.edu.nus.iss.wellness.ui.showError
+import sg.edu.nus.iss.wellness.ui.wireBottomNav
 
 /**
  * Displays AI-generated wellness recommendations and lets the user request a new one.
@@ -27,6 +31,8 @@ class RecommendationsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityRecommendationsBinding
     private lateinit var tokenStore: TokenStore
     private lateinit var api: ApiService
+    private lateinit var generateButton: Button
+    private lateinit var statusContainer: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,48 +56,73 @@ class RecommendationsActivity : AppCompatActivity() {
             ),
             binding.bottomNav.recommendationsButton
         )
+        wireBottomNav(binding.bottomNav, RecommendationsActivity::class.java)
 
         val headerView = layoutInflater.inflate(R.layout.header_generate_button, binding.recommendationsListView, false)
-        headerView.findViewById<Button>(R.id.generateButton).setOnClickListener { generateRecommendation() }
+        generateButton = headerView.findViewById(R.id.generateButton)
+        statusContainer = headerView.findViewById(R.id.statusContainer)
+        generateButton.setOnClickListener { generateRecommendation() }
         binding.recommendationsListView.addHeaderView(headerView)
-        binding.recommendationsListView.emptyView = binding.emptyStateContainer
+        binding.recommendationsListView.adapter = RecommendationAdapter(this, emptyList())
 
         loadRecommendations()
     }
 
-    private fun loadRecommendations() {
+    private fun showLoading(title: String, detail: String) {
+        binding.recommendationsListView.visibility = View.GONE
+        binding.emptyStateContainer.visibility = View.VISIBLE
         binding.emptyStateContainer.removeAllViews()
-        addStateBlock(binding.emptyStateContainer, "Loading recommendations", "Fetching generated guidance from the backend.", "...")
-        binding.recommendationsListView.adapter = RecommendationAdapter(this, emptyList())
+        addStateBlock(binding.emptyStateContainer, title, detail, "...")
+    }
+
+    private fun showFetchError(title: String, detail: String) {
+        binding.recommendationsListView.visibility = View.GONE
+        binding.emptyStateContainer.visibility = View.VISIBLE
+        binding.emptyStateContainer.removeAllViews()
+        showError(binding.emptyStateContainer, title, detail)
+    }
+
+    private fun showContent() {
+        binding.emptyStateContainer.visibility = View.GONE
+        binding.emptyStateContainer.removeAllViews()
+        binding.recommendationsListView.visibility = View.VISIBLE
+    }
+
+    private fun loadRecommendations() {
+        showLoading("Loading recommendations", "Fetching generated guidance from the backend.")
         scope.launch {
             runCatching { api.recommendations() }
                 .onSuccess { renderRecommendations(it) }
-                .onFailure {
-                    binding.emptyStateContainer.removeAllViews()
-                    showError(binding.emptyStateContainer, "Could not load recommendations.", "Check backend, Python AI service, and Ollama status.")
-                }
+                .onFailure { showFetchError("Could not load recommendations.", "Check backend, Python AI service, and Ollama status.") }
         }
     }
 
     private fun renderRecommendations(recommendations: List<RecommendationResponse>) {
-        binding.emptyStateContainer.removeAllViews()
+        showContent()
+        statusContainer.removeAllViews()
         if (recommendations.isEmpty()) {
-            addStateBlock(binding.emptyStateContainer, "No recommendations yet", "Generate one after adding wellness records.", "+")
+            statusContainer.addView(infoCard("No recommendations yet", "Generate one after adding wellness records."))
         }
         binding.recommendationsListView.adapter = RecommendationAdapter(this, recommendations)
     }
 
     private fun generateRecommendation() {
-        binding.emptyStateContainer.removeAllViews()
-        addStateBlock(binding.emptyStateContainer, "Generating recommendation", "Local AI may take up to a minute. Duplicate submissions are disabled.", "AI")
-        binding.recommendationsListView.adapter = RecommendationAdapter(this, emptyList())
+        statusContainer.removeAllViews()
+        addStateBlock(statusContainer, "Generating recommendation", "Local AI may take up to a minute. Duplicate submissions are disabled.", "AI")
+        generateButton.isEnabled = false
         scope.launch {
             runCatching { api.generateRecommendation() }
-                .onSuccess { loadRecommendations() }
+                .onSuccess {
+                    generateButton.isEnabled = true
+                    runCatching { api.recommendations() }
+                        .onSuccess { renderRecommendations(it) }
+                        .onFailure { statusContainer.removeAllViews() }
+                }
                 .onFailure {
-                    binding.emptyStateContainer.removeAllViews()
+                    generateButton.isEnabled = true
+                    statusContainer.removeAllViews()
                     showError(
-                        binding.emptyStateContainer,
+                        statusContainer,
                         apiErrorMessage("Could not generate recommendation", it),
                         "Do not pretend a recommendation was saved. Retry after services recover."
                     )
