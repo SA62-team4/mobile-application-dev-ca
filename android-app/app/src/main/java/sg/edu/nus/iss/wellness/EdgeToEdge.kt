@@ -32,16 +32,22 @@ object EdgeToEdge {
         val bottom = root.paddingBottom
 
         root.setOnApplyWindowInsetsListener { view, insets ->
-            val systemBars = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                insets.getInsets(WindowInsets.Type.systemBars())
+            val insetLeft: Int
+            val insetTop: Int
+            val insetRight: Int
+            val insetBottom: Int
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val systemBars = insets.getInsets(WindowInsets.Type.systemBars())
+                insetLeft = systemBars.left
+                insetTop = systemBars.top
+                insetRight = systemBars.right
+                insetBottom = systemBars.bottom
             } else {
-                null
+                insetLeft = insets.systemWindowInsetLeft
+                insetTop = insets.systemWindowInsetTop
+                insetRight = insets.systemWindowInsetRight
+                insetBottom = insets.systemWindowInsetBottom
             }
-
-            val insetLeft = systemBars?.left ?: insets.systemWindowInsetLeft
-            val insetTop = systemBars?.top ?: insets.systemWindowInsetTop
-            val insetRight = systemBars?.right ?: insets.systemWindowInsetRight
-            val insetBottom = systemBars?.bottom ?: insets.systemWindowInsetBottom
 
             view.setPadding(
                 left + insetLeft,
