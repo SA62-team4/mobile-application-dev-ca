@@ -1,0 +1,63 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginBottom="14dp">
+
+    <LinearLayout
+        android:id="@+id/userBubble"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_chat_user_bubble"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:id="@+id/userLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="You"
+            android:textSize="12sp"
+            android:textColor="@android:color/white"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/userMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/assistantBubble"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_app_card">
+
+        <TextView
+            android:id="@+id/assistantLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Assistant"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/assistantMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@color/text_primary" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/sourcesCaption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="@color/text_secondary"
+        android:paddingTop="4dp" />
+</LinearLayout>

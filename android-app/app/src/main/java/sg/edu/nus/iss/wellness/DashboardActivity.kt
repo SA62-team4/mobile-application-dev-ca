@@ -8,7 +8,9 @@ import android.graphics.Typeface
 import android.os.Bundle
 import android.text.InputType
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -17,6 +19,7 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import sg.edu.nus.iss.wellness.adapter.RecordsAdapter
 import sg.edu.nus.iss.wellness.api.ApiClient
 import sg.edu.nus.iss.wellness.api.ApiService
 import sg.edu.nus.iss.wellness.api.RecommendationResponse
@@ -47,6 +50,12 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var tokenStore: TokenStore
     private lateinit var api: ApiService
 
+    private lateinit var snapshotContainer: LinearLayout
+    private lateinit var metricsContainer: LinearLayout
+    private lateinit var insightContainer: LinearLayout
+    private lateinit var filterChip: TextView
+    private lateinit var recordsEmptyContainer: LinearLayout
+
     private var activeFilter: DateRangeFilter? = null
     private var cachedRecords: List<WellnessRecordResponse> = emptyList()
     private var cachedRecommendations: List<RecommendationResponse> = emptyList()
@@ -74,27 +83,60 @@ class DashboardActivity : AppCompatActivity() {
             binding.bottomNav.dashboardButton
         )
 
+        val snapshotHeader = layoutInflater.inflate(R.layout.header_dashboard_snapshot, binding.dashboardListView, false)
+        snapshotContainer = snapshotHeader.findViewById(R.id.snapshotContainer)
+        binding.dashboardListView.addHeaderView(snapshotHeader)
+
+        val metricsHeader = layoutInflater.inflate(R.layout.header_dashboard_metrics, binding.dashboardListView, false)
+        metricsContainer = metricsHeader.findViewById(R.id.metricsContainer)
+        binding.dashboardListView.addHeaderView(metricsHeader)
+
+        val insightHeader = layoutInflater.inflate(R.layout.header_dashboard_insight, binding.dashboardListView, false)
+        insightContainer = insightHeader.findViewById(R.id.insightContainer)
+        binding.dashboardListView.addHeaderView(insightHeader)
+
+        val recordsHeader = layoutInflater.inflate(R.layout.header_dashboard_records, binding.dashboardListView, false)
+        filterChip = recordsHeader.findViewById(R.id.filterChip)
+        recordsEmptyContainer = recordsHeader.findViewById(R.id.recordsEmptyContainer)
+        recordsHeader.findViewById<Button>(R.id.filterButton).setOnClickListener { showDateRangeFilterDialog() }
+        recordsHeader.findViewById<Button>(R.id.addRecordButton).setOnClickListener { openRecordDialog(null) }
+        filterChip.setOnClickListener { clearFilter() }
+        binding.dashboardListView.addHeaderView(recordsHeader)
+
+        binding.dashboardListView.adapter = RecordsAdapter(this, emptyList(), ::openRecordDialog) { confirmDelete(it.id) }
+
         loadDashboard()
     }
 
-    private fun resetDashboard() {
-        binding.snapshotContainer.removeAllViews()
-        binding.metricsContainer.removeAllViews()
-        binding.insightContainer.removeAllViews()
-        binding.recordsContainer.removeAllViews()
+    private fun showLoading(title: String, detail: String) {
+        binding.dashboardListView.visibility = View.GONE
+        binding.emptyStateContainer.visibility = View.VISIBLE
+        binding.emptyStateContainer.removeAllViews()
+        addStateBlock(binding.emptyStateContainer, title, detail, "...")
+    }
+
+    private fun showFetchError(title: String, detail: String) {
+        binding.dashboardListView.visibility = View.GONE
+        binding.emptyStateContainer.visibility = View.VISIBLE
+        binding.emptyStateContainer.removeAllViews()
+        showError(binding.emptyStateContainer, title, detail)
+    }
+
+    private fun showContent() {
+        binding.emptyStateContainer.visibility = View.GONE
+        binding.emptyStateContainer.removeAllViews()
+        binding.dashboardListView.visibility = View.VISIBLE
     }
 
     private fun loadDashboard() {
-        resetDashboard()
-        addStateBlock(binding.snapshotContainer, "Loading dashboard", "Fetching your latest wellness data.", "...")
+        showLoading("Loading dashboard", "Fetching your latest wellness data.")
         scope.launch {
             val records = runCatching { api.records() }.getOrElse { err ->
                 if (err is HttpException && err.code() in listOf(401, 403)) {
                     tokenStore.clear()
                     goToLogin()
                 } else {
-                    resetDashboard()
-                    showError(binding.snapshotContainer, "Could not load dashboard.", "Check that the backend is reachable from the emulator.")
+                    showFetchError("Could not load dashboard.", "Check that the backend is reachable from the emulator.")
                 }
                 return@launch
             }
@@ -106,7 +148,11 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun renderDashboard(records: List<WellnessRecordResponse>, recommendations: List<RecommendationResponse>) {
-        resetDashboard()
+        showContent()
+        snapshotContainer.removeAllViews()
+        metricsContainer.removeAllViews()
+        insightContainer.removeAllViews()
+
         val aggregates = DashboardDataHelper.aggregateByDate(records)
         val snapshot = DashboardDataHelper.buildDailySnapshot(aggregates)
         val summary = DashboardDataHelper.computeWeeklySummary(aggregates)
@@ -121,19 +167,19 @@ class DashboardActivity : AppCompatActivity() {
         val actSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.ACTIVITY, greenColor)
         val moodSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.MOOD, amberColor)
 
-        binding.metricsContainer.addView(buildMetricCard("Sleep", "💤", summary, sleepSeries, summary.sleepBadge, MetricType.SLEEP))
-        binding.metricsContainer.addView(buildMetricCard("Activity", "🏃", summary, actSeries, summary.activityBadge, MetricType.ACTIVITY))
-        binding.metricsContainer.addView(buildMetricCard("Mood", "😊", summary, moodSeries, summary.moodBadge, MetricType.MOOD))
+        metricsContainer.addView(buildMetricCard("Sleep", "💤", summary, sleepSeries, summary.sleepBadge, MetricType.SLEEP))
+        metricsContainer.addView(buildMetricCard("Activity", "🏃", summary, actSeries, summary.activityBadge, MetricType.ACTIVITY))
+        metricsContainer.addView(buildMetricCard("Mood", "😊", summary, moodSeries, summary.moodBadge, MetricType.MOOD))
 
         val teaser = DashboardDataHelper.buildInsightTeaser(recommendations)
         renderInsightCard(teaser) { /* T-701G: navigate to RecommendationsActivity */ }
 
-        buildRecordsSection(binding.recordsContainer, records)
+        renderRecordsList(records)
     }
 
     private fun renderSnapshotTiles(snapshot: DailySnapshot?) {
         if (snapshot == null) {
-            binding.snapshotContainer.addView(infoCard("No records yet", "Add your first wellness log below to get started."))
+            snapshotContainer.addView(infoCard("No records yet", "Add your first wellness log below to get started."))
             return
         }
 
@@ -144,10 +190,10 @@ class DashboardActivity : AppCompatActivity() {
         tilesRow.addView(snapshotTile("💤", "${snapshot.sleepHours}h", "Sleep"))
         tilesRow.addView(snapshotTile("🏃", "${snapshot.exerciseMinutes}min", "Activity"))
         tilesRow.addView(snapshotTile("😊", "${snapshot.moodScore}/5", "Mood"))
-        binding.snapshotContainer.addView(tilesRow)
+        snapshotContainer.addView(tilesRow)
 
         if (!snapshot.isToday) {
-            binding.snapshotContainer.addView(
+            snapshotContainer.addView(
                 caption("Showing ${snapshot.date}  ·  No entry today").centered()
                     .apply { setPadding(0, 0, 0, dp(12)) }
             )
@@ -258,67 +304,33 @@ class DashboardActivity : AppCompatActivity() {
             teaser.createdAt?.let { cardView.addView(caption("Generated $it")) }
             cardView.addView(caption("View details →"))
         }
-        binding.insightContainer.addView(cardView)
+        insightContainer.addView(cardView)
     }
 
-    private fun buildRecordsSection(section: LinearLayout, allRecords: List<WellnessRecordResponse>) {
-        section.removeAllViews()
+    private fun renderRecordsList(allRecords: List<WellnessRecordResponse>) {
+        recordsEmptyContainer.removeAllViews()
 
-        val header = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).withBottomMargin(dp(10))
-        }
-        header.addView(title("Recent Records", 16).apply {
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            setPadding(0, 0, 0, 0)
-        })
-        header.addView(headerIconButton("📅 Filter", ButtonStyle.SECONDARY) { showDateRangeFilterDialog() })
-        header.addView(headerIconButton("+ Add", ButtonStyle.PRIMARY) { openRecordDialog(null) })
-        section.addView(header)
-
-        activeFilter?.let { filter ->
-            val chip = TextView(this).apply {
-                text = "Filtered: ${filter.from} – ${filter.to}  ✕"
-                textSize = 13f
-                setTextColor(getColor(R.color.primary_dark))
-                setPadding(dp(12), dp(6), dp(12), dp(6))
-                background = rounded(getColor(R.color.bg_subtle), dp(16), getColor(R.color.primary))
-                setOnClickListener { clearFilter() }
-                layoutParams = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-                ).withBottomMargin(dp(10))
-            }
-            section.addView(chip)
+        val filter = activeFilter
+        if (filter != null) {
+            filterChip.visibility = View.VISIBLE
+            filterChip.text = "Filtered: ${filter.from} – ${filter.to}  ✕"
+        } else {
+            filterChip.visibility = View.GONE
         }
 
         val filtered = DashboardDataHelper.applyDateFilter(allRecords, activeFilter)
         when {
             allRecords.isEmpty() -> {
-                section.addView(infoCard("No records yet", "Add your first wellness log to start seeing history."))
+                recordsEmptyContainer.addView(infoCard("No records yet", "Add your first wellness log to start seeing history."))
             }
             filtered.isEmpty() -> {
-                section.addView(body("No records in this date range."))
-                section.addView(headerIconButton("Clear filter", ButtonStyle.SECONDARY) { clearFilter() }.apply {
-                    layoutParams = LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, dp(44)
-                    ).withBottomMargin(dp(8))
-                })
+                recordsEmptyContainer.addView(body("No records in this date range."))
+                recordsEmptyContainer.addView(headerIconButton("Clear filter", ButtonStyle.SECONDARY) { clearFilter() })
             }
-            else -> filtered.forEach { record ->
-                val recordCard = card()
-                recordCard.addView(title(record.recordDate, 16))
-                recordCard.addView(accent("Sleep ${record.sleepHours}h | ${record.exerciseType ?: "No exercise"} ${record.exerciseMinutes}min | Mood ${record.moodScore}/5"))
-                recordCard.addView(body(record.notes.orEmpty().ifBlank { "No notes added." }))
-                val actions = horizontal()
-                actions.addView(smallButton("Edit", ButtonStyle.SECONDARY) { openRecordDialog(record) })
-                actions.addView(smallButton("Delete", ButtonStyle.DESTRUCTIVE) { confirmDelete(record.id) })
-                recordCard.addView(actions)
-                section.addView(recordCard)
-            }
+            else -> Unit
         }
+
+        binding.dashboardListView.adapter = RecordsAdapter(this, filtered, ::openRecordDialog) { confirmDelete(it.id) }
     }
 
     private fun showDateRangeFilterDialog() {
@@ -352,7 +364,7 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun refreshRecordsList() {
-        buildRecordsSection(binding.recordsContainer, cachedRecords)
+        renderRecordsList(cachedRecords)
     }
 
     private fun clearFilter() {
@@ -392,16 +404,14 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun saveRecord(id: Long?, request: WellnessRecordRequest) {
-        resetDashboard()
-        addStateBlock(binding.snapshotContainer, "Saving record", "Sending your wellness log to the backend.", "...")
+        showLoading("Saving record", "Sending your wellness log to the backend.")
         scope.launch {
             runCatching {
                 if (id == null) api.createRecord(request) else api.updateRecord(id, request)
             }.onSuccess {
                 loadDashboard()
             }.onFailure {
-                resetDashboard()
-                showError(binding.snapshotContainer, "Could not save record.", "Check fields and backend connection.")
+                showFetchError("Could not save record.", "Check fields and backend connection.")
             }
         }
     }
@@ -416,14 +426,12 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun deleteRecord(id: Long) {
-        resetDashboard()
-        addStateBlock(binding.snapshotContainer, "Deleting record", "Removing the selected wellness log.", "...")
+        showLoading("Deleting record", "Removing the selected wellness log.")
         scope.launch {
             runCatching { api.deleteRecord(id) }
                 .onSuccess { loadDashboard() }
                 .onFailure {
-                    resetDashboard()
-                    showError(binding.snapshotContainer, "Could not delete record.", "Please retry after checking the backend connection.")
+                    showFetchError("Could not delete record.", "Please retry after checking the backend connection.")
                 }
         }
     }
