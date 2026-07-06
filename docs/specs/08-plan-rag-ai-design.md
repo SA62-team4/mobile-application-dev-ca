@@ -134,6 +134,16 @@ Spring Boot saves:
 - Model name
 - Timestamp
 
+### Streaming Variant
+
+A streaming chat path (`POST /rag/chat/stream` → `POST /api/chat/messages/stream`) exists
+alongside the blocking one so long answers are not truncated and the user sees tokens as
+they are generated. Retrieval runs first (sources are known up front), then Ollama runs with
+`stream=True` and each fragment is forwarded as a Server-Sent Events frame. Spring Boot
+accumulates the fragments, persists the same fields listed above once the stream completes,
+and only then emits the terminal `done` frame — so streamed and non-streamed exchanges are
+stored identically. See `06-plan-api-contracts.md` for the SSE frame protocol.
+
 ## Failure Modes
 
 | Failure | Expected Behavior |
@@ -155,6 +165,9 @@ local/offline, and Ollama remains the only LLM runtime.
 - Instrumented steps use LangSmith's `@traceable` decorator:
   - `rag.chat` (chain), `rag.retrieve` (retriever)
   - `ollama.embed` (embedding) and `ollama.generate` (llm)
+  - The streaming path is traced too: `rag.chat.stream` (chain) and
+    `ollama.generate.stream` (llm). Streamed fragments are reduced back into a single
+    answer string so the run renders like the blocking path.
 - The bound service instance is stripped from traced inputs so runs stay
   readable and never serialise Chroma/HTTP clients.
 - Configuration is env-driven and off by default:

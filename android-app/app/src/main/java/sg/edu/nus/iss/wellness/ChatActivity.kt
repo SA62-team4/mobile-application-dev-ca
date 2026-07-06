@@ -12,7 +12,10 @@ import kotlinx.coroutines.launch
 import sg.edu.nus.iss.wellness.adapter.ChatAdapter
 import sg.edu.nus.iss.wellness.api.ApiClient
 import sg.edu.nus.iss.wellness.api.ApiService
-import sg.edu.nus.iss.wellness.api.ChatRequest
+import sg.edu.nus.iss.wellness.api.ChatResponse
+import sg.edu.nus.iss.wellness.api.ChatStreamClient
+import sg.edu.nus.iss.wellness.api.ChatStreamEvent
+import sg.edu.nus.iss.wellness.api.SourceSnippet
 import sg.edu.nus.iss.wellness.databinding.ActivityChatBinding
 import sg.edu.nus.iss.wellness.ui.addStateBlock
 import sg.edu.nus.iss.wellness.ui.apiErrorMessage
@@ -37,6 +40,12 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
     private lateinit var tokenStore: TokenStore
     private lateinit var api: ApiService
+    private lateinit var streamClient: ChatStreamClient
+    private lateinit var adapter: ChatAdapter
+
+    // Source of truth for the visible conversation (oldest first). A live streaming answer
+    // is appended here as a pending row (id == 0) and grows in place until persisted.
+    private val messages = mutableListOf<ChatResponse>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +55,7 @@ class ChatActivity : AppCompatActivity() {
             return
         }
         api = ApiClient.create(tokenStore)
+        streamClient = ChatStreamClient(tokenStore)
 
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -84,7 +94,8 @@ class ChatActivity : AppCompatActivity() {
         }
         binding.swipeRefresh.setOnRefreshListener { loadChatHistory() }
 
-        binding.chatListView.adapter = ChatAdapter(this, emptyList())
+        adapter = ChatAdapter(this, emptyList())
+        binding.chatListView.adapter = adapter
 
         loadChatHistory()
     }
@@ -93,31 +104,88 @@ class ChatActivity : AppCompatActivity() {
         binding.statusContainer.removeAllViews()
         addStateBlock(binding.statusContainer, "Thinking", "Local RAG and Ollama may take a little while.", "AI")
         binding.sendButton.isEnabled = false
+        binding.questionInput.setText("")
+
+        // Append a live, growing answer bubble beneath the existing history. Because only one
+        // send runs at a time (the button is disabled), this pending row is always the last.
+        val pendingIndex = messages.size
+        messages.add(pendingMessage(question, "", emptyList()))
+        renderMessages()
+
+        val answer = StringBuilder()
+        var sources: List<SourceSnippet> = emptyList()
+
         scope.launch {
-            runCatching { api.sendChat(ChatRequest(question)) }
-                .onSuccess {
-                    binding.sendButton.isEnabled = true
-                    binding.questionInput.setText("")
-                    loadChatHistory()
+            runCatching {
+                streamClient.stream(question) { event ->
+                    when (event) {
+                        is ChatStreamEvent.Sources -> {
+                            binding.statusContainer.removeAllViews()
+                            sources = event.sources
+                            updatePending(pendingIndex, question, answer.toString(), sources)
+                        }
+                        is ChatStreamEvent.Token -> {
+                            binding.statusContainer.removeAllViews()
+                            answer.append(event.text)
+                            updatePending(pendingIndex, question, answer.toString(), sources)
+                        }
+                        is ChatStreamEvent.Done -> {
+                            binding.sendButton.isEnabled = true
+                            // Replace the pending row with the persisted server copy (correct
+                            // id, timestamp, and stored sources) by reloading history.
+                            loadChatHistory()
+                        }
+                        is ChatStreamEvent.Error -> {
+                            binding.sendButton.isEnabled = true
+                            dropPendingMessages()
+                            showError(
+                                binding.statusContainer,
+                                event.message,
+                                "Keep your question and retry when services are running."
+                            )
+                        }
+                    }
                 }
-                .onFailure {
-                    binding.sendButton.isEnabled = true
-                    binding.statusContainer.removeAllViews()
-                    showError(
-                        binding.statusContainer,
-                        apiErrorMessage("Chatbot unavailable", it),
-                        "Keep your question and retry when services are running."
-                    )
-                }
+            }.onFailure {
+                binding.sendButton.isEnabled = true
+                dropPendingMessages()
+                showError(
+                    binding.statusContainer,
+                    apiErrorMessage("Chatbot unavailable", it),
+                    "Keep your question and retry when services are running."
+                )
+            }
+        }
+    }
+
+    private fun pendingMessage(question: String, answer: String, sources: List<SourceSnippet>) =
+        ChatResponse(id = 0, question = question, answer = answer, sources = sources, modelName = null, createdAt = null)
+
+    private fun updatePending(index: Int, question: String, answer: String, sources: List<SourceSnippet>) {
+        if (index >= messages.size) return
+        messages[index] = pendingMessage(question, answer, sources)
+        renderMessages()
+    }
+
+    /** Remove any unpersisted streaming rows (id == 0) after a failure. */
+    private fun dropPendingMessages() {
+        messages.removeAll { it.id == 0L }
+        renderMessages()
+    }
+
+    private fun renderMessages() {
+        adapter.submit(messages.toList())
+        if (messages.isNotEmpty()) {
+            binding.chatListView.setSelection(messages.size - 1)
         }
     }
 
     private fun loadChatHistory() {
         scope.launch {
             runCatching { api.chatHistory() }
-                .onSuccess { messages ->
+                .onSuccess { history ->
                     binding.statusContainer.removeAllViews()
-                    if (messages.isEmpty()) {
+                    if (history.isEmpty()) {
                         addStateBlock(
                             binding.statusContainer,
                             "No chat yet",
@@ -127,10 +195,9 @@ class ChatActivity : AppCompatActivity() {
                     }
                     // Backend returns newest-first; reverse so the latest exchange sits at the
                     // bottom next to the input box, then scroll to it.
-                    binding.chatListView.adapter = ChatAdapter(this@ChatActivity, messages.reversed())
-                    if (messages.isNotEmpty()) {
-                        binding.chatListView.setSelection(messages.size - 1)
-                    }
+                    messages.clear()
+                    messages.addAll(history.reversed())
+                    renderMessages()
                 }
                 .onFailure {
                     binding.statusContainer.removeAllViews()

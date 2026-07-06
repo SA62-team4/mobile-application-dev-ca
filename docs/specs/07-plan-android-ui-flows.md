@@ -314,15 +314,20 @@ Content:
 - Scrollable chat history.
 - Message input field.
 - Send button.
-- Source snippets shown below assistant messages when available.
+- Source snippets are still returned by the backend and stored, but are not shown in the
+  chat UI; the answer reads standalone.
 
 Behavior:
 
-- Send button disabled for blank messages.
-- Show typing/loading indicator while waiting for backend.
+- Send button disabled for blank messages, and while a stream is in flight to prevent duplicate submissions.
+- Show typing/loading indicator until the first streamed token arrives.
+- The answer streams in token-by-token: a live assistant bubble is appended immediately and
+  grows in place (via `ChatStreamClient` consuming the `POST /api/chat/messages/stream` SSE
+  endpoint) so long answers are never truncated. When the stream completes, history is
+  reloaded so the bubble is replaced by the persisted server copy.
 - Keep the request alive long enough for local Ollama generation, which may take tens of seconds on student laptops.
 - Store and display previous messages loaded from backend.
-- If AI service or Ollama is unavailable, show a friendly error and keep the typed question available.
+- If AI service or Ollama is unavailable, drop the partial bubble, show a friendly error, and keep the typed question available.
 
 Message display:
 

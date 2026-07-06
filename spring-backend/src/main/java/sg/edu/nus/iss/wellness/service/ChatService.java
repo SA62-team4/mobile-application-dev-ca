@@ -4,10 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
 import sg.edu.nus.iss.wellness.client.AiServiceClient;
 import sg.edu.nus.iss.wellness.dto.ChatDtos;
+import sg.edu.nus.iss.wellness.error.ApiException;
 import sg.edu.nus.iss.wellness.model.AppUser;
 import sg.edu.nus.iss.wellness.model.ChatMessage;
+import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 import sg.edu.nus.iss.wellness.repository.ChatMessageRepository;
 import sg.edu.nus.iss.wellness.repository.WellnessRecordRepository;
 
@@ -30,13 +33,16 @@ public class ChatService {
     private final AiServiceClient aiServiceClient;
     private final ChatMessageRepository chatMessages;
     private final WellnessRecordRepository wellnessRecords;
+    private final AppUserRepository users;
 
     public ChatService(AiServiceClient aiServiceClient,
                        ChatMessageRepository chatMessages,
-                       WellnessRecordRepository wellnessRecords) {
+                       WellnessRecordRepository wellnessRecords,
+                       AppUserRepository users) {
         this.aiServiceClient = aiServiceClient;
         this.chatMessages = chatMessages;
         this.wellnessRecords = wellnessRecords;
+        this.users = users;
     }
 
     /**
@@ -72,12 +78,15 @@ public class ChatService {
     }
 
     /**
-     * Fetch recent wellness records for AI context.
+     * Fetch recent wellness records for AI context. Exposed for the streaming chat path,
+     * which resolves this context on the request thread before handing off to a background
+     * worker so no JPA session is touched from the async stream.
      *
      * @param user the user whose records to fetch
      * @return list of recent wellness records
      */
-    private List<ChatDtos.RecentRecord> fetchRecentWellnessRecords(AppUser user) {
+    @Transactional(readOnly = true)
+    public List<ChatDtos.RecentRecord> fetchRecentWellnessRecords(AppUser user) {
         return wellnessRecords
                 .findByUserAndRecordDateAfterOrderByRecordDateDesc(
                         user,
@@ -110,6 +119,37 @@ public class ChatService {
         message.setModelName(aiResponse.modelName());
         message.setSourceSummary(formatSources(aiResponse.sources()));
         return chatMessages.save(message);
+    }
+
+    /**
+     * Persist a fully streamed chat exchange and return the saved response. Used by the
+     * streaming path after the token stream completes: it runs in its own short
+     * transaction and reloads the user by id because the background worker has no open
+     * JPA session from the original request.
+     *
+     * @param userId    id of the user who asked the question
+     * @param question  the user's question
+     * @param answer    the assembled assistant answer
+     * @param modelName the generating model name reported by the AI service
+     * @param sources   the retrieved source snippets
+     * @return the persisted chat response
+     */
+    @Transactional
+    public ChatDtos.ChatResponse saveStreamedAnswer(Long userId,
+                                                    String question,
+                                                    String answer,
+                                                    String modelName,
+                                                    List<ChatDtos.SourceSnippet> sources) {
+        AppUser user = users.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Authenticated user not found"));
+        ChatMessage message = new ChatMessage();
+        message.setUser(user);
+        message.setUserQuestion(question);
+        message.setAssistantAnswer(answer);
+        message.setModelName(modelName);
+        message.setSourceSummary(formatSources(sources));
+        ChatMessage saved = chatMessages.save(message);
+        return DtoMapper.chat(saved, sources);
     }
 
     /**
