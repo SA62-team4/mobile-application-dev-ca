@@ -8,12 +8,14 @@ import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import sg.edu.nus.iss.wellness.adapter.RecommendationAdapter
 import sg.edu.nus.iss.wellness.api.ApiClient
 import sg.edu.nus.iss.wellness.api.ApiService
 import sg.edu.nus.iss.wellness.api.RecommendationResponse
 import sg.edu.nus.iss.wellness.databinding.ActivityRecommendationsBinding
+import sg.edu.nus.iss.wellness.ui.addLoadingBlock
 import sg.edu.nus.iss.wellness.ui.addStateBlock
 import sg.edu.nus.iss.wellness.ui.apiErrorMessage
 import sg.edu.nus.iss.wellness.ui.highlightTab
@@ -108,17 +110,58 @@ class RecommendationsActivity : AppCompatActivity() {
 
     private fun generateRecommendation() {
         statusContainer.removeAllViews()
-        addStateBlock(statusContainer, "Generating recommendation", "Local AI may take up to a minute. Duplicate submissions are disabled.", "AI")
+        val (detailsView, progressViews) = addLoadingBlock(statusContainer, "Generating recommendation", "Accessing your 14-day logs...", "AI")
+        val (progressBar, percentView) = progressViews
         generateButton.isEnabled = false
+
+        val statusJob = scope.launch {
+            val stages = listOf(
+                "Analyzing sleep, activity, and mood patterns...",
+                "Querying vector database for expert wellness guidelines...",
+                "Local LLM is writing your custom wellness guide (usually takes 15-40s)...",
+                "Almost ready! Structuring personalized action items...",
+                "Completing final formatting and saving to backend...",
+                "Still thinking... Local Ollama is heavily processing, thanks for your patience!"
+            )
+            for (message in stages) {
+                delay(4000)
+                detailsView.text = message
+            }
+        }
+
+        val progressJob = scope.launch {
+            var currentProgress = 0
+            while (currentProgress < 95) {
+                delay(300)
+                currentProgress++
+                progressBar.progress = currentProgress
+                percentView.text = "$currentProgress%"
+
+                if (currentProgress > 75) {
+                    delay(200)
+                }
+                if (currentProgress > 88) {
+                    delay(400)
+                }
+            }
+        }
+
         scope.launch {
             runCatching { api.generateRecommendation() }
                 .onSuccess {
+                    statusJob.cancel()
+                    progressJob.cancel()
+                    progressBar.progress = 100
+                    percentView.text = "100%"
+                    delay(300)
                     generateButton.isEnabled = true
                     runCatching { api.recommendations() }
                         .onSuccess { renderRecommendations(it) }
                         .onFailure { statusContainer.removeAllViews() }
                 }
                 .onFailure {
+                    statusJob.cancel()
+                    progressJob.cancel()
                     generateButton.isEnabled = true
                     statusContainer.removeAllViews()
                     showError(
