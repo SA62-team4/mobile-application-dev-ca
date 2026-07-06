@@ -1,6 +1,5 @@
 package sg.edu.nus.iss.wellness
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Intent
@@ -17,6 +16,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -26,7 +26,6 @@ import sg.edu.nus.iss.wellness.api.ApiService
 import sg.edu.nus.iss.wellness.api.ChatRequest
 import sg.edu.nus.iss.wellness.api.ChatResponse
 import sg.edu.nus.iss.wellness.api.RecommendationResponse
-import sg.edu.nus.iss.wellness.api.WellnessRecordRequest
 import sg.edu.nus.iss.wellness.api.WellnessRecordResponse
 import sg.edu.nus.iss.wellness.dashboard.DailySnapshot
 import sg.edu.nus.iss.wellness.dashboard.DashboardDataHelper
@@ -37,13 +36,12 @@ import sg.edu.nus.iss.wellness.dashboard.MetricType
 import sg.edu.nus.iss.wellness.dashboard.SparklineDataSeries
 import sg.edu.nus.iss.wellness.dashboard.SparklineView
 import sg.edu.nus.iss.wellness.dashboard.WeeklyMetricSummary
+import sg.edu.nus.iss.wellness.databinding.ActivityHomeBinding
+import sg.edu.nus.iss.wellness.databinding.ViewRecordsSectionBinding
 import java.io.IOException
 import java.time.LocalDate
 import java.util.Calendar
 
-// Imports for records list/form
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import sg.edu.nus.iss.wellness.records.RecordFormActivity
 import sg.edu.nus.iss.wellness.records.RecordsAdapter
 
@@ -52,10 +50,11 @@ import sg.edu.nus.iss.wellness.records.RecordsAdapter
  *
  * @author SA62 Team
  */
-class HomeActivity : Activity() {
+class HomeActivity : AppCompatActivity() {
     private val scope = MainScope()
     private lateinit var tokenStore: TokenStore
     private lateinit var api: ApiService
+    private lateinit var binding: ActivityHomeBinding
     private lateinit var titleText: TextView
     private lateinit var content: LinearLayout
     private lateinit var recordsButton: Button
@@ -78,15 +77,16 @@ class HomeActivity : Activity() {
             return
         }
         api = ApiClient.create(tokenStore) { handleSessionExpired() }
-        setContentView(R.layout.activity_home)
-        EdgeToEdge.apply(this, findViewById(R.id.rootContainer))
+        binding = ActivityHomeBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        EdgeToEdge.apply(this, binding.rootContainer)
 
-        titleText = findViewById(R.id.titleText)
-        content = findViewById(R.id.contentContainer)
-        recordsButton = findViewById(R.id.recordsButton)
-        chatButton = findViewById(R.id.chatButton)
-        recommendationsButton = findViewById(R.id.recommendationsButton)
-        profileButton = findViewById(R.id.profileButton)
+        titleText = binding.titleText
+        content = binding.contentContainer
+        recordsButton = binding.recordsButton
+        chatButton = binding.chatButton
+        recommendationsButton = binding.recommendationsButton
+        profileButton = binding.profileButton
 
         recordsButton.setOnClickListener { showDashboard() }
         chatButton.setOnClickListener { showChat() }
@@ -171,13 +171,13 @@ class HomeActivity : Activity() {
         tilesRow.layoutParams = (tilesRow.layoutParams as LinearLayout.LayoutParams)
             .apply { bottomMargin = dp(4) }
 
-        tilesRow.addView(snapshotTile("💤", "${'$'}{snapshot.sleepHours}h", "Sleep"))
-        tilesRow.addView(snapshotTile("🏃", "${'$'}{snapshot.exerciseMinutes}min", "Activity"))
-        tilesRow.addView(snapshotTile("😊", "${'$'}{snapshot.moodScore}/5", "Mood"))
+        tilesRow.addView(snapshotTile("💤", "${snapshot.sleepHours}h", "Sleep"))
+        tilesRow.addView(snapshotTile("🏃", "${snapshot.exerciseMinutes}min", "Activity"))
+        tilesRow.addView(snapshotTile("😊", "${snapshot.moodScore}/5", "Mood"))
         content.addView(tilesRow)
 
         if (!snapshot.isToday) {
-            content.addView(caption("Showing ${'$'}{snapshot.date}  ·  No entry today").centered()
+            content.addView(caption("Showing ${snapshot.date}  ·  No entry today").centered()
                 .apply { setPadding(0, 0, 0, dp(12)) })
         }
     }
@@ -271,9 +271,9 @@ class HomeActivity : Activity() {
     }
 
     private fun summaryLine(summary: WeeklyMetricSummary, metric: MetricType): String = when (metric) {
-        MetricType.SLEEP -> "Avg ${'$'}{summary.averageSleepHours} h · ${'$'}{summary.recordCount} days logged"
-        MetricType.ACTIVITY -> "${'$'}{summary.exerciseDays} active days · ${'$'}{summary.totalExerciseMinutes} min total"
-        MetricType.MOOD -> "Avg mood ${'$'}{summary.averageMoodScore} / 5"
+        MetricType.SLEEP -> "Avg ${summary.averageSleepHours} h · ${summary.recordCount} days logged"
+        MetricType.ACTIVITY -> "${summary.exerciseDays} active days · ${summary.totalExerciseMinutes} min total"
+        MetricType.MOOD -> "Avg mood ${summary.averageMoodScore} / 5"
     }
 
     // AI wellness insight teaser card
@@ -335,7 +335,7 @@ class HomeActivity : Activity() {
 
         activeFilter?.let { filter ->
             val chip = TextView(this).apply {
-                text = "Filtered: ${'$'}{filter.from} – ${'$'}{filter.to}  ✕"
+                text = "Filtered: ${filter.from} – ${filter.to}  ✕"
                 textSize = 13f
                 setTextColor(getColor(R.color.primary_dark))
                 setPadding(dp(12), dp(6), dp(12), dp(6))
@@ -356,21 +356,15 @@ class HomeActivity : Activity() {
             section.addView(chip)
         }
 
-        val recordsView = layoutInflater.inflate(
-            R.layout.view_records_section,
-            section,
-            false
-        )
-
-        val recyclerView = recordsView.findViewById<RecyclerView>(R.id.recordsRecycler)
-        val emptyView = recordsView.findViewById<TextView>(R.id.recordsEmpty)
-        val loadingView = recordsView.findViewById<View>(R.id.recordsLoading)
+        val recordsBinding = ViewRecordsSectionBinding.inflate(layoutInflater, section, false)
+        val recordsList = recordsBinding.recordsList
+        val emptyView = recordsBinding.recordsEmpty
+        val loadingView = recordsBinding.recordsLoading
 
         loadingView.visibility = View.GONE
 
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
         val adapter = RecordsAdapter(
+            context = this,
             onEdit = { record ->
                 openRecordForm(record)
             },
@@ -379,7 +373,7 @@ class HomeActivity : Activity() {
             }
         )
 
-        recyclerView.adapter = adapter
+        recordsList.adapter = adapter
 
         val filteredRecords = DashboardDataHelper
             .applyDateFilter(allRecords, activeFilter)
@@ -387,25 +381,25 @@ class HomeActivity : Activity() {
 
         when {
             allRecords.isEmpty() -> {
-                recyclerView.visibility = View.GONE
+                recordsList.visibility = View.GONE
                 emptyView.visibility = View.VISIBLE
                 emptyView.text = getString(R.string.records_empty_message)
             }
 
             filteredRecords.isEmpty() -> {
-                recyclerView.visibility = View.GONE
+                recordsList.visibility = View.GONE
                 emptyView.visibility = View.VISIBLE
                 emptyView.text = "No records in this date range. Tap the filter chip to clear."
             }
 
             else -> {
                 emptyView.visibility = View.GONE
-                recyclerView.visibility = View.VISIBLE
+                recordsList.visibility = View.VISIBLE
                 adapter.submitList(filteredRecords)
             }
         }
 
-        section.addView(recordsView)
+        section.addView(recordsBinding.root)
     }
 
     private fun showDateRangeFilterDialog() {
@@ -475,36 +469,6 @@ class HomeActivity : Activity() {
 
     // Wellness Record Management (CRUD)
 
-    private fun openRecordDialog(record: WellnessRecordResponse?) {
-        val view = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(8), dp(20), 0)
-        }
-        val date = input("Date YYYY-MM-DD", record?.recordDate ?: LocalDate.now().toString(), InputType.TYPE_CLASS_DATETIME)
-        val sleep = input("Sleep hours", record?.sleepHours?.toString() ?: "7.0", InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
-        val exerciseType = input("Exercise type", record?.exerciseType ?: "Walking")
-        val exerciseMinutes = input("Exercise minutes", record?.exerciseMinutes?.toString() ?: "20", InputType.TYPE_CLASS_NUMBER)
-        val mood = input("Mood score 1-5", record?.moodScore?.toString() ?: "3", InputType.TYPE_CLASS_NUMBER)
-        val notes = input("Notes", record?.notes ?: "")
-        listOf(date, sleep, exerciseType, exerciseMinutes, mood, notes).forEach(view::addView)
-
-    private fun SaveRecordRemovedForPatch_REM() {
-    }
-
-    private fun saveRecord(id: Long?, request: WellnessRecordRequest) {
-        reset()
-        addStateBlock("Saving record", "Sending your wellness log to the backend.", "...")
-        scope.launch {
-            runCatching {
-                if (id == null) api.createRecord(request) else api.updateRecord(id, request)
-            }.onSuccess {
-                showDashboard()
-            }.onFailure {
-                showError("Could not save record.", "Check fields and backend connection.")
-            }
-        }
-    }
-
     private fun confirmDelete(id: Long) {
         AlertDialog.Builder(this)
             .setTitle("Delete record?")
@@ -519,7 +483,10 @@ class HomeActivity : Activity() {
         addStateBlock("Deleting record", "Removing the selected wellness log.", "...")
         scope.launch {
             runCatching { api.deleteRecord(id) }
-                .onSuccess { showDashboard() }
+                .onSuccess {
+                    Toast.makeText(this@HomeActivity, "Record deleted", Toast.LENGTH_SHORT).show()
+                    showDashboard()
+                }
                 .onFailure { showError("Could not delete record.", "Please retry after checking the backend connection.") }
         }
     }
@@ -571,7 +538,7 @@ class HomeActivity : Activity() {
         content.addView(chatBubble("Assistant", message.answer, false))
         val sources = message.sources.orEmpty()
         if (sources.isNotEmpty()) {
-            content.addView(caption("Sources: ${'$'}{sources.joinToString { it.title }}"))
+            content.addView(caption("Sources: ${sources.joinToString { it.title }}"))
         }
     }
 
@@ -852,10 +819,10 @@ class HomeActivity : Activity() {
                 is HttpException -> when (throwable.code()) {
                     401, 403 -> "$prefix. Please log out and log in again."
                     503 -> "$prefix. Check Python AI service and Ollama."
-                    else -> "$prefix. Backend returned HTTP ${'$'}{throwable.code()}."
+                    else -> "$prefix. Backend returned HTTP ${throwable.code()}."
                 }
                 is IOException -> "$prefix. Check that the backend is reachable from the emulator."
-                else -> "$prefix. ${'$'}{throwable.javaClass.simpleName}."
+                else -> "$prefix. ${throwable.javaClass.simpleName}."
             }
         }
 

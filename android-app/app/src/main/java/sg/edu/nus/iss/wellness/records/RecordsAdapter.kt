@@ -1,45 +1,75 @@
 package sg.edu.nus.iss.wellness.records
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.recyclerview.widget.RecyclerView
+import android.widget.BaseAdapter
 import sg.edu.nus.iss.wellness.api.WellnessRecordResponse
+import sg.edu.nus.iss.wellness.databinding.ItemWellnessRecordBinding
 
 /**
- * Simple RecordsAdapter to display WellnessRecordResponse items with edit/delete callbacks.
+ * ListView adapter for wellness record cards with edit/delete actions.
+ *
+ * @author SA62 Team
  */
 class RecordsAdapter(
+    context: Context,
     private val onEdit: (WellnessRecordResponse) -> Unit = {},
     private val onDelete: (WellnessRecordResponse) -> Unit = {}
-) : RecyclerView.Adapter<RecordsAdapter.ViewHolder>() {
+) : BaseAdapter() {
 
+    private val inflater = LayoutInflater.from(context)
     private var items: List<WellnessRecordResponse> = emptyList()
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val title: TextView? = view.findViewById(android.R.id.text1)
-    }
+    override fun getCount(): Int = items.size
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val v = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_1, parent, false)
-        return ViewHolder(v)
-    }
+    override fun getItem(position: Int): WellnessRecordResponse = items[position]
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val record = items[position]
-        holder.title?.text = "${record.recordDate} — Mood ${record.moodScore}/5"
-        holder.itemView.setOnClickListener { onEdit(record) }
-        holder.itemView.setOnLongClickListener {
-            onDelete(record)
-            true
+    override fun getItemId(position: Int): Long = items[position].id
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        val holder: ViewHolder
+        val rowView: View
+        if (convertView == null) {
+            val binding = ItemWellnessRecordBinding.inflate(inflater, parent, false)
+            holder = ViewHolder(binding)
+            rowView = binding.root
+            rowView.tag = holder
+        } else {
+            rowView = convertView
+            holder = rowView.tag as ViewHolder
         }
-    }
 
-    override fun getItemCount(): Int = items.size
+        holder.bind(getItem(position), onEdit, onDelete)
+        return rowView
+    }
 
     fun submitList(list: List<WellnessRecordResponse>) {
         items = list
         notifyDataSetChanged()
+    }
+
+    private class ViewHolder(
+        private val binding: ItemWellnessRecordBinding
+    ) {
+        fun bind(
+            record: WellnessRecordResponse,
+            onEdit: (WellnessRecordResponse) -> Unit,
+            onDelete: (WellnessRecordResponse) -> Unit
+        ) {
+            binding.recordDateText.text = record.recordDate
+            binding.sleepText.text = "Sleep: ${record.sleepHours} hours"
+            binding.exerciseText.text = if (record.exerciseType.isNullOrBlank()) {
+                "Exercise: -"
+            } else {
+                "Exercise: ${record.exerciseType} • ${record.exerciseMinutes} min"
+            }
+            binding.moodText.text = "Mood: ${record.moodScore}/5"
+            binding.notesText.text = record.notes.orEmpty().ifBlank { "No notes added." }
+            binding.editButton.setOnClickListener { onEdit(record) }
+            binding.deleteButton.setOnClickListener { onDelete(record) }
+            binding.root.setOnClickListener { onEdit(record) }
+        }
     }
 }
