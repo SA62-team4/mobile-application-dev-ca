@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import retrofit2.HttpException
 import sg.edu.nus.iss.wellness.ChatActivity
@@ -208,6 +209,49 @@ fun Activity.addStateBlock(container: LinearLayout, title: String, detail: Strin
     block.addView(title(title, 20).centered())
     block.addView(body(detail).centered())
     container.addView(block)
+}
+
+fun Activity.addLoadingBlock(container: LinearLayout, title: String, detail: String, icon: String): Pair<TextView, Pair<ProgressBar, TextView>> {
+    val block = card(
+        fillColor = getColor(R.color.bg_surface),
+        stroke = getColor(R.color.border_default)
+    )
+    block.gravity = Gravity.CENTER_HORIZONTAL
+    val mark = TextView(this).apply {
+        text = icon
+        textSize = 20f
+        typeface = Typeface.DEFAULT_BOLD
+        gravity = Gravity.CENTER
+        setTextColor(Color.WHITE)
+        background = rounded(getColor(R.color.primary), dp(32))
+        layoutParams = LinearLayout.LayoutParams(dp(64), dp(64)).withBottomMargin(dp(10))
+    }
+    block.addView(mark)
+    block.addView(title(title, 20).centered())
+    val detailView = body(detail).centered().apply {
+        setPadding(0, 0, 0, dp(12))
+    }
+    block.addView(detailView)
+
+    val progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+        max = 100
+        progress = 0
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(8)).apply {
+            bottomMargin = dp(6)
+            leftMargin = dp(24)
+            rightMargin = dp(24)
+        }
+    }
+    block.addView(progressBar)
+
+    val percentView = caption("0%").centered().apply {
+        setTextColor(getColor(R.color.primary))
+        typeface = Typeface.DEFAULT_BOLD
+    }
+    block.addView(percentView)
+
+    container.addView(block)
+    return Pair(detailView, Pair(progressBar, percentView))
 }
 
 fun Activity.showError(container: LinearLayout, title: String, detail: String) {
