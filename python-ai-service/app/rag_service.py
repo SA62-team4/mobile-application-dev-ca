@@ -107,7 +107,7 @@ class RagService:
         yield _sse({"type": "done", "modelName": self.settings.generation_model})
 
     @traceable(run_type="retriever", name="rag.retrieve", process_inputs=strip_self)
-    async def retrieve(self, question: str, top_k: int = 4) -> list[KnowledgeChunk]:
+    async def retrieve(self, question: str, top_k: int = 3) -> list[KnowledgeChunk]:
         count = self.collection.count()
         if count == 0:
             await self.reindex()
@@ -129,7 +129,10 @@ class RagService:
         return chunks
 
     def _build_prompt(self, request: RagChatRequest, chunks: list[KnowledgeChunk]) -> str:
-        context = "\n\n".join(f"Source: {chunk.title}\n{chunk.snippet}" for chunk in chunks)
+        # Cap each snippet so the grounded prompt stays small and CPU prefill stays fast.
+        context = "\n\n".join(
+            f"Source: {chunk.title}\n{chunk.snippet[:200]}" for chunk in chunks
+        )
         records = "\n".join(
             f"- {record.recordDate}: sleep {record.sleepHours}h, exercise {record.exerciseType or 'none'} "
             f"{record.exerciseMinutes}min, mood {record.moodScore}/5"

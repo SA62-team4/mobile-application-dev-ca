@@ -62,6 +62,17 @@
   register: app_ollama_pull
   changed_when: "'pulling' in app_ollama_pull.stdout"
 
+# Warm the generation model so its weights are resident before the first mobile
+# request. Paired with OLLAMA_KEEP_ALIVE=-1 (prod overlay), the model then stays
+# loaded, so the demo never pays a cold-start on the first chat.
+- name: Warm up the Ollama generation model
+  ansible.builtin.command:
+    cmd: >-
+      docker compose {{ app_compose_file_flags }} exec -T ollama
+      ollama run "{{ app_ollama_warmup_model }}" "hi"
+    chdir: "{{ app_dir }}"
+  changed_when: false
+
 # Prebuild the RAG vector index so the first mobile AI request does not have to
 # embed the whole knowledge base. The endpoint is internal-only, so call it
 # from inside the python container.

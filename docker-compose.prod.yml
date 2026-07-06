@@ -17,7 +17,16 @@ services:
   ollama:
     ports: !reset []
     deploy: !reset null
-    mem_limit: 4608m # ~4.5 GB; fits llama3.2:3b
+    mem_limit: 4608m # ~4.5 GB; comfortably fits llama3.2:1b + nomic-embed-text
+    environment:
+      # Keep model weights resident so the first request after idle does not pay a
+      # multi-second cold load (the usual "the app hung" symptom on a demo).
+      OLLAMA_KEEP_ALIVE: "-1"
+      # One request at a time uses every core instead of splitting them across
+      # parallel slots — faster single-answer latency on a CPU-only droplet.
+      OLLAMA_NUM_PARALLEL: "1"
+      # Keep both the generation and embedding models loaded together.
+      OLLAMA_MAX_LOADED_MODELS: "2"
 
   python-ai-service:
     image: ${PYTHON_IMAGE:-ghcr.io/sa62-team4/wellness-python-ai-service:latest}

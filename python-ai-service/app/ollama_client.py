@@ -62,6 +62,9 @@ class OllamaClient:
                     "options": {
                         "num_predict": num_predict,
                         "temperature": 0.3,
+                        # Cap the context window: our grounded prompt plus the answer fits
+                        # well under 1024 tokens, so a smaller KV cache means faster prefill.
+                        "num_ctx": 1024,
                     },
                 },
             )
@@ -94,6 +97,8 @@ class OllamaClient:
                     "options": {
                         "num_predict": num_predict,
                         "temperature": 0.3,
+                        # See generate(): a bounded context window speeds up CPU prefill.
+                        "num_ctx": 1024,
                     },
                 },
             ) as response:
