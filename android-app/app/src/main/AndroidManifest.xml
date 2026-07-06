@@ -8,7 +8,10 @@
         android:theme="@style/AppTheme">
         <activity android:name=".RegisterActivity" />
         <activity android:name=".ProfileActivity" />
-        <activity android:name=".ChatActivity" />
+        <activity
+            android:name=".ChatActivity"
+            android:theme="@style/AppTheme.Chat"
+            android:windowSoftInputMode="adjustResize" />
         <activity android:name=".RecommendationsActivity" />
         <activity android:name=".DashboardActivity" />
         <activity android:name=".RecordFormActivity" />

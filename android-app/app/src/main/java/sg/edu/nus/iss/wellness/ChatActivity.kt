@@ -2,11 +2,10 @@ package sg.edu.nus.iss.wellness
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -24,16 +23,20 @@ import sg.edu.nus.iss.wellness.ui.wireBottomNav
 /**
  * RAG chatbot screen: ask a wellness question and view chat history.
  *
+ * T-405 enhancements over the T-701 base: the input row is pinned to the bottom of the
+ * screen (not the list header), the history list supports pull-to-refresh, the newest
+ * exchange is anchored at the bottom next to the input, and source snippets render as
+ * Material chips (see ChatAdapter). State messages continue to use the shared
+ * addStateBlock/showError helpers.
+ *
  * @author SA62 Team
+ * @author Tang Chee Seng (T-405 enhancements)
  */
 class ChatActivity : AppCompatActivity() {
     private val scope = MainScope()
     private lateinit var binding: ActivityChatBinding
     private lateinit var tokenStore: TokenStore
     private lateinit var api: ApiService
-    private lateinit var questionInput: EditText
-    private lateinit var sendButton: Button
-    private lateinit var statusContainer: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +51,18 @@ class ChatActivity : AppCompatActivity() {
         setContentView(binding.root)
         EdgeToEdge.apply(this, binding.rootContainer)
 
+        // Lift the bottom input above the soft keyboard. With edge-to-edge the window draws
+        // behind the IME, so adjustResize alone is not enough on Android 15 — pad the root by
+        // the keyboard height (max with the nav-bar inset) whenever the IME shows. Pairs with
+        // android:windowSoftInputMode="adjustResize" on this activity in the manifest.
+        ViewCompat.setOnApplyWindowInsetsListener(binding.rootContainer) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            view.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
+            insets
+        }
+        ViewCompat.requestApplyInsets(binding.rootContainer)
+
         highlightTab(
             listOf(
                 binding.bottomNav.dashboardButton,
@@ -59,40 +74,37 @@ class ChatActivity : AppCompatActivity() {
         )
         wireBottomNav(binding.bottomNav, ChatActivity::class.java)
 
-        val headerView = layoutInflater.inflate(R.layout.header_chat_input, binding.chatListView, false)
-        questionInput = headerView.findViewById(R.id.questionInput)
-        sendButton = headerView.findViewById(R.id.sendButton)
-        statusContainer = headerView.findViewById(R.id.statusContainer)
-        sendButton.setOnClickListener {
-            val text = questionInput.text.toString().trim()
+        binding.sendButton.setOnClickListener {
+            val text = binding.questionInput.text.toString().trim()
             if (text.isBlank()) {
                 Toast.makeText(this, "Enter a wellness question before sending.", Toast.LENGTH_SHORT).show()
             } else {
                 sendChat(text)
             }
         }
-        binding.chatListView.addHeaderView(headerView)
+        binding.swipeRefresh.setOnRefreshListener { loadChatHistory() }
+
         binding.chatListView.adapter = ChatAdapter(this, emptyList())
 
         loadChatHistory()
     }
 
     private fun sendChat(question: String) {
-        statusContainer.removeAllViews()
-        addStateBlock(statusContainer, "Thinking", "Local RAG and Ollama may take a little while.", "AI")
-        sendButton.isEnabled = false
+        binding.statusContainer.removeAllViews()
+        addStateBlock(binding.statusContainer, "Thinking", "Local RAG and Ollama may take a little while.", "AI")
+        binding.sendButton.isEnabled = false
         scope.launch {
             runCatching { api.sendChat(ChatRequest(question)) }
                 .onSuccess {
-                    sendButton.isEnabled = true
-                    questionInput.setText("")
+                    binding.sendButton.isEnabled = true
+                    binding.questionInput.setText("")
                     loadChatHistory()
                 }
                 .onFailure {
-                    sendButton.isEnabled = true
-                    statusContainer.removeAllViews()
+                    binding.sendButton.isEnabled = true
+                    binding.statusContainer.removeAllViews()
                     showError(
-                        statusContainer,
+                        binding.statusContainer,
                         apiErrorMessage("Chatbot unavailable", it),
                         "Keep your question and retry when services are running."
                     )
@@ -104,16 +116,32 @@ class ChatActivity : AppCompatActivity() {
         scope.launch {
             runCatching { api.chatHistory() }
                 .onSuccess { messages ->
-                    statusContainer.removeAllViews()
+                    binding.statusContainer.removeAllViews()
                     if (messages.isEmpty()) {
-                        addStateBlock(statusContainer, "No chat yet", "Ask a wellness habit question to start a RAG-backed conversation.", "?")
+                        addStateBlock(
+                            binding.statusContainer,
+                            "No chat yet",
+                            "Ask a wellness habit question to start a RAG-backed conversation.",
+                            "?"
+                        )
                     }
-                    binding.chatListView.adapter = ChatAdapter(this@ChatActivity, messages)
+                    // Backend returns newest-first; reverse so the latest exchange sits at the
+                    // bottom next to the input box, then scroll to it.
+                    binding.chatListView.adapter = ChatAdapter(this@ChatActivity, messages.reversed())
+                    if (messages.isNotEmpty()) {
+                        binding.chatListView.setSelection(messages.size - 1)
+                    }
                 }
                 .onFailure {
-                    statusContainer.removeAllViews()
-                    showError(statusContainer, "Could not load chat history", "You can still retry after checking backend connectivity.")
+                    binding.statusContainer.removeAllViews()
+                    showError(
+                        binding.statusContainer,
+                        "Could not load chat history",
+                        "You can still retry after checking backend connectivity."
+                    )
                 }
+            // Always stop the pull-to-refresh spinner, on both success and failure.
+            binding.swipeRefresh.isRefreshing = false
         }
     }
 
