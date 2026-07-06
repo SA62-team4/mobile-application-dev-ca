@@ -1,6 +1,6 @@
 """FastAPI entry point for RAG chatbot and agentic AI features.
 
-@author SA62 Team
+@author Zhong Cheng
 """
 
 import logging
@@ -14,10 +14,13 @@ from app.config import get_settings
 from app.models import RagChatRequest, RagChatResponse, RecommendationResponse
 from app.ollama_client import OllamaClient
 from app.rag_service import RagService
+from app.tracing import configure_tracing
 
 logger = logging.getLogger("wellness.ai")
 
 settings = get_settings()
+# Configure LangSmith before building any LangChain runnables so their runs are traced.
+configure_tracing(settings)
 ollama = OllamaClient(settings)
 rag = RagService(settings, ollama)
 backend = BackendClient(settings)

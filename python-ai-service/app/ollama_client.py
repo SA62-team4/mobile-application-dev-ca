@@ -1,11 +1,13 @@
 """Small Ollama HTTP client.
 
-@author SA62 Team
+@author Zhong Cheng
 """
 
 import httpx
+from langsmith import traceable
 
 from app.config import Settings
+from app.tracing import strip_self
 
 
 class OllamaClient:
@@ -24,6 +26,7 @@ class OllamaClient:
                 response=exc.response,
             ) from exc
 
+    @traceable(run_type="embedding", name="ollama.embed", process_inputs=strip_self)
     async def embed(self, text: str) -> list[float]:
         async with httpx.AsyncClient(timeout=60) as client:
             try:
@@ -44,6 +47,7 @@ class OllamaClient:
                 self._raise_for_status(response)
                 return response.json()["embedding"]
 
+    @traceable(run_type="llm", name="ollama.generate", process_inputs=strip_self)
     async def generate(self, prompt: str, num_predict: int = 180) -> str:
         async with httpx.AsyncClient(timeout=180) as client:
             response = await client.post(

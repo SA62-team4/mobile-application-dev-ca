@@ -7,7 +7,11 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/AppTheme">
         <activity android:name=".RegisterActivity" />
-        <activity android:name=".HomeActivity" />
+        <activity android:name=".ProfileActivity" />
+        <activity android:name=".ChatActivity" />
+        <activity android:name=".RecommendationsActivity" />
+        <activity android:name=".DashboardActivity" />
+        <activity android:name=".RecordFormActivity" />
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -16,6 +20,5 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".records.RecordFormActivity" />
     </application>
 </manifest>

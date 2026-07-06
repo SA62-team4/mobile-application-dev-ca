@@ -1,15 +1,17 @@
 """Basic local RAG pipeline using Ollama embeddings and Chroma.
 
-@author SA62 Team
+@author Zhong Cheng
 """
 
 import chromadb
 from fastapi import HTTPException
+from langsmith import traceable
 
 from app.config import Settings
 from app.knowledge_base import KnowledgeChunk, load_chunks
 from app.models import RagChatRequest, RagChatResponse, SourceSnippet
 from app.ollama_client import OllamaClient
+from app.tracing import strip_self
 
 
 class RagService:
@@ -43,6 +45,7 @@ class RagService:
             )
         return {"chunks": len(chunks)}
 
+    @traceable(run_type="chain", name="rag.chat", process_inputs=strip_self)
     async def chat(self, request: RagChatRequest) -> RagChatResponse:
         retrieved = await self.retrieve(request.question)
         prompt = self._build_prompt(request, retrieved)
@@ -55,6 +58,7 @@ class RagService:
             modelName=self.settings.generation_model,
         )
 
+    @traceable(run_type="retriever", name="rag.retrieve", process_inputs=strip_self)
     async def retrieve(self, question: str, top_k: int = 4) -> list[KnowledgeChunk]:
         count = self.collection.count()
         if count == 0:

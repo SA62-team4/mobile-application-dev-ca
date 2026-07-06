@@ -1,6 +1,6 @@
 """Configuration for the Python AI service.
 
-@author SA62 Team
+@author Zhong Cheng
 """
 
 from functools import lru_cache
@@ -16,6 +16,14 @@ class Settings(BaseSettings):
     knowledge_base_dir: str = Field("../rag-knowledge-base", alias="KNOWLEDGE_BASE_DIR")
     backend_base_url: str = Field("http://localhost:8080", alias="BACKEND_BASE_URL")
     internal_service_token: str = Field("dev_internal_token", alias="INTERNAL_SERVICE_TOKEN")
+
+    # LangSmith tracing. When enabled, LangChain runs (the recommendation chain)
+    # are exported to LangSmith for observability. Disabled by default so the
+    # service runs fully local/offline without an API key.
+    langsmith_tracing: bool = Field(False, alias="LANGSMITH_TRACING")
+    langsmith_api_key: str = Field("", alias="LANGSMITH_API_KEY")
+    langsmith_project: str = Field("wellness-agentic-ai", alias="LANGSMITH_PROJECT")
+    langsmith_endpoint: str = Field("https://api.smith.langchain.com", alias="LANGSMITH_ENDPOINT")
 
 
 @lru_cache
