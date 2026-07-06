@@ -45,10 +45,14 @@ class RecommendationAdapter(
         holder.trendSummary.text = rec.trendSummary
         holder.text.text = rec.recommendationText
 
-        if (rec.actionItems.isNotEmpty()) {
+        val visibleActionItems = rec.actionItems.take(3)
+        if (visibleActionItems.isNotEmpty()) {
             holder.actionsLabel.visibility = View.VISIBLE
             holder.actionItems.visibility = View.VISIBLE
-            holder.actionItems.text = rec.actionItems.joinToString("\n") { "- $it" }
+            holder.actionsLabel.text = "Action items"
+            holder.actionItems.text = visibleActionItems
+                .mapIndexed { index, item -> "${index + 1}. $item" }
+                .joinToString("\n")
         } else {
             holder.actionsLabel.visibility = View.GONE
             holder.actionItems.visibility = View.GONE

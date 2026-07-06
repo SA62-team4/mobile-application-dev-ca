@@ -22,6 +22,7 @@ import sg.edu.nus.iss.wellness.ui.highlightTab
 import sg.edu.nus.iss.wellness.ui.infoCard
 import sg.edu.nus.iss.wellness.ui.showError
 import sg.edu.nus.iss.wellness.ui.wireBottomNav
+import java.time.Instant
 
 /**
  * Displays AI-generated wellness recommendations and lets the user request a new one.
@@ -102,10 +103,11 @@ class RecommendationsActivity : AppCompatActivity() {
     private fun renderRecommendations(recommendations: List<RecommendationResponse>) {
         showContent()
         statusContainer.removeAllViews()
-        if (recommendations.isEmpty()) {
+        val sortedRecommendations = recommendations.sortedNewestFirst()
+        if (sortedRecommendations.isEmpty()) {
             statusContainer.addView(infoCard("No recommendations yet", "Generate one after adding wellness records."))
         }
-        binding.recommendationsListView.adapter = RecommendationAdapter(this, recommendations)
+        binding.recommendationsListView.adapter = RecommendationAdapter(this, sortedRecommendations)
     }
 
     private fun generateRecommendation() {
@@ -148,7 +150,7 @@ class RecommendationsActivity : AppCompatActivity() {
 
         scope.launch {
             runCatching { api.generateRecommendation() }
-                .onSuccess {
+                .onSuccess { generated ->
                     statusJob.cancel()
                     progressJob.cancel()
                     progressBar.progress = 100
@@ -157,7 +159,7 @@ class RecommendationsActivity : AppCompatActivity() {
                     generateButton.isEnabled = true
                     runCatching { api.recommendations() }
                         .onSuccess { renderRecommendations(it) }
-                        .onFailure { statusContainer.removeAllViews() }
+                        .onFailure { renderRecommendations(listOf(generated)) }
                 }
                 .onFailure {
                     statusJob.cancel()
@@ -172,6 +174,13 @@ class RecommendationsActivity : AppCompatActivity() {
                 }
         }
     }
+
+    private fun List<RecommendationResponse>.sortedNewestFirst(): List<RecommendationResponse> =
+        sortedWith(
+            compareByDescending<RecommendationResponse> {
+                runCatching { it.createdAt?.let(Instant::parse) }.getOrNull()
+            }.thenByDescending { it.id }
+        )
 
     private fun goToLogin() {
         startActivity(Intent(this, LoginActivity::class.java))
