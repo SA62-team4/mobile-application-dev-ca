@@ -83,7 +83,13 @@ OLLAMA_GENERATION_MODEL=llama3.2:3b
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text:latest
 CHROMA_PERSIST_DIR=/data/chroma
 ADMINER_HOST_PORT=8081
+LANGSMITH_TRACING=false
+LANGSMITH_API_KEY=
+LANGSMITH_PROJECT=wellness-agentic-ai
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 ```
+
+LangSmith tracing is optional and disabled by default so the AI service runs fully local/offline. When `LANGSMITH_TRACING=true` and an API key is supplied, `python-ai-service` exports LangChain runs (the agentic recommendation chain) to LangSmith for observability.
 
 Host-facing ports must be configurable so local tools such as Homebrew MySQL do not block Docker Compose. The default MySQL host port is `3307`, while container-to-container traffic continues to use `mysql:3306`.
 
@@ -339,6 +345,10 @@ Non-secret config goes in **Variables**.
 | `SUBDOMAIN` | Variable | DNS | Chosen API host label, e.g. `api` |
 | `API_DOMAIN` | Variable | Caddy/`.env` | The full FQDN `SUBDOMAIN.DOMAIN`, e.g. `api.example.com` |
 | `GOOGLE_CLIENT_ID` | Variable | Rendered into Droplet `.env`; backend Google ID token verification (REQ-22) | Google Cloud Console → APIs & Services → Credentials → the **Web** OAuth 2.0 client ID. Non-secret (also embedded in the Android APK). Leave unset to disable SSO in production. |
+| `LANGSMITH_API_KEY` | Secret (production) | Rendered into Droplet `.env`; LangChain run tracing | smith.langchain.com → Settings → API Keys. Optional — leave unset to keep tracing off. |
+| `LANGSMITH_TRACING` | Variable | Rendered into Droplet `.env` | `true` to export traces (requires `LANGSMITH_API_KEY`), else leave unset/`false`. |
+| `LANGSMITH_PROJECT` | Variable | Rendered into Droplet `.env` | LangSmith project name; defaults to `wellness-agentic-ai`. |
+| `LANGSMITH_ENDPOINT` | Variable | Rendered into Droplet `.env` | LangSmith API endpoint; defaults to `https://api.smith.langchain.com` (use the EU host if required). |
 
 SonarQube quality dashboard deployment shares the same DigitalOcean, SSH, and
 Terraform-state configuration as the wellness app Droplet:

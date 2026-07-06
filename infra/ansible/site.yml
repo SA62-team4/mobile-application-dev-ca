@@ -28,6 +28,13 @@
     jwt_secret: "{{ lookup('env', 'JWT_SECRET') }}"
     internal_service_token: "{{ lookup('env', 'INTERNAL_SERVICE_TOKEN') }}"
 
+    # LangSmith tracing (optional). Stays off unless LANGSMITH_TRACING=true and an
+    # API key are supplied, so a missing secret never breaks the deploy.
+    langsmith_tracing: "{{ lookup('env', 'LANGSMITH_TRACING') | default('false', true) }}"
+    langsmith_api_key: "{{ lookup('env', 'LANGSMITH_API_KEY') | default('', true) }}"
+    langsmith_project: "{{ lookup('env', 'LANGSMITH_PROJECT') | default('wellness-agentic-ai', true) }}"
+    langsmith_endpoint: "{{ lookup('env', 'LANGSMITH_ENDPOINT') | default('https://api.smith.langchain.com', true) }}"
+
   roles:
     - role: bootstrap
       tags: [bootstrap]
