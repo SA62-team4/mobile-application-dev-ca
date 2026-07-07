@@ -187,7 +187,7 @@ States:
 Success:
 
 - Store JWT securely.
-- Navigate to Records screen.
+- Navigate to Dashboard screen.
 
 Google SSO notes:
 
@@ -308,7 +308,7 @@ Validation:
 
 Success:
 
-- Return to Records screen and refresh list.
+- Return to Dashboard screen and refresh the historical records section.
 
 ### Chatbot Screen
 

@@ -34,7 +34,7 @@ The workflow image also includes Analyze. In this project, Analyze is treated as
 | Plan | `04-plan-system-architecture.md` through `11-plan-implementation-roadmap.md` | Architecture, data, API, UI, AI, Docker, roadmap |
 | Tasks | `12-tasks-implementation-backlog.md`, `16-kanban-sprint-board.md` | Implementation-ready task units and the sprint/Kanban board view |
 | Analyze | `13-analyze-traceability-matrix.md`, `14-validate-quality-gates.md` | Gap analysis before implementation |
-| Implement | Future code and tests | AI-assisted implementation against specs |
+| Implement | Code and tests in `android-app/`, `spring-backend/`, `python-ai-service/`, optional `.NET` components, and operations files | AI-assisted implementation against specs |
 | Validate | `15-validate-test-and-demo-plan.md`, `14-validate-quality-gates.md` | Evidence that output matches spec |
 
 ## Reading Order

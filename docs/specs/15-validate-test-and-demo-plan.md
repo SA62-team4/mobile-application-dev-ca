@@ -137,7 +137,7 @@ Demo data should be populated through repeatable backend-controlled seed logic o
 
 Prepare one demo user:
 
-- Email: `demo@example.com`
+- Email: `demo@wellness.test`
 - Password: documented only in local demo notes, not committed as a secret.
 
 Prepare at least five wellness records showing trends:
@@ -155,6 +155,7 @@ Prepare RAG questions:
 
 Seed/reset acceptance:
 
+- `tools/scripts/seed-data.sh` can populate the demo user and trend records through backend APIs.
 - Running the seed process twice must not create uncontrolled duplicate demo users.
 - The team can reset demo data before rehearsal.
 - Demo data supports but does not replace showing at least one live create, update, and delete action.

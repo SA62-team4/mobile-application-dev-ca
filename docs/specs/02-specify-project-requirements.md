@@ -8,7 +8,7 @@
 | --- | --- |
 | Status | Draft baseline |
 | Owner | Whole team |
-| Last reviewed | Not yet reviewed |
+| Last reviewed | 2026-07-07 |
 | Depends on | Assignment PDF |
 | Feeds | Architecture, ERD, API, Android UI, RAG, agent, Docker, test specs |
 
@@ -126,7 +126,7 @@ The project assumes a 7-person team.
 | Code quality | Layered packages, DTOs, services, repositories, tests, author comments |
 | UI and UX | Clear XML screens, bottom navigation, loading and error states |
 | System design | Architecture diagrams, ERD, API spec, Docker plan |
-| Bonus or advanced features | Basic local RAG, Dockerisation, optional AWS staging, agentic recommendations, optional .NET desktop client (REQ-21) |
+| Bonus or advanced features | Basic local RAG, Dockerisation, DigitalOcean deployment automation, optional AWS discussion, agentic recommendations, optional .NET desktop client (REQ-21), optional Google SSO (REQ-22) |
 
 ## Definition Of Done
 
