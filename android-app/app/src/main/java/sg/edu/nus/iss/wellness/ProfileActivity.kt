@@ -3,6 +3,8 @@ package sg.edu.nus.iss.wellness
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import coil.load
+import coil.transform.CircleCropTransformation
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -12,9 +14,10 @@ import sg.edu.nus.iss.wellness.ui.highlightTab
 import sg.edu.nus.iss.wellness.ui.wireBottomNav
 
 /**
- * Profile screen with logout.
+ * Profile screen with logout and Google account picture.
  *
  * @author Abu Bakar Nasir
+ * @author Tiong Zhong Cheng
  */
 class ProfileActivity : AppCompatActivity() {
     private val scope = MainScope()
@@ -35,6 +38,17 @@ class ProfileActivity : AppCompatActivity() {
 
         binding.displayNameText.text = tokenStore.displayName().ifBlank { "Wellness user" }
         binding.emailText.text = tokenStore.email().ifBlank { "No email stored" }
+
+        // Google account picture, if one was captured at sign-in. Falls back to the
+        // placeholder for email/password logins or while the image loads.
+        val photoUrl = tokenStore.photoUrl()
+        if (photoUrl.isNotBlank()) {
+            binding.profileImage.load(photoUrl) {
+                placeholder(R.drawable.ic_profile_placeholder)
+                error(R.drawable.ic_profile_placeholder)
+                transformations(CircleCropTransformation())
+            }
+        }
 
         highlightTab(
             listOf(

@@ -131,20 +131,20 @@ class LoginActivity : AppCompatActivity() {
                 showStatus("Google sign-in failed: no ID token returned (check Web Client ID).", error = true)
                 return
             }
-            exchangeGoogleToken(idToken)
+            exchangeGoogleToken(idToken, account.photoUrl?.toString())
         } catch (e: ApiException) {
             Log.e(TAG, "Google sign-in failed, statusCode=${e.statusCode}", e)
             showStatus("Google sign-in failed (code ${e.statusCode}).", error = true)
         }
     }
 
-    private fun exchangeGoogleToken(idToken: String) {
+    private fun exchangeGoogleToken(idToken: String, photoUrl: String?) {
         scope.launch {
             runCatching {
                 showStatus("Signing in with Google...")
                 ApiClient.create(tokenStore).googleLogin(GoogleAuthRequest(idToken))
             }.onSuccess { response ->
-                onLoginSuccess(response.token, response.user.displayName, response.user.email)
+                onLoginSuccess(response.token, response.user.displayName, response.user.email, photoUrl)
             }.onFailure { e ->
                 Log.e(TAG, "Backend googleLogin failed", e)
                 showStatus("Google sign-in failed: ${e.message ?: "backend error"}.", error = true)
@@ -152,8 +152,8 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun onLoginSuccess(token: String, displayName: String, email: String) {
-        tokenStore.save(token, displayName, email)
+    private fun onLoginSuccess(token: String, displayName: String, email: String, photoUrl: String? = null) {
+        tokenStore.save(token, displayName, email, photoUrl)
         startActivity(Intent(this@LoginActivity, DashboardActivity::class.java))
         finish()
     }

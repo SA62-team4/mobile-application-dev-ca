@@ -36,10 +36,21 @@
                 android:background="@drawable/bg_app_card"
                 android:layout_marginBottom="14dp">
 
+                <ImageView
+                    android:id="@+id/profileImage"
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="12dp"
+                    android:contentDescription="Profile picture"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_profile_placeholder" />
+
                 <TextView
                     android:id="@+id/displayNameText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
                     android:textSize="22sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary"
@@ -50,6 +61,7 @@
                     android:id="@+id/emailText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
                     android:textSize="14sp"
                     android:textColor="@color/text_secondary"
                     android:paddingBottom="6dp"
@@ -58,6 +70,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
                     android:text="SA62 Wellness App | Version 1.0"
                     android:textSize="12sp"
                     android:textColor="@color/text_secondary" />
