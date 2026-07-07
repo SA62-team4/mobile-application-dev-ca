@@ -13,7 +13,7 @@ services:
   ollama:
     ports: !reset []
     deploy: !reset null
-    mem_limit: 4608m # llama3.2:1b + nomic-embed-text
+    mem_limit: 4608m # qwen2.5:1.5b + nomic-embed-text
     environment:
       # Keep model weights resident.
       OLLAMA_KEEP_ALIVE: "-1"

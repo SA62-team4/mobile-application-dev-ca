@@ -99,7 +99,7 @@ USERS ||--o{ RECOMMENDATIONS : owns
 
 - Stores each user question and assistant answer.
 - `source_summary` stores the retrieved RAG source titles or short snippets used to answer.
-- `model_name` stores the local Ollama generation model, for example `llama3.2:3b`.
+- `model_name` stores the local Ollama generation model, for example `qwen2.5:1.5b`.
 
 ### Recommendations
 

@@ -81,7 +81,7 @@ DOTNET_BACKEND_HOST_PORT=8082
 DOTNET_CONNECTION_STRING=Server=mysql;Port=3306;Database=wellness_app;User=wellness_user;Password=change_me;TreatTinyAsBoolean=true;
 OLLAMA_BASE_URL=http://ollama:11434
 OLLAMA_HOST_PORT=11434
-OLLAMA_GENERATION_MODEL=llama3.2:1b
+OLLAMA_GENERATION_MODEL=qwen2.5:1.5b
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text:latest
 CHROMA_PERSIST_DIR=/data/chroma
 ADMINER_HOST_PORT=8081
@@ -122,7 +122,7 @@ Future setup commands should be documented as:
 
 ```text
 docker compose up -d mysql ollama
-docker compose exec ollama ollama pull llama3.2:3b
+docker compose exec ollama ollama pull qwen2.5:1.5b
 docker compose exec ollama ollama pull nomic-embed-text:latest
 docker compose up --build
 ```
@@ -282,7 +282,7 @@ Topology and sizing:
   the prod overlay sets `OLLAMA_KEEP_ALIVE=-1` (weights stay resident, no cold
   start), `OLLAMA_NUM_PARALLEL=1` (one request uses all cores), and
   `OLLAMA_MAX_LOADED_MODELS=2` (generation + embedding both loaded); the deploy
-  warms the generation model, and generation defaults to the faster `llama3.2:1b`.
+  warms the generation model, and generation defaults to the fast `qwen2.5:1.5b`.
 - Caddy is the only public service (80/443) and terminates TLS via automatic
   Let's Encrypt for `api.<domain>`, reverse-proxying `spring-backend:8080`.
 - MySQL, Ollama, Python AI, and Spring Boot stay on the internal `wellness-net`;

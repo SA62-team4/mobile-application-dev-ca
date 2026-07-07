@@ -95,7 +95,7 @@ AI INTEGRATION TESTS (4 - Integration Ready)
 ✅ Ollama LLM Service
    ├─ Port: 11434
    ├─ Models: Ready
-   │  ├─ llama3.2:3b (generation)
+   │  ├─ qwen2.5:1.5b (generation)
    │  └─ nomic-embed-text (embeddings)
    └─ Status: Running
 
@@ -217,7 +217,7 @@ ChatServiceTest.java
              ▼
 ┌─────────────────────────────────────────┐
 │  Ollama LLM Service                      │
-│  ├─ llama3.2:3b (text generation)      │
+│  ├─ qwen2.5:1.5b (text generation)      │
 │  └─ nomic-embed-text (embeddings)      │
 └─────────────────────────────────────────┘
 ```

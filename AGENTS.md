@@ -65,7 +65,7 @@ If a future implementation request conflicts with the CA brief, preserve the CA 
 - Python owns RAG retrieval, Ollama calls, and agentic recommendation analysis.
 - AI must be free/local. Do not introduce paid LLM APIs or cloud-only model dependencies.
 - Use Ollama as the default local LLM runtime.
-- Use `llama3.2:3b` for generation and `nomic-embed-text` for embeddings unless the specs are revised.
+- Use `qwen2.5:1.5b` for generation and `nomic-embed-text` for embeddings unless the specs are revised (`llama3.2:3b` is the higher-quality, slower fallback via `OLLAMA_GENERATION_MODEL`).
 - Dockerise MySQL, Spring Boot, Python AI service, Ollama, and vector persistence where practical.
 - Android remains outside Docker.
 - Add author comments to classes or key methods during implementation, as required by the assignment.

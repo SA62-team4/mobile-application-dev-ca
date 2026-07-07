@@ -290,7 +290,7 @@ Response `200 OK`:
       "snippet": "A calming routine and consistent bedtime support better sleep quality."
     }
   ],
-  "modelName": "llama3.2:3b",
+  "modelName": "qwen2.5:1.5b",
   "createdAt": "2026-07-01T12:10:00Z"
 }
 ```
@@ -318,7 +318,7 @@ data: {"type":"token","text":"Try keeping "}
 
 data: {"type":"token","text":"evening exercise moderate."}
 
-data: {"type":"done","id":25,"modelName":"llama3.2:3b","createdAt":"2026-07-01T12:10:00Z","sources":[{"title":"Sleep Hygiene Basics","snippet":"..."}]}
+data: {"type":"done","id":25,"modelName":"qwen2.5:1.5b","createdAt":"2026-07-01T12:10:00Z","sources":[{"title":"Sleep Hygiene Basics","snippet":"..."}]}
 ```
 
 Behavior:
@@ -415,7 +415,7 @@ Response:
       "snippet": "Consistent sleep schedules support sleep quality."
     }
   ],
-  "modelName": "llama3.2:3b"
+  "modelName": "qwen2.5:1.5b"
 }
 ```
 
@@ -432,7 +432,7 @@ data: {"type":"sources","sources":[{"title":"Sleep Hygiene Basics","snippet":"..
 
 data: {"type":"token","text":"A consistent "}
 
-data: {"type":"done","modelName":"llama3.2:3b"}
+data: {"type":"done","modelName":"qwen2.5:1.5b"}
 ```
 
 Spring Boot consumes this stream, forwards `sources`/`token` frames to Android, accumulates

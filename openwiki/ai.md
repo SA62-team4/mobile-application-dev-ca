@@ -45,7 +45,7 @@ This keeps the main data model in one place and lets the AI service remain an is
 The AI stack is designed to work locally during development and demo runs. The docs/specs assume:
 
 - Ollama for generation
-- `llama3.2:3b` for generation
+- `qwen2.5:1.5b` for generation
 - `nomic-embed-text` for embeddings
 - bounded prompt/output sizes so CPU-only inference stays usable
 

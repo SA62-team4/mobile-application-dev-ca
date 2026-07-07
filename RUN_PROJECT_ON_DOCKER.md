@@ -89,7 +89,7 @@ With Podman:
 | MySQL 8.4 | Stores user accounts, wellness records, chat history | Yes |
 | Spring Boot (Java 17) | REST API — authentication, records, AI proxy | Yes |
 | Python FastAPI (Python 3.12) | RAG chatbot and AI recommendations | Yes |
-| Ollama | Runs the local LLM (llama3.2:3b) | Yes |
+| Ollama | Runs the local LLM (qwen2.5:1.5b) | Yes |
 | Adminer | Web UI to browse MySQL data | Yes |
 | Android App | Mobile UI on your phone/emulator | **No** — runs natively in Android Studio |
 
@@ -336,7 +336,7 @@ mysql -h 127.0.0.1 -P 3307 -u wellness_user -p wellness_app
 
 **Why Ollama needs to start first:**
 
-The AI models (llama3.2:3b and nomic-embed-text) are stored in the `ollama-data` volume. We must pull them before the Python AI Service starts, because the RAG service attempts to use them on first request.
+The AI models (qwen2.5:1.5b and nomic-embed-text) are stored in the `ollama-data` volume. We must pull them before the Python AI Service starts, because the RAG service attempts to use them on first request.
 
 ---
 
@@ -344,12 +344,12 @@ The AI models (llama3.2:3b and nomic-embed-text) are stored in the `ollama-data`
 
 This step downloads the language models that the application uses. You only need to do this **once**. The models are saved to the `ollama-data` Podman volume and persist across restarts.
 
-> **Warning:** This step requires an internet connection and downloads several gigabytes of data. `llama3.2:3b` is approximately 2 GB and `nomic-embed-text` is approximately 270 MB.
+> **Warning:** This step requires an internet connection and downloads over a gigabyte of data. `qwen2.5:1.5b` is approximately 1 GB and `nomic-embed-text` is approximately 270 MB.
 
 ### 3.1 Pull the generation model
 
 ```bash
-podman compose exec ollama ollama pull llama3.2:3b
+podman compose exec ollama ollama pull qwen2.5:1.5b
 ```
 
 **Breaking down this command:**
@@ -358,12 +358,12 @@ podman compose exec ollama ollama pull llama3.2:3b
 |---|---|
 | `podman compose exec` | Run a command inside a running container |
 | `ollama` | The name of the service (from docker-compose.yml) |
-| `ollama pull llama3.2:3b` | The command to run inside the container — downloads the model |
+| `ollama pull qwen2.5:1.5b` | The command to run inside the container — downloads the model |
 
 **Expected output:**
 ```
 pulling manifest
-pulling 74701a8c35f6... 100% ▕████████████████████████████████▏ 2.0 GB
+pulling 74701a8c35f6... 100% ▕████████████████████████████████▏ 986 MB
 pulling 966de95ca8a6... 100% ▕████████████████████████████████▏ 1.4 KB
 ...
 success
@@ -392,7 +392,7 @@ podman compose exec ollama ollama list
 **Expected output:**
 ```
 NAME                    ID              SIZE    MODIFIED
-llama3.2:3b             a80c4f17acd5    2.0 GB  2 minutes ago
+qwen2.5:1.5b             65ec06548149    986 MB  2 minutes ago
 nomic-embed-text:latest 0a109f422b47    274 MB  1 minute ago
 ```
 
@@ -881,7 +881,7 @@ curl -X POST http://localhost:8000/rag/reindex
 
 **Fix:** Re-pull the models (see Step 3):
 ```bash
-podman compose exec ollama ollama pull llama3.2:3b
+podman compose exec ollama ollama pull qwen2.5:1.5b
 podman compose exec ollama ollama pull nomic-embed-text
 ```
 
@@ -1039,7 +1039,7 @@ podman machine start
 cp .env.example .env
 # Edit .env with real secrets, then:
 podman compose up -d mysql ollama
-podman compose exec ollama ollama pull llama3.2:3b
+podman compose exec ollama ollama pull qwen2.5:1.5b
 podman compose exec ollama ollama pull nomic-embed-text
 podman compose up --build -d
 

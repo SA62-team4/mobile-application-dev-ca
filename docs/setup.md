@@ -25,7 +25,7 @@ adb version
 ```bash
 cp .env.example .env
 docker compose up -d mysql ollama
-docker compose exec ollama ollama pull llama3.2:3b
+docker compose exec ollama ollama pull qwen2.5:1.5b
 docker compose exec ollama ollama pull nomic-embed-text
 docker compose up --build
 ```

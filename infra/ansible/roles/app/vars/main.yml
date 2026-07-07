@@ -15,15 +15,17 @@ app_compose_files:
 app_compose_file_flags: "-f docker-compose.yml -f docker-compose.prod.yml"
 
 # Models that must be present before the first mobile AI request.
-# Generation uses llama3.2:1b for faster CPU-only inference; to fall back to 3b,
-# add it here and set OLLAMA_GENERATION_MODEL accordingly.
+# Generation uses qwen2.5:1.5b: same latency class as llama3.2:1b on CPU but
+# better instruction-following, and it fits the Ollama mem_limit comfortably.
+# To step up quality at ~2-3x the latency, switch to llama3.2:3b here and in
+# OLLAMA_GENERATION_MODEL (and raise the ollama mem_limit in the prod overlay).
 app_ollama_models:
-  - llama3.2:1b
+  - qwen2.5:1.5b
   - nomic-embed-text:latest
 
 # Generation model to warm up (load into memory) at the end of a deploy so the
 # first user request is fast. Keep in sync with OLLAMA_GENERATION_MODEL.
-app_ollama_warmup_model: llama3.2:1b
+app_ollama_warmup_model: qwen2.5:1.5b
 
 # Files shipped from the repo checkout to the droplet.
 app_compose_assets:
