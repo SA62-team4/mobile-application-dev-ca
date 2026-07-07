@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - Root navigation between login and the signed-in shell (REQ-21).
+// @author Tiong Zhong Cheng
 using CommunityToolkit.Mvvm.ComponentModel;
 using WellnessDesktop.Services;
 

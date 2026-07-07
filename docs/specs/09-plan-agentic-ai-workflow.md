@@ -1,5 +1,7 @@
 # 07 Agentic AI Spec
 
+<!-- @author Tiong Zhong Cheng -->
+
 ## Spec Metadata
 
 | Field | Value |

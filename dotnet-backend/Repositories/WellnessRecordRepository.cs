@@ -8,7 +8,7 @@ namespace Wellness.Backup.Api.Repositories;
 /// <summary>
 /// User-scoped persistence for wellness records.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public sealed class WellnessRecordRepository
 {
     private readonly MySqlConnectionFactory _connections;

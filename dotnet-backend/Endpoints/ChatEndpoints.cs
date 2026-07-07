@@ -8,7 +8,7 @@ namespace Wellness.Backup.Api.Endpoints;
 /// <summary>
 /// Chatbot routes that orchestrate through the Python RAG service.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public static class ChatEndpoints
 {
     public static void MapChatEndpoints(this IEndpointRouteBuilder app)

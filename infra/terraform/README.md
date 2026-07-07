@@ -1,5 +1,7 @@
 # Terraform — Wellness App (DigitalOcean)
 
+<!-- @author Tiong Zhong Cheng -->
+
 Provisions the app runtime droplet and the SonarQube Community Build dashboard
 droplet, each with a reserved IP, cloud firewall (22/80/443), optional DNS, and
 project grouping. Infra only — app/SonarQube deploys and secrets are handled by

@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - ApiClient request/header/error behavior tests (REQ-21, NFR-02).
+// Author: Tiong Zhong Cheng - ApiClient request/header/error behavior tests (REQ-21, NFR-02).
 using System;
 using System.Linq;
 using System.Net;

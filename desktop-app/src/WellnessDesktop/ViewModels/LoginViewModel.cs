@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - Login and registration screen logic (REQ-02, REQ-21, NFR-02).
+// @author Tiong Zhong Cheng
 using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;

@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * Entry point for the wellness backend.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 @SpringBootApplication
 public class WellnessApplication {

@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - Desktop client entry point (REQ-21).
+// @author Tiong Zhong Cheng
 using System;
 using Avalonia;
 

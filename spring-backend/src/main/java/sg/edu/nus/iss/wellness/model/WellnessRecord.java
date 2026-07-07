@@ -9,7 +9,7 @@ import java.time.LocalDate;
 /**
  * User-owned wellness observation.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 @Entity
 @Table(name = "wellness_records", indexes = @Index(name = "idx_records_user_date", columnList = "user_id,record_date"))

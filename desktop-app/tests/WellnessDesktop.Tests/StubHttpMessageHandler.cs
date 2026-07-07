@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - Test double that captures requests and returns canned responses.
+// Author: Tiong Zhong Cheng - Test double that captures requests and returns canned responses.
 using System;
 using System.Collections.Generic;
 using System.Net;

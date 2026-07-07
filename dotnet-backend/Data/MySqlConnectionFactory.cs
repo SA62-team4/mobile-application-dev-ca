@@ -6,7 +6,7 @@ namespace Wellness.Backup.Api.Data;
 /// <summary>
 /// Opens MySQL connections against the same database used by Spring Boot.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public sealed class MySqlConnectionFactory
 {
     private readonly BackendOptions _options;

@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Application-level configuration values loaded from environment variables.
  *
- * @author SA62 Team
+ * @author Chua Wei Yi Justin, Kumaraguru Surya, Tiong Zhong Cheng
  */
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {

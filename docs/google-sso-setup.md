@@ -1,6 +1,6 @@
 # Google SSO Integration — Full Implementation Guide
 
-**Author:** Surya Kumaraguru  
+**Author:** Kumaraguru Surya
 **Branch:** `feature/google-sso`  
 **Project:** wellness-app-500913 (Google Cloud)  
 **Date:** 2026-06-29
@@ -215,7 +215,7 @@ public record GoogleAuthRequest(@NotBlank String idToken) {
 /**
  * Validates Google ID tokens received from the Android client for SSO login.
  *
- * @author Surya Kumaraguru
+ * @author Kumaraguru Surya
  */
 @Service
 public class GoogleTokenVerifier {
@@ -408,7 +408,7 @@ Added below the "Create account" button:
 /**
  * Login screen — supports email/password and Google SSO.
  *
- * @author Surya Kumaraguru
+ * @author Kumaraguru Surya
  */
 class LoginActivity : Activity() {
 

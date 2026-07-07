@@ -19,11 +19,10 @@ import sg.edu.nus.iss.wellness.api.LoginRequest
 import sg.edu.nus.iss.wellness.databinding.ActivityLoginBinding
 
 /**
- * 1) Login screen — supports email/password and Google SSO.
- *    Done by @author Surya Kumaraguru
-
- * 2) Refactor UI to Android methods taught in class
- *    Done by @author Tang Chee Seng
+ * Login screen for email/password and Google SSO.
+ *
+ * @author Kumaraguru Surya
+ * @author Tang Chee Seng
  */
 class LoginActivity : AppCompatActivity() {
 

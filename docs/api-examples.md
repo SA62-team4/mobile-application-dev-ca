@@ -1,5 +1,7 @@
 # API Examples
 
+<!-- @author Tiong Zhong Cheng -->
+
 ## Register
 
 ```bash

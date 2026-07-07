@@ -6,7 +6,7 @@ namespace Wellness.Backup.Api.Validation;
 /// <summary>
 /// Minimal validation rules matching the public Spring API contract.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public static class RequestValidation
 {
     public static void Validate(RegisterRequest request)

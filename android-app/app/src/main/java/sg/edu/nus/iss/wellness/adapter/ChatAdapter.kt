@@ -13,13 +13,7 @@ import sg.edu.nus.iss.wellness.api.ChatResponse
 /**
  * Row adapter for the chat history list. Each row holds one question/answer pair.
  *
- * T-405 enhancement: source snippets render as Material chips instead of a plain caption.
- * Streaming enhancement: [submit] refreshes the rows in place so a live answer can grow
- * token-by-token without recreating the adapter on every frame.
- *
- * @author SA62 Team
- * @author Tang Chee Seng (T-405: source snippets as Material chips)
- * @author Zhong Cheng (streaming in-place updates)
+ * @author Tiong Zhong Cheng, Tang Chee Seng, Abu Bakar Nasir
  */
 class ChatAdapter(
     context: Context,

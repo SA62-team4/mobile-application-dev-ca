@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Repository for agent-generated recommendations.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 public interface RecommendationRepository extends JpaRepository<Recommendation, Long> {
     List<Recommendation> findByUserOrderByCreatedAtDesc(AppUser user);

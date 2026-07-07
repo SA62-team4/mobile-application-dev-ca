@@ -28,7 +28,7 @@ def apiBaseUrlForBuildConfig = {
     return value.replace("\\", "\\\\").replace("\"", "\\\"")
 }
 
-// Enable dependency locking so Semgrep Supply Chain (Managed Scans) can resolve deps without a build
+// Emit lockfiles for dependency scanning.
 dependencyLocking {
     lockAllConfigurations()
 }
@@ -37,10 +37,7 @@ android {
     namespace "sg.edu.nus.iss.wellness"
     compileSdk 35
 
-    // Shared debug keystore committed to the repo so every developer's debug build has the
-    // same signing SHA-1. Google Sign-In only works when the running APK's SHA-1 is registered
-    // on the Android OAuth client; a shared key means one SHA-1 to register for the whole team
-    // instead of each machine's unique ~/.android/debug.keystore (which causes error code 10).
+    // Shared debug key keeps one Google Sign-In SHA-1 for the team.
     signingConfigs {
         debug {
             storeFile file("shared-debug.keystore")

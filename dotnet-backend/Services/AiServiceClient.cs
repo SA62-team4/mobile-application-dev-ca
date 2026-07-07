@@ -8,7 +8,7 @@ namespace Wellness.Backup.Api.Services;
 /// <summary>
 /// HTTP client for the existing Python RAG and agentic AI service.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public sealed class AiServiceClient
 {
     private readonly HttpClient _httpClient;

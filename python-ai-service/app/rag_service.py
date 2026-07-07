@@ -1,6 +1,6 @@
 """Basic local RAG pipeline using Ollama embeddings and Chroma.
 
-@author Zhong Cheng
+@author Tiong Zhong Cheng
 """
 
 import json

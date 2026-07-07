@@ -1,6 +1,6 @@
 """Pydantic request and response models.
 
-@author SA62 Team
+@author Tiong Zhong Cheng
 """
 
 from pydantic import BaseModel, Field

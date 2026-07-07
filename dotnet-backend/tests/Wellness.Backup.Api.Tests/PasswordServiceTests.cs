@@ -7,7 +7,7 @@ namespace Wellness.Backup.Api.Tests;
 /// Verifies BCrypt behavior required for Spring Security password compatibility, and that
 /// registration stores a salted hash rather than the raw password (E1 Auth &amp; Security).
 /// </summary>
-/// <remarks>@author SA62 Team, JustinChua97</remarks>
+/// <remarks>@author Chua Wei Yi Justin, Tiong Zhong Cheng</remarks>
 public sealed class PasswordServiceTests
 {
     [Fact]

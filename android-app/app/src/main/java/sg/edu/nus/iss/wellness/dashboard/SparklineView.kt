@@ -11,10 +11,9 @@ import android.util.TypedValue
 import android.view.View
 
 /**
- * Custom view that draws a simple sparkline (line or bar) on an Android Canvas.
- * Keeps implementation lightweight by drawing directly to the canvas without third-party dependencies.
+ * Canvas sparkline view.
  *
- * @author SA62 Team
+ * @author Jemilin Beulah Suria Christopher Raj
  */
 class SparklineView(context: Context, attrs: AttributeSet? = null) : View(context, attrs) {
 
@@ -73,11 +72,11 @@ class SparklineView(context: Context, attrs: AttributeSet? = null) : View(contex
         val count = s.points.size
         val minVal = s.points.min()
         val maxVal = s.points.max()
-        val flat = maxVal - minVal < 0.001f  // identical values (e.g., 7.5h every day)
+        val flat = maxVal - minVal < 0.001f
         val range = if (flat) 1f else maxVal - minVal
 
         fun xAt(i: Int) = if (count == 1) width / 2f else i * (width - 1f) / (count - 1)
-        // Flat/single-value lines are centered vertically so they render mid-card, not at the bottom
+        // Center flat lines vertically.
         fun yAt(v: Float) = if (flat) topPadding + chartH / 2f
                             else topPadding + chartH * (1f - (v - minVal) / range)
 
@@ -89,12 +88,12 @@ class SparklineView(context: Context, attrs: AttributeSet? = null) : View(contex
         }
 
         if (s.dotsAtAllPoints) {
-            // Mood: dot at every point
+            // Mood dots.
             for (i in 0 until count) {
                 canvas.drawCircle(xAt(i), yAt(s.points[i]), dotRadius, dotPaint)
             }
         } else {
-            // Sleep: filled dot at end only
+            // Sleep endpoint.
             canvas.drawCircle(xAt(count - 1), yAt(s.points.last()), dotRadius + 1f, dotPaint)
         }
     }
@@ -106,10 +105,10 @@ class SparklineView(context: Context, attrs: AttributeSet? = null) : View(contex
         val slotW = width.toFloat() / count
         val barW = slotW * 0.6f
         val minBarH = 4f
-        barPaint.alpha = 204  // 80%
+        barPaint.alpha = 204
 
         s.points.forEachIndexed { i, value ->
-            if (value <= 0f) return@forEachIndexed  // Skip drawing bars for zero-value or missing days
+            if (value <= 0f) return@forEachIndexed
             val barH = ((value / maxVal) * chartH).coerceAtLeast(minBarH)
             val left = i * slotW + (slotW - barW) / 2f
             val top = topPadding + chartH - barH

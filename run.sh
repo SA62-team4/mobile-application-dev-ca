@@ -1,26 +1,21 @@
 #!/usr/bin/env bash
-# ─────────────────────────────────────────────────────────────────────────────
-# run.sh — start the Wellness App with podman compose
+# Start the Wellness App with compose.
 #
 # Usage:
-#   ./run.sh                  Normal start (incremental; reuses running state)
-#   ./run.sh --clean          Wipe app data (MySQL + ChromaDB) and rebuild
-#                             images. Preserves ollama-data (avoids re-downloading
-#                             multi-GB LLM models).
-#   ./run.sh --clean-all      Wipe EVERYTHING including ollama-data.
-#                             Ollama models will be re-downloaded on startup.
+#   ./run.sh                  Normal start
+#   ./run.sh --clean          Wipe app data and rebuild
+#   ./run.sh --clean-all      Wipe app data and Ollama models
 #   ./run.sh --skip-models    Skip the Ollama model presence check.
 #   ./run.sh -h               Show this help.
-# ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"  # ensures .env and docker-compose.yml are found automatically
+cd "$SCRIPT_DIR"
 
-# Compose command; override for other engines (droplet deploy sets docker compose).
+# Override when needed, e.g. COMPOSE="docker compose".
 COMPOSE="${COMPOSE:-podman compose}"
 
-# ── terminal colours ──────────────────────────────────────────────────────────
+# Terminal colours.
 if [[ -t 1 ]]; then
   GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'
   BOLD='\033[1m'; DIM='\033[2m'; NC='\033[0m'
@@ -34,7 +29,7 @@ error() { echo -e "${RED}  ✗${NC}  $*" >&2; }
 step()  { echo -e "\n${BOLD}▶  $*${NC}"; }
 dim()   { echo -e "${DIM}     $*${NC}"; }
 
-# ── arg parsing ───────────────────────────────────────────────────────────────
+# Args.
 CLEAN=false
 CLEAN_ALL=false
 SKIP_MODELS=false
@@ -53,7 +48,7 @@ for arg in "$@"; do
   esac
 done
 
-# ── source .env for port numbers (read-only — does not modify env in parent) ──
+# Read .env values.
 if [[ -f ".env" ]]; then
   set -a; source ".env"; set +a
 else
@@ -67,7 +62,7 @@ ADMINER_PORT="${ADMINER_HOST_PORT:-8081}"
 GEN_MODEL="${OLLAMA_GENERATION_MODEL:-llama3.2:3b}"
 EMB_MODEL="${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}"
 
-# ── helper: wait for HTTP endpoint to return 2xx ─────────────────────────────
+# Wait for an HTTP endpoint.
 wait_for_url() {
   local url="$1" label="$2" max_wait="${3:-180}" interval=5
   local elapsed=0
@@ -86,7 +81,7 @@ wait_for_url() {
   echo -e "  ${GREEN}ready${NC}"
 }
 
-# ── macOS: ensure Podman machine is running ───────────────────────────────────
+# macOS Podman machine.
 if [[ "$(uname)" == "Darwin" ]]; then
   step "Podman machine (macOS)"
   STATUS=$(podman machine status 2>/dev/null | awk '{print $2}' || echo "Unknown")
@@ -99,7 +94,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   fi
 fi
 
-# ── clean ─────────────────────────────────────────────────────────────────────
+# Clean previous run.
 if $CLEAN; then
   step "Cleaning previous run"
   warn "Stopping all containers..."
@@ -107,18 +102,16 @@ if $CLEAN; then
 
   if $CLEAN_ALL; then
     warn "Removing ALL volumes (ollama-data included — models will re-download)."
-    # --volumes removes volumes declared in the compose file
     $COMPOSE down --volumes --rmi local 2>/dev/null || true
-    # Belt-and-suspenders: also remove by pattern in case already stopped
+    # Remove any matching leftovers.
     podman volume ls --format "{{.Name}}" 2>/dev/null \
       | grep -E "(mysql-data|ollama-data|chroma-data)" \
       | xargs -r podman volume rm 2>/dev/null || true
   else
     warn "Removing app data volumes (mysql-data + chroma-data). Preserving ollama-data."
     dim "Use --clean-all to also remove the Ollama model cache."
-    # Remove only the built service images (not the base images like mysql, ollama)
     $COMPOSE down --rmi local 2>/dev/null || true
-    # Remove app data volumes by pattern — names vary by compose project prefix
+    # Compose prefixes volume names.
     podman volume ls --format "{{.Name}}" 2>/dev/null \
       | grep -E "(mysql-data|chroma-data)" \
       | xargs -r podman volume rm 2>/dev/null || true
@@ -126,7 +119,7 @@ if $CLEAN; then
   info "Clean complete."
 fi
 
-# ── stage 1: start MySQL and Ollama (heavy services that need a head-start) ───
+# Stage 1: start heavy services.
 step "Stage 1/3 — Starting MySQL and Ollama"
 $COMPOSE up -d mysql ollama
 dim "Giving MySQL 20 s to initialise its data directory on first boot..."
@@ -134,13 +127,13 @@ sleep 20
 
 wait_for_url "http://localhost:$OLLAMA_PORT/api/version" "Ollama :$OLLAMA_PORT" 120
 
-# ── pull Ollama models if not already present ─────────────────────────────────
+# Pull missing Ollama models.
 if ! $SKIP_MODELS; then
   step "Checking Ollama model cache"
   TAGS=$(curl -sf "http://localhost:$OLLAMA_PORT/api/tags" 2>/dev/null || echo "{}")
 
-  GEN_KEY="${GEN_MODEL%%:*}"   # e.g. "llama3.2" from "llama3.2:3b"
-  EMB_KEY="${EMB_MODEL%%:*}"   # e.g. "nomic-embed-text"
+  GEN_KEY="${GEN_MODEL%%:*}"
+  EMB_KEY="${EMB_MODEL%%:*}"
 
   if echo "$TAGS" | grep -q "$GEN_KEY"; then
     info "Generation model ($GEN_MODEL) already present — skipping pull."
@@ -159,17 +152,17 @@ if ! $SKIP_MODELS; then
   fi
 fi
 
-# ── stage 2: build and start all remaining services ───────────────────────────
+# Stage 2: build and start app services.
 step "Stage 2/3 — Building and starting remaining services"
 dim "Spring Boot rebuilds from source on code changes. First build ~60 s."
 $COMPOSE up --build -d
 
-# ── stage 3: wait for Python AI service and Spring Boot ───────────────────────
+# Stage 3: wait for app services.
 step "Stage 3/3 — Waiting for services to become healthy"
 wait_for_url "http://localhost:$AI_PORT/health"               "Python AI service :$AI_PORT" 120
 wait_for_url "http://localhost:$SPRING_PORT/actuator/health"  "Spring Boot :$SPRING_PORT"   180
 
-# ── final status ──────────────────────────────────────────────────────────────
+# Status.
 step "All services are up"
 $COMPOSE ps
 

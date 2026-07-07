@@ -1,14 +1,10 @@
-# Production overlay for the droplet. Apply on top of the base compose:
+# Production overlay:
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-# Changes: prebuilt GHCR images for spring/python, no public host ports except
-# Caddy (80/443), Adminer disabled (debug profile), Caddy TLS reverse proxy added.
-# mem_limit (enforced, unlike deploy.resources) sized to fit an 8 GB droplet and
-# to cap the Spring JVM (UseContainerSupport reads this limit). Sum ~6.25 GB.
+# Uses GHCR images, Caddy-only public ports, and enforced memory caps.
 
 services:
 
-  # deploy.resources is reset because docker compose ignores it and it cannot
-  # coexist with a distinct mem_limit. mem_limit is the enforced cap.
+  # Use enforced memory caps.
   mysql:
     ports: !reset [] # internal only
     deploy: !reset null
@@ -17,15 +13,13 @@ services:
   ollama:
     ports: !reset []
     deploy: !reset null
-    mem_limit: 4608m # ~4.5 GB; comfortably fits llama3.2:1b + nomic-embed-text
+    mem_limit: 4608m # llama3.2:1b + nomic-embed-text
     environment:
-      # Keep model weights resident so the first request after idle does not pay a
-      # multi-second cold load (the usual "the app hung" symptom on a demo).
+      # Keep model weights resident.
       OLLAMA_KEEP_ALIVE: "-1"
-      # One request at a time uses every core instead of splitting them across
-      # parallel slots — faster single-answer latency on a CPU-only droplet.
+      # Prefer single-answer latency.
       OLLAMA_NUM_PARALLEL: "1"
-      # Keep both the generation and embedding models loaded together.
+      # Keep generation and embedding models loaded.
       OLLAMA_MAX_LOADED_MODELS: "2"
 
   python-ai-service:
@@ -45,7 +39,7 @@ services:
   adminer:
     profiles: ["debug"] # not started in prod
 
-  # Public HTTPS edge; only internet-facing service.
+  # Public HTTPS edge.
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -56,7 +50,7 @@ services:
       API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in .env}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data   # persist certs across restarts
+      - caddy-data:/data   # cert storage
       - caddy-config:/config
     networks:
       - wellness-net

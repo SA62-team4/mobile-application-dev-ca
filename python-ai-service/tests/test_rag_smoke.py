@@ -7,7 +7,7 @@ Verifies the T-403 acceptance criteria without a live Ollama server:
 - retrieval returns the relevant chunk
 - chat returns an answer with sources
 
-@author JustinChua97
+@author Chua Wei Yi Justin
 """
 
 import json

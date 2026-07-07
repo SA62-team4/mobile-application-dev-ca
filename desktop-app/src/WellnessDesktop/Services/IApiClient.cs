@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - REST client contract for the Spring Boot backend (REQ-21).
+// @author Tiong Zhong Cheng
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using WellnessDesktop.Models;
@@ -6,8 +6,7 @@ using WellnessDesktop.Models;
 namespace WellnessDesktop.Services;
 
 /// <summary>
-/// Typed access to the Spring Boot REST API documented in
-/// docs/specs/06-plan-api-contracts.md. The desktop client calls only this API.
+/// Typed Spring backend client.
 /// </summary>
 public interface IApiClient
 {

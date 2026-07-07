@@ -3,9 +3,9 @@ using System.Data.Common;
 namespace Wellness.Backup.Api.Data;
 
 /// <summary>
-/// Small data-reader helpers for stable MySQL type conversion.
+/// Stable MySQL reader conversions.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public static class DataReaderExtensions
 {
     public static string GetRequiredString(this DbDataReader reader, string name)

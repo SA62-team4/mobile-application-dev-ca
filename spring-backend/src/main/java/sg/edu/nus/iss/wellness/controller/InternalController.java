@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Internal APIs used by the Python agentic AI service.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 @RestController
 @RequestMapping("/api/internal/users/{userId}")

@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Repository for RAG chatbot history.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
     List<ChatMessage> findByUserOrderByCreatedAtDesc(AppUser user);

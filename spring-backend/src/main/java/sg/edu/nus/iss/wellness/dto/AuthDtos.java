@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 /**
  * DTOs for authentication endpoints.
  *
- * @author SA62 Team
+ * @author Kumaraguru Surya, Tiong Zhong Cheng
  */
 public final class AuthDtos {
     private AuthDtos() {

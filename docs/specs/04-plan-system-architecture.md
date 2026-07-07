@@ -1,5 +1,7 @@
 # 02 System Architecture
 
+<!-- @author Tiong Zhong Cheng -->
+
 ## Spec Metadata
 
 | Field | Value |

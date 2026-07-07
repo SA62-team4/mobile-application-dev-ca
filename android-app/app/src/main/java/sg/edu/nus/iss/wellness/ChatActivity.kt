@@ -26,14 +26,7 @@ import sg.edu.nus.iss.wellness.ui.wireBottomNav
 /**
  * RAG chatbot screen: ask a wellness question and view chat history.
  *
- * T-405 enhancements over the T-701 base: the input row is pinned to the bottom of the
- * screen (not the list header), the history list supports pull-to-refresh, the newest
- * exchange is anchored at the bottom next to the input, and source snippets render as
- * Material chips (see ChatAdapter). State messages continue to use the shared
- * addStateBlock/showError helpers.
- *
- * @author SA62 Team
- * @author Tang Chee Seng, with assistance from Claude (T-405 enhancements)
+ * @author Tiong Zhong Cheng, Tang Chee Seng, Abu Bakar Nasir
  */
 class ChatActivity : AppCompatActivity() {
     private val scope = MainScope()
@@ -61,10 +54,7 @@ class ChatActivity : AppCompatActivity() {
         setContentView(binding.root)
         EdgeToEdge.apply(this, binding.rootContainer)
 
-        // Lift the bottom input above the soft keyboard. With edge-to-edge the window draws
-        // behind the IME, so adjustResize alone is not enough on Android 15 — pad the root by
-        // the keyboard height (max with the nav-bar inset) whenever the IME shows. Pairs with
-        // android:windowSoftInputMode="adjustResize" on this activity in the manifest.
+        // Keep the input above the keyboard in edge-to-edge mode.
         ViewCompat.setOnApplyWindowInsetsListener(binding.rootContainer) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
@@ -106,16 +96,14 @@ class ChatActivity : AppCompatActivity() {
         binding.sendButton.isEnabled = false
         binding.questionInput.setText("")
 
-        // Append a live, growing answer bubble beneath the existing history. Because only one
-        // send runs at a time (the button is disabled), this pending row is always the last.
+        // Append the live answer row.
         val pendingIndex = messages.size
         messages.add(pendingMessage(question, "", emptyList()))
         renderMessages()
 
         val answer = StringBuilder()
         var sources: List<SourceSnippet> = emptyList()
-        // Once a terminal frame (done/error) is handled, the answer is settled. Any later
-        // exception from closing the stream must not flash an error over the finished reply.
+        // Ignore late stream failures after terminal frames.
         var terminal = false
 
         scope.launch {

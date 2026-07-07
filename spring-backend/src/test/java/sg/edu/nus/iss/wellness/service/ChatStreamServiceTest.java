@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
  * persistence hand-off, and error forwarding. Runs {@code runStream} synchronously with a
  * mock emitter so no executor or Spring context is involved.
  *
- * @author Zhong Cheng
+ * @author Tiong Zhong Cheng
  */
 @DisplayName("Chat Stream Service Tests")
 class ChatStreamServiceTest {

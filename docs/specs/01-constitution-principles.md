@@ -1,5 +1,7 @@
 # 00 Constitution
 
+<!-- @author Tiong Zhong Cheng -->
+
 ## Purpose
 
 This constitution defines the project principles, standards, and guardrails that all specs, tasks, AI-generated code, and validation work must follow.

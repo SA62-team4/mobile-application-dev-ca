@@ -16,7 +16,7 @@ import sg.edu.nus.iss.wellness.service.GoogleTokenVerifier;
 /**
  * Handles account registration and stateless JWT login/logout.
  *
- * @author SA62 Team
+ * @author Kumaraguru Surya, Tiong Zhong Cheng
  */
 @RestController
 @RequestMapping("/api/auth")

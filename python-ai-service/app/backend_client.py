@@ -1,6 +1,6 @@
 """Client for backend internal APIs.
 
-@author SA62 Team
+@author Tiong Zhong Cheng
 """
 
 import httpx

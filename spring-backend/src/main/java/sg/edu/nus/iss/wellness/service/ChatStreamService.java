@@ -29,7 +29,7 @@ import java.util.concurrent.Executors;
  * context are available) and the actual streaming runs on a background worker so the servlet
  * thread is released promptly.
  *
- * @author Zhong Cheng
+ * @author Tiong Zhong Cheng
  */
 @Service
 public class ChatStreamService {

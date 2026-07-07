@@ -23,7 +23,7 @@ import java.time.LocalDate
  * Add/edit screen for a single wellness record. Returns RESULT_OK to the
  * caller (Dashboard) on save or delete so it can refresh.
  *
- * @author SA62 Team
+ * @author Abu Bakar Nasir
  */
 class RecordFormActivity : AppCompatActivity() {
     private val scope = MainScope()

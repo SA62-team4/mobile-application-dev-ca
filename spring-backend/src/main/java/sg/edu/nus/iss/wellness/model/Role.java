@@ -3,7 +3,7 @@ package sg.edu.nus.iss.wellness.model;
 /**
  * Account roles used for authentication and authorization.
  *
- * @author JustinChua97
+ * @author Chua Wei Yi Justin
  */
 public enum Role {
     USER,

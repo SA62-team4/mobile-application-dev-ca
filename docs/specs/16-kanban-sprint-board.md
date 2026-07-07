@@ -1,5 +1,7 @@
 # 16 Kanban Sprint Board
 
+<!-- @author Abu Bakar Nasir, Tang Chee Seng -->
+
 ## Spec Metadata
 
 | Field | Value |

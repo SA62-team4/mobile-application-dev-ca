@@ -1,6 +1,4 @@
-# Public HTTPS edge. Terminates TLS (auto Let's Encrypt) and proxies to Spring
-# Boot over the internal network. Domain comes from $API_DOMAIN (set in .env).
-# DNS for $API_DOMAIN must resolve to the droplet before Caddy starts.
+# HTTPS edge for the Spring backend.
 
 {$API_DOMAIN} {
 	reverse_proxy spring-backend:8080

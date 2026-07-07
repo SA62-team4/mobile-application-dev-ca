@@ -11,7 +11,7 @@ import android.view.WindowInsets
 /**
  * Applies system-bar insets so XML screens do not draw under cutouts or nav bars.
  *
- * @author SA62 Team
+ * @author Bryan Phang Wai Yip, Tiong Zhong Cheng
  */
 object EdgeToEdge {
     fun apply(activity: Activity, root: View) {

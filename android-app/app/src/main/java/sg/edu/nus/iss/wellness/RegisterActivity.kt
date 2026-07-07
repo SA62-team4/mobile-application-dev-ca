@@ -13,10 +13,10 @@ import sg.edu.nus.iss.wellness.databinding.ActivityRegisterBinding
 
 /**
  * 1) Account registration screen.
- *    @author SA62 Team
+ *    @author Tang Chee Seng, Tiong Zhong Cheng
 
  * 2) Refactor UI to Android methods taught in class
- *    Done by @author Tang Chee Seng
+ *    @author Tang Chee Seng
  */
 class RegisterActivity : AppCompatActivity() {
     private val scope = MainScope()
