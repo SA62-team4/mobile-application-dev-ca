@@ -22,8 +22,9 @@ No paid LLM APIs and no cloud-only model dependency.
 
 Default local models:
 
-- Generation: `llama3.2:1b` (chosen for faster CPU-only inference on the droplet; override
-  `OLLAMA_GENERATION_MODEL` with `llama3.2:3b` when answer quality matters more than latency)
+- Generation: `qwen2.5:1.5b` (same latency class as `llama3.2:1b` on CPU-only but better
+  instruction-following; override `OLLAMA_GENERATION_MODEL` with `llama3.2:3b` when answer
+  quality matters more than latency, noting the ~2-3x latency and higher memory cost)
 - Embeddings: `nomic-embed-text`
 
 Default local runtime:
@@ -69,7 +70,7 @@ rectangle "User Question" as UserQuestion
 rectangle "Query Embedding" as QueryEmbed
 rectangle "Top K Retrieval" as Retrieve
 rectangle "Grounded Prompt" as Prompt
-rectangle "Ollama Generation\nllama3.2:1b" as Generate
+rectangle "Ollama Generation\nqwen2.5:1.5b" as Generate
 rectangle "Answer + Sources" as Answer
 
 KB --> Chunker
@@ -151,7 +152,8 @@ stored identically. See `06-plan-api-contracts.md` for the SSE frame protocol.
 
 Generation runs CPU-only on the droplet, so latency is managed rather than eliminated:
 
-- **Model**: `llama3.2:1b` by default (~2-3x faster than 3b on CPU).
+- **Model**: `qwen2.5:1.5b` by default (~2-3x faster than 3b on CPU, similar speed to
+  llama3.2:1b with better output quality).
 - **Keep-warm**: the prod overlay sets `OLLAMA_KEEP_ALIVE=-1` and `OLLAMA_NUM_PARALLEL=1`, and
   the deploy warms the generation model, so the first request pays no cold model load and a
   single request uses every core. See `10-plan-docker-devops.md`.

@@ -176,7 +176,7 @@ services:
     build: ./python-ai-service
     environment:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
-      OLLAMA_GENERATION_MODEL: ${OLLAMA_GENERATION_MODEL:-llama3.2:3b}
+      OLLAMA_GENERATION_MODEL: ${OLLAMA_GENERATION_MODEL:-qwen2.5:1.5b}
       OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
       CHROMA_PERSIST_DIR: ${CHROMA_PERSIST_DIR:-/data/chroma}
       KNOWLEDGE_BASE_DIR: /app/rag-knowledge-base
@@ -239,7 +239,7 @@ volumes:
 |---|---|---|---|
 | `networks` | Missing | `networks: - wellness-net` added | Same rationale as `mysql` — all services must share the same network to use DNS-based service names. |
 | `restart` | Missing | `restart: unless-stopped` | If Ollama crashes during a generation, it will be restarted automatically. |
-| `deploy.resources.limits.memory` | Missing | `memory: 4g` | Ollama loads the full model weights into memory. `llama3.2:3b` requires approximately 2–3 GB. Setting 4 GB gives headroom for multiple concurrent requests. Without this limit, Ollama could consume all available host RAM. |
+| `deploy.resources.limits.memory` | Missing | `memory: 4g` | Ollama loads the full model weights into memory. `qwen2.5:1.5b` requires approximately 1–2 GB. Setting 4 GB gives headroom for multiple concurrent requests. Without this limit, Ollama could consume all available host RAM. |
 
 ##### `python-ai-service` service
 
@@ -300,7 +300,7 @@ AI_SERVICE_HOST_PORT=8000
 INTERNAL_SERVICE_TOKEN=replace_with_internal_token
 OLLAMA_BASE_URL=http://ollama:11434
 OLLAMA_HOST_PORT=11434
-OLLAMA_GENERATION_MODEL=llama3.2:3b
+OLLAMA_GENERATION_MODEL=qwen2.5:1.5b
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 CHROMA_PERSIST_DIR=/data/chroma
 KNOWLEDGE_BASE_DIR=/app/rag-knowledge-base
@@ -439,7 +439,7 @@ This is a new file created from scratch. It is a 9-step, beginner-friendly guide
 | Prerequisites | Docker Desktop, key concepts (Image, Container, Network, Volume, docker-compose.yml) — each explained from scratch |
 | Step 1 — Prepare Your Environment | `cp .env.example .env`, how to generate real secrets with `openssl rand`, explanation of every variable |
 | Step 2 — Start MySQL and Ollama | `docker compose up -d mysql ollama` fully broken down, how MySQL auto-creates the database on first boot, how to connect to MySQL from the host |
-| Step 3 — Pull AI Models | `docker compose exec ollama ollama pull llama3.2:3b` and `nomic-embed-text`, download size warning, verification step |
+| Step 3 — Pull AI Models | `docker compose exec ollama ollama pull qwen2.5:1.5b` and `nomic-embed-text`, download size warning, verification step |
 | Step 4 — Build and Start Everything | `docker compose up --build -d` fully broken down, what happens during Maven and pip builds, expected output |
 | Step 5 — Verify Everything | `docker compose ps`, health checks via `curl`, `docker compose logs -f`, `docker compose exec`, Adminer login, Android emulator URL |
 | Step 6 — Stop the Application | `docker compose stop` vs `docker compose down` vs `docker compose down --volumes`, what data is lost in each case |

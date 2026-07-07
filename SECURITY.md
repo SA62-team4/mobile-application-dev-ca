@@ -113,4 +113,4 @@ Before final submission:
 - Confirm JWT and ownership tests pass.
 - Confirm Android cannot access MySQL or Python AI directly.
 - Confirm Docker containers do not expose unnecessary secrets in logs or docs.
-- Confirm local-only AI settings still use Ollama with `llama3.2:3b` and `nomic-embed-text`.
+- Confirm local-only AI settings still use Ollama with `qwen2.5:1.5b` and `nomic-embed-text`.

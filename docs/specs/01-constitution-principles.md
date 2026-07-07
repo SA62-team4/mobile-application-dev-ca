@@ -61,7 +61,7 @@ The LLM must be free/local.
 
 Allowed:
 
-- Ollama generation model: `llama3.2:3b`.
+- Ollama generation model: `qwen2.5:1.5b` (default; `llama3.2:3b` allowed when quality is prioritised over latency).
 - Ollama embedding model: `nomic-embed-text`.
 - Curated local wellness knowledge base.
 

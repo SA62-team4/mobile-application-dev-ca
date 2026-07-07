@@ -26,7 +26,7 @@ database "MySQL\nTransactional Data" as MySQL
 rectangle "Python FastAPI AI Service\nRAG + Agentic AI" as AI
 database "Chroma Vector Store\nPersisted Embeddings" as Chroma
 folder "Curated Wellness Knowledge Base\nMarkdown or JSON" as KB
-rectangle "Ollama Local LLM\nllama3.2:3b\nnomic-embed-text" as Ollama
+rectangle "Ollama Local LLM\nqwen2.5:1.5b\nnomic-embed-text" as Ollama
 
 Android --> Backend : HTTPS REST + JWT
 Desktop --> Backend : HTTPS REST + JWT\noptional client
