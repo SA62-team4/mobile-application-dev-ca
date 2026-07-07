@@ -73,7 +73,7 @@ Today is **Sun 28 Jun 2026**; deadline **Thu 9 Jul 11pm**; presentation **Fri 10
 | Card | Title | Epic | Owner | Pts | Status | Depends On | REQ | Done When |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | T-205 | Auth/JWT test suite green (register hashes, dup-email reject, login ok/reject, missing-token reject) | E1 | M4 | 3 | Ready | — | REQ-02, REQ-03 | Tests pass in CI |
-| T-204 | Ownership guards + cross-user access tests | E1 | M4 | 3 | Backlog | T-205 | NFR-01 | Foreign record returns 403/404 |
+| T-204 | Ownership guards + cross-user access tests | E1 | M4 | 3 | Done | T-205 | NFR-01 | Foreign record returns 403/404 |
 | T-301t | Wellness CRUD API tests (create/list/update/delete, owned-only) | E2 | M5 | 3 | Backlog | T-205 | REQ-04..07, REQ-09 | Tests pass |
 | T-303 | **Android wellness CRUD screens** (list, add/edit form + validation, delete-confirm; loading/empty/error states) | E2 | M2 | 8 | Backlog | T-301t | REQ-04..07, NFR-04 | CRUD works on device end-to-end |
 | T-302 | Android auth polish: logout clears token, expired-token → login redirect | E1 | M1 | 3 | Ready | — | REQ-02, NFR-04 | Logout + expiry verified |
