@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Provides recommendation generation and listing APIs.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 @RestController
 @RequestMapping("/api/recommendations")

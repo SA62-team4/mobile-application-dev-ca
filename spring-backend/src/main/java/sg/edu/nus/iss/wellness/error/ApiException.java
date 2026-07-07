@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 /**
  * API exception carrying an HTTP status code.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 public class ApiException extends RuntimeException {
     private final HttpStatus status;

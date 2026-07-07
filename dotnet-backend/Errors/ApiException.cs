@@ -3,7 +3,7 @@ namespace Wellness.Backup.Api.Errors;
 /// <summary>
 /// Controlled exception converted to the Spring-compatible JSON error shape.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public sealed class ApiException : Exception
 {
     public ApiException(int statusCode, string message) : base(message)

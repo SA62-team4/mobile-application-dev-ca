@@ -9,7 +9,7 @@ namespace Wellness.Backup.Api.Endpoints;
 /// <summary>
 /// Authentication routes mirrored from the Spring Boot backend.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public static class AuthEndpoints
 {
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)

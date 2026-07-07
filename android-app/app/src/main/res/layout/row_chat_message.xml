@@ -58,7 +58,7 @@
             android:textColor="@color/text_primary" />
     </LinearLayout>
 
-    <!-- T-405: source snippets rendered as Material chips (title per chip). -->
+    <!-- Source chips -->
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/sourceChips"
         android:layout_width="match_parent"

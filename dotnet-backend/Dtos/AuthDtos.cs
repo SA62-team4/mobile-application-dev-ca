@@ -3,7 +3,7 @@ namespace Wellness.Backup.Api.Dtos;
 /// <summary>
 /// DTOs for authentication endpoints mirrored from Spring Boot.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public sealed record RegisterRequest(string? DisplayName, string? Email, string? Password);
 
 public sealed record LoginRequest(string? Email, string? Password);

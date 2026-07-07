@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Integration tests for chat orchestration endpoints.
  * Tests RAG chatbot question/answer flow and chat history retrieval.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng, Kumaraguru Surya
  */
 @SpringBootTest
 @AutoConfigureMockMvc

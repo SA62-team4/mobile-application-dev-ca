@@ -6,7 +6,7 @@ namespace Wellness.Backup.Api.Middleware;
 /// <summary>
 /// Converts .NET exceptions into the same JSON error response shape used by Spring.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng, Chua Wei Yi Justin</remarks>
 public sealed class ApiErrorMiddleware
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

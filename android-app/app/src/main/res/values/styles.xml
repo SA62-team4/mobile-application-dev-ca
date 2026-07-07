@@ -7,7 +7,7 @@
         <item name="android:colorAccent">@color/primary</item>
     </style>
 
-    <!-- Explicit parent REPLACES the implicit "AppTheme.*" parent, so we re-declare the look items. -->
+    <!-- Re-declare style items for the explicit parent. -->
     <style name="AppTheme.Chat" parent="Theme.MaterialComponents.Light.NoActionBar.Bridge">
         <item name="android:fontFamily">sans</item>
         <item name="android:windowLightStatusBar">true</item>
@@ -17,4 +17,3 @@
     </style>
 
 </resources>
-

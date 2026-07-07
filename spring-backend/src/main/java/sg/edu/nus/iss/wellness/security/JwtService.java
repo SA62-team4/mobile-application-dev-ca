@@ -20,8 +20,7 @@ import sg.edu.nus.iss.wellness.model.Role;
 /**
  * Creates and validates JWT access tokens.
  *
- * @author SA62 Team
- * @author JustinChua97
+ * @author Tiong Zhong Cheng, Chua Wei Yi Justin, Kumaraguru Surya
  */
 @Service
 public class JwtService {
@@ -76,4 +75,3 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }
-

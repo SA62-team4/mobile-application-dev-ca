@@ -3,7 +3,7 @@ namespace Wellness.Backup.Api.Configuration;
 /// <summary>
 /// Runtime configuration for the optional .NET cold-standby backend.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng, Chua Wei Yi Justin</remarks>
 public sealed class BackendOptions
 {
     public required string MySqlConnectionString { get; init; }

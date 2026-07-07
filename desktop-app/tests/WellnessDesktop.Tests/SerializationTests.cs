@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - DTO (de)serialization tests against the documented JSON (REQ-21).
+// Author: Tiong Zhong Cheng - DTO (de)serialization tests against the documented JSON (REQ-21).
 using System.Text.Json;
 using WellnessDesktop.Models;
 using WellnessDesktop.Services;

@@ -5,10 +5,9 @@ import sg.edu.nus.iss.wellness.api.WellnessRecordResponse
 import java.time.LocalDate
 
 /**
- * Utility for aggregating and parsing wellness record data for the dashboard.
- * Keeps business logic decoupled from Android UI components to facilitate unit testing.
+ * Dashboard aggregations.
  *
- * @author SA62 Team
+ * @author Jemilin Beulah Suria Christopher Raj
  */
 
 data class DailySnapshot(
@@ -72,12 +71,7 @@ data class DateRangeFilter(
 
 object DashboardDataHelper {
 
-    /**
-     * Groups wellness records by calendar date. Skips records with invalid or malformed dates.
-     * For each date, averages sleep duration and mood score, and sums exercise minutes.
-     * Raw notes remain intact on individual record entities to allow detailed view.
-     * Returns a list of daily aggregates sorted chronologically.
-     */
+    /** Aggregates valid records by date, sorted oldest to newest. */
     fun aggregateByDate(records: List<WellnessRecordResponse>): List<DayAggregate> {
         val grouped = records
             .mapNotNull { record ->
@@ -97,9 +91,7 @@ object DashboardDataHelper {
         }.sortedBy { it.date }
     }
 
-    /**
-     * Returns the most-recent day's data as a snapshot, or null when aggregates is empty.
-     */
+    /** Returns the latest aggregate as a snapshot. */
     fun buildDailySnapshot(aggregates: List<DayAggregate>): DailySnapshot? {
         val latest = aggregates.lastOrNull() ?: return null
         return DailySnapshot(
@@ -112,10 +104,7 @@ object DashboardDataHelper {
         )
     }
 
-    /**
-     * Computes a weekly summary for the past 7 calendar days (including today).
-     * Averages and sums are rounded to avoid floating-point precision boundary issues when checking thresholds.
-     */
+    /** Computes the latest 7-day summary. */
     fun computeWeeklySummary(aggregates: List<DayAggregate>): WeeklyMetricSummary {
         val today = LocalDate.now()
         val weekAgo = today.minusDays(6)
@@ -151,10 +140,7 @@ object DashboardDataHelper {
         )
     }
 
-    /**
-     * Prepares data points for trend sparklines over the past 7 days.
-     * Only logged days are included; gaps are left empty rather than filled with zeroes.
-     */
+    /** Builds 7-day sparkline points, leaving missing days empty. */
     fun buildSparklineSeries(
         aggregates: List<DayAggregate>,
         metricType: MetricType,
@@ -184,10 +170,7 @@ object DashboardDataHelper {
         )
     }
 
-    /**
-     * Filters records to those whose parsed date falls within filter.from..filter.to inclusive.
-     * Returns all records when filter is null. Silently skips records with unparseable dates.
-     */
+    /** Applies an inclusive date range, skipping invalid dates. */
     fun applyDateFilter(
         records: List<WellnessRecordResponse>,
         filter: DateRangeFilter?
@@ -200,10 +183,7 @@ object DashboardDataHelper {
         }
     }
 
-    /**
-     * Returns an InsightTeaser from the most recent recommendation, or null if none exist.
-     * Excerpt is capped at 120 characters (UI contracts).
-     */
+    /** Builds a short teaser from the latest recommendation. */
     fun buildInsightTeaser(recommendations: List<RecommendationResponse>): InsightTeaser? {
         val rec = recommendations.firstOrNull() ?: return null
         val text = rec.recommendationText
@@ -211,7 +191,7 @@ object DashboardDataHelper {
         return InsightTeaser(title = rec.title, excerpt = excerpt, createdAt = rec.createdAt)
     }
 
-    // Round to 1 decimal place to avoid floating-point precision issues
+    // Avoid threshold drift from floating-point precision.
     fun round1dp(value: Double): Double = Math.round(value * 10) / 10.0
 
     private fun sleepBadge(avg: Double): MetricBadge = when {

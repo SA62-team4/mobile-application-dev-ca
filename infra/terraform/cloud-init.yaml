@@ -1,4 +1,5 @@
 #cloud-config
+# @author Tiong Zhong Cheng
 # Minimal bootstrap so Ansible can take over. Creates the 'deploy' user with the
 # SSH key and installs Python; Docker, /opt/wellness, and the app stack are all
 # managed by the Ansible playbooks in infra/ansible/. No secrets.

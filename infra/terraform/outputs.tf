@@ -1,3 +1,4 @@
+# @author Tiong Zhong Cheng
 # Outputs consumed by operators and the deploy workflow.
 
 output "reserved_ip" {

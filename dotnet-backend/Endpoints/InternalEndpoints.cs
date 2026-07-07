@@ -9,7 +9,7 @@ namespace Wellness.Backup.Api.Endpoints;
 /// <summary>
 /// Internal routes used only by the Python agentic AI service.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public static class InternalEndpoints
 {
     public static void MapInternalEndpoints(this IEndpointRouteBuilder app)

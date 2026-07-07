@@ -1,6 +1,7 @@
+# @author Tiong Zhong Cheng
 ---
 # Server configuration: Docker Engine + compose plugin and the app directory.
-# Idempotent — a second run reports no changes once the host is configured.
+# Idempotent after the first run.
 
 - name: Install prerequisite packages
   ansible.builtin.apt:

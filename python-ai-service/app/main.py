@@ -1,6 +1,6 @@
 """FastAPI entry point for RAG chatbot and agentic AI features.
 
-@author Zhong Cheng
+@author Tiong Zhong Cheng
 """
 
 import logging
@@ -22,7 +22,7 @@ from app.tracing import configure_tracing
 logger = logging.getLogger("wellness.ai")
 
 settings = get_settings()
-# Configure LangSmith before building any LangChain runnables so their runs are traced.
+# Configure tracing before constructing services.
 configure_tracing(settings)
 ollama = OllamaClient(settings)
 rag = RagService(settings, ollama)
@@ -42,7 +42,7 @@ async def reindex() -> dict[str, int]:
     try:
         return await rag.reindex()
     except httpx.HTTPError as exc:
-        # Reindexing embeds every knowledge-base chunk through Ollama.
+        # Reindex uses Ollama embeddings.
         logger.exception("Reindex could not reach the AI model service at %s", settings.ollama_base_url)
         raise HTTPException(
             status_code=502,
@@ -55,8 +55,7 @@ async def chat(request: RagChatRequest) -> RagChatResponse:
     try:
         return await rag.chat(request)
     except httpx.HTTPError as exc:
-        # Chat embeds the question and generates an answer through Ollama; surface a
-        # clear, actionable error instead of a blank 500 when it cannot be reached.
+        # Return a clear Ollama failure.
         logger.exception("Chat could not reach the AI model service at %s", settings.ollama_base_url)
         raise HTTPException(
             status_code=502,
@@ -71,8 +70,7 @@ async def chat_stream(request: RagChatRequest) -> StreamingResponse:
             async for frame in rag.chat_stream(request):
                 yield frame
         except httpx.HTTPError as exc:
-            # The stream has already started (200 OK sent), so we cannot switch to a
-            # 502 here; surface the failure as a terminal SSE error event instead.
+            # Streaming responses can only report failure as an SSE event.
             logger.exception("Chat stream could not reach the AI model service at %s", settings.ollama_base_url)
             message = f"Could not reach the AI model service (Ollama) at {settings.ollama_base_url}: {exc}"
             yield f"data: {json.dumps({'type': 'error', 'message': message})}\n\n"
@@ -85,8 +83,7 @@ async def recommendation(user_id: int) -> RecommendationResponse:
     try:
         return await agent.generate_recommendation(user_id)
     except httpx.HTTPError as exc:
-        # The recommendation workflow may fail while calling Spring internal APIs
-        # or local Ollama. Surface a clear, actionable error instead of a blank 500.
+        # Return a clear Spring/Ollama failure.
         logger.exception("Recommendation agent workflow failed for backend %s or Ollama %s",
                          settings.backend_base_url, settings.ollama_base_url)
         raise HTTPException(

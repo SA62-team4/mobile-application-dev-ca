@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 /**
  * One Server-Sent Events frame from the chat streaming endpoint.
  *
- * @author Zhong Cheng
+ * @author Tiong Zhong Cheng
  */
 sealed interface ChatStreamEvent {
     /** Retrieved knowledge-base sources, delivered once before the tokens. */
@@ -44,7 +44,7 @@ sealed interface ChatStreamEvent {
  * The JWT is attached per call and 401/403 clears the stored token so the caller can
  * return to login, mirroring [ApiClient]'s interceptor behaviour.
  *
- * @author Zhong Cheng
+ * @author Tiong Zhong Cheng
  */
 class ChatStreamClient(private val tokenStore: TokenStore) {
     private val gson = Gson()
@@ -94,9 +94,7 @@ class ChatStreamClient(private val tokenStore: TokenStore) {
                     if (payload.isEmpty()) continue
                     val event = parse(payload) ?: continue
                     emit(onEvent, event)
-                    // Stop once a terminal frame is delivered. Reading past it would block on
-                    // the server closing the stream and can throw on the close, which would
-                    // otherwise surface as a spurious error after a successful answer.
+                    // Stop after terminal frames.
                     if (event is ChatStreamEvent.Done || event is ChatStreamEvent.Error) break
                 }
             }

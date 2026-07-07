@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - Login/registration view (REQ-02, REQ-21).
+// @author Tiong Zhong Cheng
 using Avalonia.Controls;
 
 namespace WellnessDesktop.Views;

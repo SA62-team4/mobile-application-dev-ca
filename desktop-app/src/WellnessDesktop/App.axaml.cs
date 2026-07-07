@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - Application bootstrap and dependency wiring (REQ-21).
+// @author Tiong Zhong Cheng
 using System.Net.Http;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -17,7 +17,7 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Compose the small object graph by hand to avoid a DI container for this bonus client.
+            // Manual wiring is enough for this small client.
             var config = AppConfig.Load();
             var http = new HttpClient { BaseAddress = config.BackendBaseUri };
             var session = new SessionStore();

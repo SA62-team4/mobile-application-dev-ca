@@ -9,7 +9,7 @@ namespace Wellness.Backup.Api.Repositories;
 /// <summary>
 /// User-scoped persistence for Python-agent recommendations.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public sealed class RecommendationRepository
 {
     private readonly MySqlConnectionFactory _connections;

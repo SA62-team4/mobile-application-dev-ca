@@ -1,11 +1,12 @@
-# DigitalOcean infra only — no app secrets (deploy workflow handles those).
+# @author Tiong Zhong Cheng
+# DigitalOcean infra only. App secrets come from the deploy workflow.
 
-# Existing DO SSH key; its public half is reused for the droplet 'deploy' user.
+# Existing DO SSH key.
 data "digitalocean_ssh_key" "deploy" {
   name = var.ssh_key_name
 }
 
-# ── Droplet ────────────────────────────────────────────────────────────────
+# Droplets.
 resource "digitalocean_droplet" "wellness" {
   name       = var.droplet_name
   region     = var.region
@@ -15,8 +16,7 @@ resource "digitalocean_droplet" "wellness" {
   monitoring = true
   tags       = ["wellness", "prod"]
 
-  # Minimal bootstrap: creates 'deploy' user + installs Python so Ansible can
-  # take over Docker install and app config. No secrets.
+  # Minimal bootstrap for Ansible.
   user_data = templatefile("${path.module}/cloud-init.yaml", {
     ssh_public_key = data.digitalocean_ssh_key.deploy.public_key
   })
@@ -31,15 +31,13 @@ resource "digitalocean_droplet" "sonar" {
   monitoring = true
   tags       = ["wellness", "sonarqube", "quality"]
 
-  # Minimal bootstrap mirrors the app droplet: creates 'deploy' and installs
-  # Python so the shared Ansible playbook can install Docker and SonarQube.
+  # Minimal bootstrap for Ansible.
   user_data = templatefile("${path.module}/cloud-init.yaml", {
     ssh_public_key = data.digitalocean_ssh_key.deploy.public_key
   })
 }
 
-# ── Reserved IP ──────────────────────────────────────────────────────────────
-# Stable public address (DNS + SSH deploy target it).
+# Reserved IPs.
 resource "digitalocean_reserved_ip" "wellness" {
   region     = var.region
   droplet_id = digitalocean_droplet.wellness.id
@@ -50,8 +48,7 @@ resource "digitalocean_reserved_ip" "sonar" {
   droplet_id = digitalocean_droplet.sonar.id
 }
 
-# ── Cloud firewall ───────────────────────────────────────────────────────────
-# Only 22/80/443 inbound; data/AI services stay on the internal Docker network.
+# Cloud firewall.
 resource "digitalocean_firewall" "wellness" {
   name        = "wellness-prod-fw"
   droplet_ids = [digitalocean_droplet.wellness.id]
@@ -72,7 +69,7 @@ resource "digitalocean_firewall" "wellness" {
     source_addresses = ["0.0.0.0/0", "::/0"]
   }
 
-  # Allow all outbound (apt, model/image pulls, ACME).
+  # Allow outbound package, image, model, and ACME traffic.
   outbound_rule {
     protocol              = "tcp"
     port_range            = "1-65535"
@@ -126,7 +123,7 @@ resource "digitalocean_firewall" "sonar" {
   }
 }
 
-# ── Project grouping ─────────────────────────────────────────────────────────
+# Project grouping.
 resource "digitalocean_project" "wellness" {
   name        = var.project_name
   description = "AI-enabled wellness app - production and quality dashboard infrastructure."
@@ -140,8 +137,8 @@ resource "digitalocean_project" "wellness" {
   ]
 }
 
-# ── DNS (optional) ───────────────────────────────────────────────────────────
-# <subdomain>.<domain> -> reserved IP. Disable if DNS is hosted outside DO.
+# Optional DNS.
+# <subdomain>.<domain> -> reserved IP.
 resource "digitalocean_record" "api" {
   count  = var.manage_dns ? 1 : 0
   domain = var.domain

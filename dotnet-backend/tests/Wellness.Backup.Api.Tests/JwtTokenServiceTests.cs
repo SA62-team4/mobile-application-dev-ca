@@ -14,7 +14,7 @@ namespace Wellness.Backup.Api.Tests;
 /// a freshly issued token validates and carries the expected claims, and tampered, wrong-secret,
 /// or expired tokens are rejected (E1 Auth &amp; Security).
 /// </summary>
-/// <remarks>@author SA62 Team, JustinChua97</remarks>
+/// <remarks>@author Chua Wei Yi Justin, Tiong Zhong Cheng</remarks>
 public sealed class JwtTokenServiceTests
 {
     [Fact]

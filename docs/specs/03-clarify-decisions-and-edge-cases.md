@@ -1,5 +1,7 @@
 # 12 Clarification Log
 
+<!-- @author Tiong Zhong Cheng -->
+
 ## Purpose
 
 This file records resolved ambiguities, dependencies, assumptions, and edge cases. It corresponds to the Spec Kit **Clarify** step.

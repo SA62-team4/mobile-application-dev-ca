@@ -7,7 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Verifies that the application entry point remains available to tests.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 class WellnessApplicationTests {
     @Test

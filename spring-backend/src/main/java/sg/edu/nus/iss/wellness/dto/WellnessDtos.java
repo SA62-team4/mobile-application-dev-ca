@@ -13,7 +13,7 @@ import jakarta.validation.constraints.NotNull;
 /**
  * DTOs for wellness record endpoints.
  *
- * @author SA62 Team
+ * @author Tang Chee Seng, Tiong Zhong Cheng
  */
         public final class WellnessDtos {
         private WellnessDtos() {

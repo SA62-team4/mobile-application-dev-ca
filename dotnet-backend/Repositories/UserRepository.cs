@@ -8,7 +8,7 @@ namespace Wellness.Backup.Api.Repositories;
 /// <summary>
 /// Reads and writes users in the shared `users` table.
 /// </summary>
-/// <remarks>@author SA62 Team, JustinChua97</remarks>
+/// <remarks>@author Tiong Zhong Cheng, Chua Wei Yi Justin</remarks>
 public sealed class UserRepository
 {
     private readonly MySqlConnectionFactory _connections;

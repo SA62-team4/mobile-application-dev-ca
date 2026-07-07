@@ -1,5 +1,7 @@
 # 05 Android UI Spec
 
+<!-- @author Tiong Zhong Cheng, Abu Bakar Nasir -->
+
 ## Spec Metadata
 
 | Field | Value |

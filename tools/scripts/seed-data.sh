@@ -1,21 +1,15 @@
 #!/usr/bin/env bash
-# ─────────────────────────────────────────────────────────────────────────────
-# seed-data.sh — register demo users and load wellness records via the REST API
+# Seed demo users and wellness records through the REST API.
 #
 # Usage:
 #   ./tools/scripts/seed-data.sh                  (default: http://localhost:8080)
 #   BASE_URL=http://localhost:8080 ./tools/scripts/seed-data.sh
 #
-# Pre-conditions:
+# Requires:
 #   • run.sh has been executed and Spring Boot is healthy.
 #   • No arguments required; reads BASE_URL from environment or uses default.
 #
-# Demo users created (all passwords: Wellness@123)
-#   alice@wellness.test  — All-excellent badges  (7 consecutive days, high sleep/mood/activity)
-#   bob@wellness.test    — Mixed/below-target    (7 days, poor sleep, low mood, some activity)
-#   carol@wellness.test  — Sparse + historical   (4 of 7 days this week + older records for date filter)
-#   demo@wellness.test   — Dedup edge case       (two records on today, exercises dedup logic)
-# ─────────────────────────────────────────────────────────────────────────────
+# Demo password: Wellness@123
 set -euo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
@@ -31,7 +25,7 @@ from datetime import date, timedelta
 BASE_URL = sys.argv[1].rstrip("/")
 PASSWORD = "Wellness@123"
 
-# ── HTTP helpers ──────────────────────────────────────────────────────────────
+# HTTP calls.
 
 def http(method, path, body=None, token=None):
     """Make an HTTP request; return (status, parsed_body)."""
@@ -100,14 +94,8 @@ def seed_user(display_name, email, records):
     return token
 
 
-# ── Data design ───────────────────────────────────────────────────────────────
-#
 # Each tuple: (days_ago, sleepHours, exerciseType|None, exerciseMinutes, moodScore, notes)
-#
-# Alice  — EXCELLENT all badges
-#   sleep avg  : (8.0+8.5+7.8+8.2+8.0+7.9+8.1)/7 = 8.07 → round1dp=8.1 → EXCELLENT (≥8.0)
-#   active days: 7 out of 7                                              → EXCELLENT (≥5)
-#   mood avg   : (4+5+4+4+5+4+4)/7 = 4.29 → round1dp=4.3              → EXCELLENT (≥4.0)
+# Alice: excellent 7-day trend.
 ALICE_RECORDS = [
     (0, "8.0", "Running",   45, 4, "Morning 5K, felt great"),
     (1, "8.5", "Cycling",   30, 5, "Long cycle — personal best"),
@@ -118,10 +106,7 @@ ALICE_RECORDS = [
     (6, "8.1", "Walking",   35, 4, "Neighbourhood stroll"),
 ]
 
-# Bob    — BELOW_TARGET sleep, FAIR mood, GOOD activity
-#   sleep avg  : (5.5+6.0+5.0+7.0+6.5+5.5+6.0)/7 = 5.93 → round1dp=5.9 → BELOW_TARGET (<6.0)
-#   active days: days 0, 3, 5 have exercise                              → GOOD (3–4 days)
-#   mood avg   : (2+3+2+3+2+3+2)/7 = 2.43 → round1dp=2.4              → FAIR (2.0–2.9)
+# Bob: low sleep, fair mood, some activity.
 BOB_RECORDS = [
     (0, "5.5", "Walking",  20, 2, "Tired, only managed a short walk"),
     (1, "6.0", None,        0, 3, "Rest day — needed it"),
@@ -132,47 +117,35 @@ BOB_RECORDS = [
     (6, "6.0", None,        0, 2, "Another rest day"),
 ]
 
-# Carol  — Sparse sparklines (4 of 7 days) + historical records for date-filter demo
-#   This week (days 0, 2, 4, 6 only — every other day):
-#   sleep avg  : (7.5+7.0+8.0+6.5)/4 = 7.25 → round1dp=7.3 → GOOD (7.0–7.9)
-#   active days: days 0, 2, 4 have exercise (day 6 is rest) → 3 → GOOD (3–4 days)
-#   mood avg   : (4+3+4+3)/4 = 3.5 → round1dp=3.5          → GOOD (3.0–3.9)
-#   Older records (days 10, 12, 14) — visible only when date-filter spans that range
+# Carol: sparse current week plus older filter data.
 CAROL_RECORDS = [
-    # This week — sparse (every other day)
+    # Sparse current week.
     (0,  "7.5", "Running",  30, 4, "Good morning run"),
     (2,  "7.0", "Yoga",     20, 3, "Gentle stretching"),
     (4,  "8.0", "Cycling",  45, 4, "Long bike ride along the coast"),
     (6,  "6.5", None,        0, 3, "Took a full rest day"),
-    # Older — only visible when filter applied (use date filter: today-14 → today-9)
+    # Older filter data.
     (10, "7.0", "Walking",  30, 3, "Rainy day walk"),
     (12, "6.5", "Swimming", 40, 4, "Early morning swim"),
     (14, "8.0", None,        0, 5, "Perfect rest — slept in"),
 ]
 
-# Demo   — Deduplication edge case: 2 records on today's date
-#   DashboardDataHelper dedup for today: sleep=(6.0+8.0)/2=7.0, exercise=15+30=45min, mood=(3+5)/2=4
-#   Overall weekly (5 distinct dates including deduped today):
-#   sleep avg  : (7.0+7.5+6.5+7.0+8.0)/5 = 7.2 → round1dp=7.2 → GOOD
-#   active days: today-45min, day1-30min, day2-rest, day3-20min, day4-45min → 4 → GOOD
-#   mood avg   : (4+4+3+3+4)/5 = 3.6 → round1dp=3.6               → GOOD
+# Demo: two records today for deduplication checks.
 DEMO_RECORDS = [
-    # Two records today — tests DashboardDataHelper.aggregateByDate deduplication
+    # Same-day records.
     (0, "6.0", "Walking", 15, 3, "Morning log — slow start"),
     (0, "8.0", "Running", 30, 5, "Evening log — feeling much better"),
-    # Other days
+    # Other days.
     (1, "7.5", "Cycling",  30, 4, "Solid session"),
     (2, "6.5", None,        0, 3, "Rest day"),
     (3, "7.0", "Running",  20, 3, "Light jog"),
     (4, "8.0", "Swimming", 45, 4, "Great swim session"),
 ]
 
-# ── Run ───────────────────────────────────────────────────────────────────────
-
 print(f"\n  Wellness seed data loader")
 print(f"  Target: {BASE_URL}\n")
 
-# Verify backend is reachable
+# Verify backend health.
 status, health = http("GET", "/actuator/health")
 if status != 200 or health.get("status") != "UP":
     print(f"  ✗ Backend not healthy ({status}: {health}). Is run.sh complete?")
@@ -196,7 +169,6 @@ for display_name, email, records in users:
         sys.exit(1)
     print()
 
-# ── Credentials table ─────────────────────────────────────────────────────────
 print("=" * 65)
 print("  Demo credentials (password for all: Wellness@123)")
 print("=" * 65)

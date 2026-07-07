@@ -29,9 +29,5 @@ app:
   ai-service-url: ${AI_SERVICE_URL:http://localhost:8000}
   internal-service-token: ${INTERNAL_SERVICE_TOKEN:dev_internal_token}
   google:
-    # OAuth Web client ID whose 'aud' the Android ID token must match. Not a secret (it ships in
-    # the APK). Defaults to the shared team project so local backends validate tokens out of the
-    # box; override via GOOGLE_CLIENT_ID env var per environment. Must equal the app's
-    # GOOGLE_WEB_CLIENT_ID or /auth/google returns 401.
+    # OAuth Web client ID for Android ID token validation.
     client-id: ${GOOGLE_CLIENT_ID:554077955234-cvbtaidiru0t7ppu4lht6tt9gmgddu09.apps.googleusercontent.com}
-

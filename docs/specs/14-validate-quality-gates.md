@@ -1,5 +1,7 @@
 # 14 Validation Gates
 
+<!-- @author Tiong Zhong Cheng -->
+
 ## Purpose
 
 This file defines how to verify that implementation output matches the specs. It corresponds to the Spec Kit **Validate** step.

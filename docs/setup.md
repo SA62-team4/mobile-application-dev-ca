@@ -1,5 +1,7 @@
 # Setup Guide
 
+<!-- @author Tang Chee Seng, Tiong Zhong Cheng -->
+
 ## Prerequisites
 
 - Docker Desktop

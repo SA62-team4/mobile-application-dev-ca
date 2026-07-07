@@ -3,7 +3,7 @@ namespace Wellness.Backup.Api.Services;
 /// <summary>
 /// BCrypt hashing compatible with Spring Security's BCryptPasswordEncoder.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public sealed class PasswordService
 {
     public string Hash(string password)

@@ -23,9 +23,9 @@ import sg.edu.nus.iss.wellness.databinding.BottomNavBarBinding
 import java.io.IOException
 
 /**
- * Shared view-building helpers used by every authenticated screen.
+ * Shared view builders for authenticated screens.
  *
- * @author SA62 Team
+ * @author Abu Bakar Nasir
  */
 enum class ButtonStyle {
     PRIMARY,
@@ -294,4 +294,3 @@ fun Activity.wireBottomNav(bottomNav: BottomNavBarBinding, current: Class<out Ac
         }
     }
 }
-

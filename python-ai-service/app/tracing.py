@@ -5,7 +5,7 @@ runtime. This module pushes the values from our pydantic ``Settings`` into the
 standard ``LANGSMITH_*`` variables so tracing can be driven through the same
 config/compose mechanism as the rest of the service.
 
-@author Zhong Cheng
+@author Tiong Zhong Cheng
 """
 
 import logging

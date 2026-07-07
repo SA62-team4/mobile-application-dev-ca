@@ -1,5 +1,7 @@
 # 06 RAG AI Spec
 
+<!-- @author Tiong Zhong Cheng -->
+
 ## Spec Metadata
 
 | Field | Value |

@@ -3,7 +3,7 @@ namespace Wellness.Backup.Api.Dtos;
 /// <summary>
 /// DTOs for RAG chatbot endpoints mirrored from Spring Boot.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public sealed record ChatRequest(string? Question);
 
 public sealed record SourceSnippet(string Title, string Snippet);

@@ -1,3 +1,4 @@
+# @author Tiong Zhong Cheng
 # Versions + remote state on DO Spaces (S3-compatible).
 # bucket/key/endpoints supplied at init: terraform init -backend-config=backend.hcl
 # Credentials via AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (from SPACES_* secrets).

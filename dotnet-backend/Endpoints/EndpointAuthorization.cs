@@ -9,9 +9,9 @@ using Wellness.Backup.Api.Services;
 namespace Wellness.Backup.Api.Endpoints;
 
 /// <summary>
-/// Resolves the authenticated user from a bearer token without adding a divergent auth stack.
+/// Resolves the authenticated user from a bearer token.
 /// </summary>
-/// <remarks>@author SA62 Team, JustinChua97</remarks>
+/// <remarks>@author Chua Wei Yi Justin, Tiong Zhong Cheng</remarks>
 public static class EndpointAuthorization
 {
     public static async Task<AppUser> RequireCurrentUserAsync(

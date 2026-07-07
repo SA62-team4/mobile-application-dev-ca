@@ -41,7 +41,7 @@ import java.util.Calendar
 /**
  * Wellness dashboard: today's snapshot, metric trends, AI insight teaser, and records history.
  *
- * @author SA62 Team
+ * @author Abu Bakar Nasir
  */
 class DashboardActivity : AppCompatActivity() {
     private val scope = MainScope()

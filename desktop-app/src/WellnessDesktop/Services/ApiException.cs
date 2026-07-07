@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - User-friendly API failure carrier (REQ-21, NFR-02).
+// @author Tiong Zhong Cheng
 using System;
 
 namespace WellnessDesktop.Services;

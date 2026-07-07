@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 /**
  * HTTP client for the Python RAG and agentic AI service.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 @Component
 public class AiServiceClient {

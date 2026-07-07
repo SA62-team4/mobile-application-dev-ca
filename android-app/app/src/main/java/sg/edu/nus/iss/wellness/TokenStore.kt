@@ -5,7 +5,7 @@ import android.content.Context
 /**
  * Stores the JWT access token for authenticated API calls.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 class TokenStore(context: Context) {
     private val prefs = context.getSharedPreferences("wellness_auth", Context.MODE_PRIVATE)

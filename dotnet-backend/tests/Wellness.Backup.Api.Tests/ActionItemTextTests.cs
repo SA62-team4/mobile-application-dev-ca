@@ -6,7 +6,7 @@ namespace Wellness.Backup.Api.Tests;
 /// <summary>
 /// Verifies recommendation action items use Spring's newline storage format.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public sealed class ActionItemTextTests
 {
     [Fact]

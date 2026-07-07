@@ -1,6 +1,6 @@
 """Small Ollama HTTP client.
 
-@author Zhong Cheng
+@author Tiong Zhong Cheng
 """
 
 import json
@@ -62,8 +62,7 @@ class OllamaClient:
                     "options": {
                         "num_predict": num_predict,
                         "temperature": 0.3,
-                        # Cap the context window: our grounded prompt plus the answer fits
-                        # well under 1024 tokens, so a smaller KV cache means faster prefill.
+                        # Smaller KV cache speeds up local CPU inference.
                         "num_ctx": 1024,
                     },
                 },
@@ -75,16 +74,13 @@ class OllamaClient:
         run_type="llm",
         name="ollama.generate.stream",
         process_inputs=strip_self,
-        # Reduce the streamed fragments back into one answer so the LangSmith run
-        # renders like the non-streaming ollama.generate call.
+        # Store one combined streamed answer in LangSmith.
         reduce_fn=lambda fragments: "".join(fragments),
     )
     async def generate_stream(self, prompt: str, num_predict: int = 220) -> AsyncIterator[str]:
         """Yield generation tokens as they arrive from Ollama.
 
-        Ollama streams newline-delimited JSON, one object per chunk with a
-        ``response`` fragment. We surface each fragment so callers can forward
-        it to the client instead of waiting for the full answer.
+        Ollama sends newline-delimited JSON with a ``response`` fragment.
         """
         async with httpx.AsyncClient(timeout=180) as client:
             async with client.stream(
@@ -97,7 +93,7 @@ class OllamaClient:
                     "options": {
                         "num_predict": num_predict,
                         "temperature": 0.3,
-                        # See generate(): a bounded context window speeds up CPU prefill.
+                        # Keep local CPU inference responsive.
                         "num_ctx": 1024,
                     },
                 },

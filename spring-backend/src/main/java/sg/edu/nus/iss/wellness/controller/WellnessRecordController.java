@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Provides authenticated wellness record CRUD APIs.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 @RestController
 @RequestMapping("/api/wellness-records")

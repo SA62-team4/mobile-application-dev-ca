@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - DTOs mirroring docs/specs/06-plan-api-contracts.md (REQ-21).
+// @author Tiong Zhong Cheng
 // JSON uses camelCase; the shared JsonSerializerOptions in ApiClient maps these
 // PascalCase properties automatically, so no per-property attributes are needed.
 using System.Collections.Generic;

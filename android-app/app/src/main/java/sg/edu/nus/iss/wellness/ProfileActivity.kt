@@ -12,9 +12,9 @@ import sg.edu.nus.iss.wellness.ui.highlightTab
 import sg.edu.nus.iss.wellness.ui.wireBottomNav
 
 /**
- * Displays the signed-in user's profile and handles logout.
+ * Profile screen with logout.
  *
- * @author SA62 Team
+ * @author Abu Bakar Nasir
  */
 class ProfileActivity : AppCompatActivity() {
     private val scope = MainScope()

@@ -1,4 +1,4 @@
-<!-- Author: SA62 Group 4 - Optional .NET (Avalonia) desktop client (REQ-21). -->
+<!-- @author Tiong Zhong Cheng -->
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>

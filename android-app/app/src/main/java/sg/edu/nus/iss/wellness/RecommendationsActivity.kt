@@ -27,7 +27,7 @@ import java.time.Instant
 /**
  * Displays AI-generated wellness recommendations and lets the user request a new one.
  *
- * @author SA62 Team
+ * @author Bryan Phang Wai Yip, Abu Bakar Nasir
  */
 class RecommendationsActivity : AppCompatActivity() {
     private val scope = MainScope()

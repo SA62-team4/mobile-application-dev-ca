@@ -32,7 +32,7 @@ import sg.edu.nus.iss.wellness.security.JwtService;
  * Ownership tests for recommendation endpoints (T-204, NFR-01): a user must never see
  * another user's saved recommendations.
  *
- * @author SA62 Team
+ * @author Abu Bakar Nasir
  */
 @SpringBootTest
 @AutoConfigureMockMvc

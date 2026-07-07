@@ -1,6 +1,6 @@
 """Configuration for the Python AI service.
 
-@author Zhong Cheng
+@author Tiong Zhong Cheng
 """
 
 from functools import lru_cache

@@ -3,7 +3,7 @@ package sg.edu.nus.iss.wellness.api
 /**
  * API request and response models.
  *
- * @author SA62 Team
+ * @author Kumaraguru Surya, Tiong Zhong Cheng
  */
 data class RegisterRequest(val displayName: String, val email: String, val password: String)
 data class LoginRequest(val email: String, val password: String)

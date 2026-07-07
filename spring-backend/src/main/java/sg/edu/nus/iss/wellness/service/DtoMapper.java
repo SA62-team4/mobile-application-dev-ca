@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Converts JPA entities to API DTOs.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 public final class DtoMapper {
     private DtoMapper() {

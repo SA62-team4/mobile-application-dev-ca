@@ -18,12 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Reads bearer tokens and creates authenticated Spring Security principals.
  *
- * <p>Any token problem (missing, expired, malformed, or referencing an unknown account)
- * leaves the request unauthenticated, so the security layer returns a 401 for protected
- * endpoints. Authorities are derived from the freshly loaded user's Role enum, keeping the
- * database as the single source of truth.</p>
- *
- * @author SA62 Team
+ * @author Chua Wei Yi Justin, Tang Chee Seng, Tiong Zhong Cheng
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {

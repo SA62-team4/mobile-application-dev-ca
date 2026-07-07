@@ -4,16 +4,8 @@ namespace Wellness.Backup.Api.Models;
 /// Account roles used for authentication and authorization.
 /// </summary>
 /// <remarks>
-/// The database/JWT wire value is the SCREAMING_SNAKE_CASE string ("USER" /
-/// "PREMIUM_USER") produced by <see cref="RoleExtensions.ToDbValue"/>. These match
-/// the values the Spring Boot backend persists in the shared <c>users.role</c>
-/// column and carries in the JWT <c>role</c> claim, keeping both backends
-/// interoperable against the one MySQL schema.
-/// <para>
-/// <see cref="PremiumUser"/> is declared for forward compatibility only; it is not
-/// yet granted or checked anywhere in the authentication/authorization flow.
-/// </para>
-/// @author JustinChua97
+/// Wire values match Spring's shared MySQL/JWT role strings.
+/// @author Chua Wei Yi Justin
 /// </remarks>
 public enum Role
 {
@@ -22,18 +14,15 @@ public enum Role
 }
 
 /// <summary>
-/// Maps <see cref="Role"/> to and from its canonical storage/wire string and
-/// Spring-style authority ("ROLE_USER").
+/// Maps roles to storage values and Spring-style authorities.
 /// </summary>
-/// <remarks>@author JustinChua97</remarks>
+/// <remarks>@author Chua Wei Yi Justin</remarks>
 public static class RoleExtensions
 {
     /// <summary>Spring Security prefixes role authorities with <c>ROLE_</c>.</summary>
     public const string AuthorityPrefix = "ROLE_";
 
-    /// <summary>
-    /// The canonical persisted/claim value, e.g. <see cref="Role.User"/> => <c>"USER"</c>.
-    /// </summary>
+    /// <summary>Persisted/JWT value.</summary>
     public static string ToDbValue(this Role role) => role switch
     {
         Role.User => "USER",

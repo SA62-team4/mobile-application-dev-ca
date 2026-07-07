@@ -12,7 +12,7 @@ import java.time.LocalDate
  * Unit tests to verify the correctness of the DashboardDataHelper aggregation and filtering logic.
  * Decoupled from the Android framework to allow fast, local JVM testing.
  *
- * @author SA62 Team
+ * @author Jemilin Beulah Suria Christopher Raj
  */
 class DashboardDataHelperTest {
 

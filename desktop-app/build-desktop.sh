@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Author: SA62 Group 4 - Build self-contained desktop binaries (REQ-21).
+# @author Tiong Zhong Cheng
 #
 # Produces standalone, single-file builds of the Avalonia desktop client for
 # Windows and macOS. The .NET runtime is bundled, so target machines need
