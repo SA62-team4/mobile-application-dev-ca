@@ -1,6 +1,6 @@
 """Unit tests for knowledge base loading edge cases.
 
-@author zctiong-iss
+@author Tiong Zhong Cheng
 """
 
 from app.knowledge_base import _extract_title, load_chunks

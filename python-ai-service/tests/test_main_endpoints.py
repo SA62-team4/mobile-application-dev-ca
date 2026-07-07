@@ -1,6 +1,6 @@
 """FastAPI endpoint tests with service dependencies mocked.
 
-@author zctiong-iss
+@author Tiong Zhong Cheng
 """
 
 import importlib

@@ -1,6 +1,6 @@
 """Unit tests for Spring internal API client calls.
 
-@author zctiong-iss
+@author Tiong Zhong Cheng
 """
 
 import httpx

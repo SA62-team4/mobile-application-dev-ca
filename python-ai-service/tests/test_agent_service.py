@@ -1,6 +1,6 @@
 """Unit tests for the deterministic agent workflow.
 
-@author zctiong-iss
+@author Tiong Zhong Cheng
 """
 
 from app.agent_service import AgentService

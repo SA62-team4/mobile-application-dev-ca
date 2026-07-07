@@ -1,6 +1,6 @@
 """Unit tests for the Ollama HTTP client.
 
-@author zctiong-iss
+@author Tiong Zhong Cheng
 """
 
 import httpx
