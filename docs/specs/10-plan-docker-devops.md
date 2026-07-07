@@ -79,7 +79,7 @@ DOTNET_BACKEND_HOST_PORT=8082
 DOTNET_CONNECTION_STRING=Server=mysql;Port=3306;Database=wellness_app;User=wellness_user;Password=change_me;TreatTinyAsBoolean=true;
 OLLAMA_BASE_URL=http://ollama:11434
 OLLAMA_HOST_PORT=11434
-OLLAMA_GENERATION_MODEL=llama3.2:3b
+OLLAMA_GENERATION_MODEL=llama3.2:1b
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text:latest
 CHROMA_PERSIST_DIR=/data/chroma
 ADMINER_HOST_PORT=8081
@@ -276,7 +276,11 @@ Topology and sizing:
 - One Ubuntu 24.04 Droplet. Default **8 GB / 4 vCPU** (`s-4vcpu-8gb`) with enforced
   `mem_limit`s in the prod overlay so the stack fits; **16 GB** (`g-4vcpu-16gb`)
   is roomier but restricted on new DO accounts (raise the tier via a ticket).
-  Ollama runs on-server; CPU inference is slow but functional.
+  Ollama runs on-server; CPU inference is slow but functional. To keep it usable,
+  the prod overlay sets `OLLAMA_KEEP_ALIVE=-1` (weights stay resident, no cold
+  start), `OLLAMA_NUM_PARALLEL=1` (one request uses all cores), and
+  `OLLAMA_MAX_LOADED_MODELS=2` (generation + embedding both loaded); the deploy
+  warms the generation model, and generation defaults to the faster `llama3.2:1b`.
 - Caddy is the only public service (80/443) and terminates TLS via automatic
   Let's Encrypt for `api.<domain>`, reverse-proxying `spring-backend:8080`.
 - MySQL, Ollama, Python AI, and Spring Boot stay on the internal `wellness-net`;
@@ -299,8 +303,8 @@ Configuration and deployment (`infra/ansible/`):
   ensures `/opt/wellness`. The `app` role logs in to GHCR, ships
   compose/Caddy/knowledge-base files, templates `.env` (mode `0600`) from
   secrets, pulls images and runs the prod overlay, ensures the Ollama models are
-  present, prebuilds the Python RAG vector index, and verifies the HTTPS health
-  endpoint. The playbook is idempotent: a second run reports no changes for
+  present, warms the generation model into memory, prebuilds the Python RAG vector
+  index, and verifies the HTTPS health endpoint. The playbook is idempotent: a second run reports no changes for
   unchanged config.
 - Secrets are read from the environment via `lookup('env', ...)` (not CLI
   extra-vars) so they never appear in the process argv; non-sensitive config

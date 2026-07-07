@@ -10,6 +10,8 @@ Verifies the T-403 acceptance criteria without a live Ollama server:
 @author JustinChua97
 """
 
+import json
+
 from app.knowledge_base import load_chunks
 from app.models import RagChatRequest
 
@@ -83,4 +85,25 @@ async def test_chat_returns_answer_with_sources(rag_service, fake_ollama):
     assert response.answer.strip()
     assert response.sources
     assert response.modelName == rag_service.settings.generation_model
+    assert fake_ollama.generate_calls == 1
+
+
+async def test_chat_stream_emits_sources_tokens_then_done(rag_service, fake_ollama):
+    frames = [
+        json.loads(frame.removeprefix("data:").strip())
+        async for frame in rag_service.chat_stream(
+            RagChatRequest(userId=1, question="How can I sleep better?")
+        )
+    ]
+
+    types = [frame["type"] for frame in frames]
+    # sources first, at least one token, done last.
+    assert types[0] == "sources"
+    assert "token" in types
+    assert types[-1] == "done"
+
+    assert frames[0]["sources"], "expected retrieved sources in the first frame"
+    answer = "".join(frame["text"] for frame in frames if frame["type"] == "token")
+    assert answer.strip()
+    assert frames[-1]["modelName"] == rag_service.settings.generation_model
     assert fake_ollama.generate_calls == 1
