@@ -33,7 +33,7 @@ import sg.edu.nus.iss.wellness.ui.wireBottomNav
  * addStateBlock/showError helpers.
  *
  * @author SA62 Team
- * @author Tang Chee Seng (T-405 enhancements)
+ * @author Tang Chee Seng, with assistance from Claude (T-405 enhancements)
  */
 class ChatActivity : AppCompatActivity() {
     private val scope = MainScope()
