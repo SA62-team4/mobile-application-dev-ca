@@ -111,8 +111,14 @@ jobs:
           /n:"SA62 Wellness .NET Backup Backend"
           /d:sonar.host.url="$SONAR_HOST_URL"
           /d:sonar.token="$SONAR_TOKEN"
+          /d:sonar.cs.opencover.reportsPaths="dotnet-backend/**/coverage.opencover.xml"
+          /d:sonar.coverage.exclusions="dotnet-backend/tests/**"
+          /d:sonar.exclusions="android-app/**,spring-backend/**,python-ai-service/**,desktop-app/**,rag-knowledge-base/**,infra/**,docs/**,openwiki/**,tools/**"
       - name: Test .NET backup backend
-        run: dotnet test dotnet-backend/tests/Wellness.Backup.Api.Tests/Wellness.Backup.Api.Tests.csproj --no-restore
+        run: >
+          dotnet test dotnet-backend/tests/Wellness.Backup.Api.Tests/Wellness.Backup.Api.Tests.csproj --no-restore
+          --collect:"XPlat Code Coverage;Format=opencover"
+          --results-directory dotnet-backend/coverage
       - name: End .NET backup backend SonarQube scan
         if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
