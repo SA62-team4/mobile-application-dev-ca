@@ -1,5 +1,7 @@
 # Local Setup Guide — Google SSO
 
+<!-- @author Tiong Zhong Cheng, Kumaraguru Surya -->
+
 This guide is for developers who have cloned the repo and want to run Google SSO locally. It assumes you already have the project running without SSO.
 
 ---

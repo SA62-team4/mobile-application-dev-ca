@@ -3,7 +3,7 @@
 Provides a deterministic, offline stand-in for Ollama so the indexing and
 retrieval pipeline can be verified in CI without a live model server.
 
-@author JustinChua97
+@author Chua Wei Yi Justin
 """
 
 import hashlib

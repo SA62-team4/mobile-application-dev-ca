@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - In-memory JWT/session holder (REQ-21, NFR-01).
+// @author Tiong Zhong Cheng
 using WellnessDesktop.Models;
 
 namespace WellnessDesktop.Services;

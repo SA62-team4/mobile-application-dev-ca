@@ -19,7 +19,7 @@ namespace Wellness.Backup.Api.Tests;
 /// token with 401 (E1 Auth &amp; Security). These paths fail before any database access, so the
 /// tests need no MySQL — the repository is constructed but never queried.
 /// </summary>
-/// <remarks>@author JustinChua97</remarks>
+/// <remarks>@author Chua Wei Yi Justin</remarks>
 public sealed class EndpointAuthorizationTests
 {
     [Fact]

@@ -1,5 +1,7 @@
 # SonarQube Community Build Setup
 
+<!-- @author Tiong Zhong Cheng -->
+
 ## Purpose
 
 SonarQube Community Build provides the shared code-quality dashboard for the

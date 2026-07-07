@@ -3,7 +3,7 @@ namespace Wellness.Backup.Api.Models;
 /// <summary>
 /// User row from the shared MySQL schema.
 /// </summary>
-/// <remarks>@author SA62 Team, JustinChua97</remarks>
+/// <remarks>@author Tiong Zhong Cheng, Chua Wei Yi Justin</remarks>
 public sealed record AppUser(
     long Id,
     string Email,

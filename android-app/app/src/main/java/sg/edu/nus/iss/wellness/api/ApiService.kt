@@ -5,7 +5,7 @@ import retrofit2.http.*
 /**
  * Retrofit contract for the Spring Boot backend.
  *
- * @author SA62 Team
+ * @author Kumaraguru Surya, Tiong Zhong Cheng
  */
 interface ApiService {
     @POST("api/auth/register")

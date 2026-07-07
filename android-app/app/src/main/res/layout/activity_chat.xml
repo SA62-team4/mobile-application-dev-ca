@@ -18,7 +18,7 @@
         android:textSize="22sp"
         android:textStyle="bold" />
 
-    <!-- Chat history. Pull down from the top to refresh (T-405 enhancement). -->
+    <!-- Chat history -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefresh"
         android:layout_width="match_parent"
@@ -46,7 +46,7 @@
         android:orientation="vertical"
         android:paddingHorizontal="16dp" />
 
-    <!-- Input row pinned to the bottom, above the shared bottom nav (T-405 enhancement). -->
+    <!-- Chat input -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

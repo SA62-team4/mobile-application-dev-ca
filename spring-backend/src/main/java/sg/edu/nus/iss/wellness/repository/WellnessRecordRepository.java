@@ -11,7 +11,7 @@ import java.util.Optional;
 /**
  * Repository for user-owned wellness records.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 public interface WellnessRecordRepository extends JpaRepository<WellnessRecord, Long> {
     List<WellnessRecord> findByUserOrderByRecordDateDesc(AppUser user);

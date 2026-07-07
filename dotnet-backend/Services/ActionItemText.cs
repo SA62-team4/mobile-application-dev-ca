@@ -1,9 +1,9 @@
 namespace Wellness.Backup.Api.Services;
 
 /// <summary>
-/// Converts recommendation action items to the newline-delimited storage format used by Spring.
+/// Converts action items to Spring's newline-delimited format.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public static class ActionItemText
 {
     public static string Join(IReadOnlyList<string>? actionItems)

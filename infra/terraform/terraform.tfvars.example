@@ -1,31 +1,28 @@
-# Copy to terraform.tfvars (gitignored) and adjust. No secrets here —
-# DIGITALOCEAN_TOKEN and Spaces keys come from environment variables.
+# @author Tiong Zhong Cheng
+# Copy to terraform.tfvars (gitignored). Tokens come from environment variables.
 
-# ── Required ──
+# Required.
 ssh_key_name = "your-do-ssh-key-name" # name of an SSH key already in your DO account
 
-# ── Droplet (optional; defaults shown) ──
+# Droplet defaults.
 region = "sgp1" # sgp1 | nyc3 | fra1 | ...
-# s-4vcpu-8gb works with the prod mem_limits. g-4vcpu-16gb is roomier but is
-# restricted on new DO accounts (open a ticket to raise the tier).
+# g-4vcpu-16gb gives more Ollama headroom but is restricted on new DO accounts.
 droplet_size  = "s-4vcpu-8gb"
 droplet_image = "ubuntu-24-04-x64"
 droplet_name  = "wellness-prod"
 project_name  = "Wellness App"
 
-# SonarQube Community Build quality dashboard droplet.
-# s-2vcpu-4gb is the practical minimum; s-4vcpu-8gb is smoother for indexing.
+# SonarQube droplet.
 sonar_droplet_size = "s-2vcpu-4gb"
 sonar_droplet_name = "wellness-sonar"
 
-# ── DNS (optional) ──
-# manage_dns = true  -> Terraform creates <subdomain>.<domain> A record in DO DNS.
-# manage_dns = false -> DNS is external (registrar or DuckDNS); domain/subdomain unused.
+# Optional DNS.
+# true creates <subdomain>.<domain> in DO DNS; false uses external DNS.
 manage_dns = true
 domain     = "example.com"
 subdomain  = "api"          # FQDN becomes api.example.com
 sonar_subdomain = "sonar"   # FQDN becomes sonar.example.com
 
-# No registered domain? Use a free DuckDNS subdomain instead:
+# DuckDNS alternative:
 #   manage_dns = false
-#   (leave domain/subdomain as-is; set GitHub Variable API_DOMAIN=<name>.duckdns.org)
+#   set GitHub Variable API_DOMAIN=<name>.duckdns.org

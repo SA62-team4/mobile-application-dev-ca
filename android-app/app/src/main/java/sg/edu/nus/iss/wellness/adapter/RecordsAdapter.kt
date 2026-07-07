@@ -13,7 +13,7 @@ import sg.edu.nus.iss.wellness.api.WellnessRecordResponse
 /**
  * Row adapter for the wellness records list, with per-row Edit/Delete callbacks.
  *
- * @author SA62 Team
+ * @author Abu Bakar Nasir
  */
 class RecordsAdapter(
     context: Context,

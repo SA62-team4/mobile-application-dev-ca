@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Public status endpoint for quick browser checks during local development.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 @RestController
 public class StatusController {

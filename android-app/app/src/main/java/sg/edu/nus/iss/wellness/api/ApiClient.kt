@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
  * signals the app to return to the login screen, so every API call is covered
  * uniformly rather than each screen re-implementing the check.
  *
- * @author SA62 Team, JustinChua97
+ * @author Chua Wei Yi Justin, Tiong Zhong Cheng
  */
 object ApiClient {
     /**

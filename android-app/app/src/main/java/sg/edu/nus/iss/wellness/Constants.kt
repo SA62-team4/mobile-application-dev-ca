@@ -3,7 +3,7 @@ package sg.edu.nus.iss.wellness
 /**
  * Shared Intent-extra keys used for inter-Activity navigation.
  *
- * @author SA62 Team
+ * @author Abu Bakar Nasir
  */
 object Constants {
     const val EXTRA_RECORD_ID = "extra_record_id"

@@ -1,6 +1,6 @@
 """Agentic recommendation workflow using LangChain.
 
-@author SA62 Team
+@author Jemilin Beulah Suria Christopher Raj, Tiong Zhong Cheng
 """
 
 from langchain_ollama import OllamaLLM

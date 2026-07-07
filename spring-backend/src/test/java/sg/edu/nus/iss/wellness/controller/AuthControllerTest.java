@@ -28,7 +28,7 @@ import sg.edu.nus.iss.wellness.security.JwtService;
  * protected endpoints reject a missing or malformed token. Runs against the in-memory H2 database,
  * so it needs no external services in CI.
  *
- * @author JustinChua97
+ * @author Chua Wei Yi Justin
  */
 @SpringBootTest
 @AutoConfigureMockMvc

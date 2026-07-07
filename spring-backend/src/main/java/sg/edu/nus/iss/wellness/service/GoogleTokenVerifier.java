@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Validates Google ID tokens received from the Android client for SSO login.
  *
- * @author Surya Kumaraguru
+ * @author Kumaraguru Surya
  */
 @Service
 public class GoogleTokenVerifier {

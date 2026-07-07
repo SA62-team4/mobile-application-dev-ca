@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - Maps a ViewModel to its View by naming convention (REQ-21).
+// @author Tiong Zhong Cheng
 using System;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;

@@ -17,7 +17,7 @@ import java.util.Locale
 /**
  * Row adapter for the recommendations list.
  *
- * @author SA62 Team
+ * @author Bryan Phang Wai Yip, Abu Bakar Nasir
  */
 class RecommendationAdapter(
     context: Context,

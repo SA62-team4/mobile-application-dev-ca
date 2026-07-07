@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - AI recommendations screen logic (REQ-13, REQ-21, NFR-02, NFR-04).
+// @author Tiong Zhong Cheng
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;

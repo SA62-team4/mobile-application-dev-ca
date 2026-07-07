@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - AI recommendations view (REQ-13, REQ-21).
+// @author Tiong Zhong Cheng
 using Avalonia.Controls;
 
 namespace WellnessDesktop.Views;

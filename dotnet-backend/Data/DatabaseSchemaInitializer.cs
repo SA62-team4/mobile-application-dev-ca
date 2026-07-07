@@ -5,7 +5,7 @@ namespace Wellness.Backup.Api.Data;
 /// <summary>
 /// Creates Spring-compatible MySQL tables when the backup backend starts first.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public sealed class DatabaseSchemaInitializer
 {
     private readonly MySqlConnectionFactory _connections;

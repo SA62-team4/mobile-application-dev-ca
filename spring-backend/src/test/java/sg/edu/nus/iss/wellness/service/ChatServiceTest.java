@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration tests for ChatService business logic.
  * Tests chat persistence and history retrieval.
  *
- * @author SA62 Team
+ * @author Kumaraguru Surya
  */
 @SpringBootTest
 @Transactional

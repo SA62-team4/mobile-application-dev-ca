@@ -21,7 +21,7 @@ import java.util.List;
  * Business logic for chat orchestration with RAG service.
  * Handles question forwarding, wellness context retrieval, and response persistence.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng, Kumaraguru Surya
  */
 @Service
 @Transactional
@@ -121,19 +121,7 @@ public class ChatService {
         return chatMessages.save(message);
     }
 
-    /**
-     * Persist a fully streamed chat exchange and return the saved response. Used by the
-     * streaming path after the token stream completes: it runs in its own short
-     * transaction and reloads the user by id because the background worker has no open
-     * JPA session from the original request.
-     *
-     * @param userId    id of the user who asked the question
-     * @param question  the user's question
-     * @param answer    the assembled assistant answer
-     * @param modelName the generating model name reported by the AI service
-     * @param sources   the retrieved source snippets
-     * @return the persisted chat response
-     */
+    /** Persist a completed streamed chat exchange. */
     @Transactional
     public ChatDtos.ChatResponse saveStreamedAnswer(Long userId,
                                                     String question,

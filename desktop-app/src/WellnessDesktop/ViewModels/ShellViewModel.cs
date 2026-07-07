@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - Signed-in shell hosting the feature tabs (REQ-21).
+// @author Tiong Zhong Cheng
 using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;

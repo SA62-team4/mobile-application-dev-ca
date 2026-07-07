@@ -1,5 +1,7 @@
 # 00 Spec Kit Index
 
+<!-- @author Tang Chee Seng, Tiong Zhong Cheng, Jemilin Beulah Suria Christopher Raj -->
+
 ## Purpose
 
 This directory is the contract for the project. Implementation work should read the relevant specs first, then update the specs when behavior, interfaces, schemas, AI behavior, Docker services, or demo expectations change.

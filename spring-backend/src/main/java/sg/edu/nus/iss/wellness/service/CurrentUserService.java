@@ -13,7 +13,7 @@ import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 /**
  * Resolves the authenticated user from Spring Security context.
  *
- * @author SA62 Team
+ * @author Tang Chee Seng, Tiong Zhong Cheng
  */
 @Service
 public class CurrentUserService {

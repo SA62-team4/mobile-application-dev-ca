@@ -22,8 +22,7 @@ import jakarta.persistence.Table;
 /**
  * Application user account.
  *
- * @author SA62 Team
- * @author JustinChua97
+ * @author Tiong Zhong Cheng, Chua Wei Yi Justin, Kumaraguru Surya
  */
 @Entity
 @Table(name = "users", indexes = @Index(name = "idx_users_email", columnList = "email", unique = true))
@@ -56,7 +55,7 @@ public class AppUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // PREMIUM_USER are intentionally not expanded into USER until premium auth is wired up.
+        // Keep roles explicit until premium auth is wired.
         return List.of(new SimpleGrantedAuthority(role.authority()));
     }
 

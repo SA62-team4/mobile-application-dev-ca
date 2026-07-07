@@ -7,7 +7,7 @@ excluded from CI. Run locally once Ollama is up and the models are pulled:
 
 CI runs `pytest -m "not integration"`, which skips this module entirely.
 
-@author JustinChua97
+@author Chua Wei Yi Justin
 """
 
 import os

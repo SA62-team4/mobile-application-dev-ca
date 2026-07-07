@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Wellness App</string>
 
-    <!-- Records strings for T-303 -->
+    <!-- Records -->
     <string name="records_sleep_format">Sleep: %s hours</string>
     <string name="records_exercise_none">Exercise: —</string>
     <string name="records_exercise_format">Exercise: %1$s • %2$d min</string>
@@ -10,7 +10,7 @@
     <string name="cd_edit_record">Edit record</string>
     <string name="cd_delete_record">Delete record</string>
 
-    <!-- Sample / layout helper strings -->
+    <!-- Samples -->
     <string name="record_sample_date">2026-07-05</string>
     <string name="record_sample_sleep">Sleep: 7.5 hours</string>
     <string name="record_sample_exercise">Exercise: Running • 30 min</string>
@@ -20,7 +20,7 @@
     <string name="action_edit">Edit</string>
     <string name="action_delete">Delete</string>
 
-    <!-- Labels & hints used by RecordFormActivity -->
+    <!-- Record form labels -->
     <string name="label_record_date">Record date</string>
     <string name="hint_pick_date">Tap to pick date</string>
 
@@ -39,7 +39,7 @@
     <string name="label_notes">Notes</string>
     <string name="hint_notes">Optional notes</string>
 
-    <!-- Form strings for RecordFormActivity -->
+    <!-- Record form messages -->
     <string name="record_date_required">Record date is required</string>
     <string name="error_sleep_range">Sleep hours must be 0–24</string>
     <string name="error_exercise_minutes">Exercise minutes must be 0 or more</string>
@@ -50,7 +50,7 @@
     <string name="action_cancel">Cancel</string>
     <string name="cd_record_date">Record date</string>
 
-    <!-- Additional strings for records list -->
+    <!-- Records list -->
     <string name="records_empty_message">No records yet — try adding one</string>
     <string name="cd_records_loading">Loading wellness records</string>
 </resources>

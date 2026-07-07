@@ -12,7 +12,7 @@ import java.time.Instant;
 /**
  * Converts backend exceptions into stable JSON error responses.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {

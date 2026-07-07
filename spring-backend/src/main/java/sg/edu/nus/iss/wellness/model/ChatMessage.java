@@ -7,7 +7,7 @@ import java.time.Instant;
 /**
  * Stored RAG chatbot exchange.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 @Entity
 @Table(name = "chat_messages", indexes = @Index(name = "idx_chat_user_created", columnList = "user_id,created_at"))

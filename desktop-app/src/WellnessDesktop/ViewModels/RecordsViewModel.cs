@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - Wellness record CRUD logic (REQ-04..REQ-07, REQ-21, NFR-02, NFR-04).
+// @author Tiong Zhong Cheng
 using System;
 using System.Collections.ObjectModel;
 using System.Globalization;

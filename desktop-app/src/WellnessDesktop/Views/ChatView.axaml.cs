@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - RAG chatbot view (REQ-10, REQ-21).
+// @author Tiong Zhong Cheng
 using Avalonia.Controls;
 
 namespace WellnessDesktop.Views;

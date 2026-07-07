@@ -1,4 +1,4 @@
-// Author: SA62 Group 4 - Resolves the Spring Boot backend base URL (REQ-21).
+// @author Tiong Zhong Cheng
 using System;
 using System.IO;
 using System.Text.Json;
@@ -6,8 +6,7 @@ using System.Text.Json;
 namespace WellnessDesktop;
 
 /// <summary>
-/// Loads the backend base URL from the WELLNESS_API_BASE_URL environment variable,
-/// falling back to appsettings.json, then to a local default.
+/// Resolves the backend base URL.
 /// </summary>
 public sealed class AppConfig
 {
@@ -17,7 +16,7 @@ public sealed class AppConfig
 
     private AppConfig(string baseUrl)
     {
-        // Ensure a trailing slash so relative request paths resolve correctly.
+        // Keep relative paths resolvable.
         if (!baseUrl.EndsWith('/'))
         {
             baseUrl += "/";

@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * DTOs for recommendation endpoints.
  *
- * @author SA62 Team
+ * @author Tiong Zhong Cheng
  */
 public final class RecommendationDtos {
     private RecommendationDtos() {

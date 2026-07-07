@@ -1,6 +1,6 @@
 """Knowledge base loading and chunking.
 
-@author SA62 Team
+@author Tiong Zhong Cheng
 """
 
 from dataclasses import dataclass

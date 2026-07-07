@@ -3,7 +3,7 @@ namespace Wellness.Backup.Api.Endpoints;
 /// <summary>
 /// Public status endpoints matching the Spring Boot API contract.
 /// </summary>
-/// <remarks>@author SA62 Team</remarks>
+/// <remarks>@author Tiong Zhong Cheng</remarks>
 public static class StatusEndpoints
 {
     public static void MapStatusEndpoints(this IEndpointRouteBuilder app)

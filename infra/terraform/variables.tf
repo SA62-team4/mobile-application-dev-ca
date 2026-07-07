@@ -1,5 +1,6 @@
+# @author Tiong Zhong Cheng
 # Input variables for the Wellness App DigitalOcean infrastructure.
-# Set real values in terraform.tfvars (gitignored) — see terraform.tfvars.example.
+# Set real values in terraform.tfvars. See terraform.tfvars.example.
 
 variable "region" {
   description = "DigitalOcean region slug (e.g. sgp1, nyc3, fra1)."

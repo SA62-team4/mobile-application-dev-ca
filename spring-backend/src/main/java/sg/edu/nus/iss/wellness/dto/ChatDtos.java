@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * DTOs for RAG chatbot endpoints.
  *
- * @author SA62 Team
+ * @author Kumaraguru Surya, Tiong Zhong Cheng
  */
 public final class ChatDtos {
     private ChatDtos() {

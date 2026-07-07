@@ -5,7 +5,7 @@ Covers the env-var wiring in :func:`app.tracing.configure_tracing`, the
 the underlying Ollama calls) is decorated with ``@traceable`` and still behaves
 correctly when tracing is switched on.
 
-@author Zhong Cheng
+@author Tiong Zhong Cheng
 """
 
 import os

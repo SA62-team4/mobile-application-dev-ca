@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <!-- Emit packages.lock.json so Semgrep Supply Chain (Managed Scans) can resolve deps without a build -->
+    <!-- Emit lockfiles for dependency scanning. -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 </Project>
