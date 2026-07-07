@@ -34,6 +34,79 @@ If the `.NET Backup API` is implemented, it must preserve Spring Boot parity:
 - Internal Python callbacks must use `X-Internal-Service-Token` and the same internal endpoint request/response shapes.
 - Spring remains the source of truth when a contract ambiguity appears.
 
+## Contract Flow Diagrams
+
+These diagrams clarify the contract paths that are easiest to mis-wire during
+implementation.
+
+### Google SSO Exchange
+
+```plantuml
+@startuml
+actor User
+participant "Android App" as Android
+participant "Google Sign-In SDK" as GoogleSdk
+participant "Spring Boot API" as Spring
+participant "Google JWKS / Token Claims" as Google
+database "MySQL" as MySQL
+
+User -> Android: Tap Sign in with Google
+Android -> GoogleSdk: requestIdToken() + requestEmail()
+GoogleSdk --> Android: Google ID token + profile metadata
+Android -> Spring: POST /api/auth/google\n{idToken}
+Spring -> Google: Verify signature, issuer,\naudience, expiry, email
+Google --> Spring: Valid token claims
+Spring -> MySQL: Find user by lowercased email
+alt Existing account
+  MySQL --> Spring: User row
+else First Google login
+  Spring -> MySQL: Create user\npassword_hash = NULL
+  MySQL --> Spring: User row
+end
+Spring --> Android: Internal JWT + user profile
+Android -> Android: Store JWT and optional photoUrl
+@enduml
+```
+
+Rules reinforced by this flow:
+
+- Android never sends the Google token to Python or MySQL directly.
+- Google SSO returns the same internal JWT shape as email/password login.
+- A null `password_hash` is valid only for SSO-provisioned users; it does not
+  enable password login.
+
+### Streamed Chat Path
+
+```plantuml
+@startuml
+actor User
+participant "Android ChatActivity" as Android
+participant "Spring Boot API" as Spring
+participant "Python AI Service" as Python
+database "Chroma" as Chroma
+participant "Ollama" as Ollama
+database "MySQL" as MySQL
+
+User -> Android: Send wellness question
+Android -> Spring: POST /api/chat/messages/stream\nAuthorization: Bearer JWT
+Spring -> Python: POST /rag/chat/stream\nquestion + recent records
+Python -> Chroma: Retrieve top KB chunks
+Python --> Spring: SSE sources frame
+Spring --> Android: SSE sources frame
+Python -> Ollama: Stream local generation
+loop Token fragments
+  Ollama --> Python: fragment
+  Python --> Spring: SSE token frame
+  Spring --> Android: SSE token frame
+end
+Spring -> MySQL: Persist full assembled answer
+Spring --> Android: SSE done frame\nid + modelName + createdAt
+@enduml
+```
+
+Failure rule: once the SSE response is open, mid-stream failures are represented
+as a terminal `error` frame rather than a new HTTP status code.
+
 ## Public Status Endpoints
 
 ### Backend Status

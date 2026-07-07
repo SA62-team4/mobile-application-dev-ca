@@ -6,7 +6,9 @@
 
 This file translates the spec plan into implementation-ready task units. It corresponds to the Spec Kit **Tasks** step.
 
-Do not execute these tasks until the implementation phase is explicitly requested.
+Implementation is now active. Treat the table below as the original traceable
+task contract, and use the status snapshot to understand which planned units
+already have repository evidence.
 
 ## Task Status Values
 
@@ -15,6 +17,52 @@ Do not execute these tasks until the implementation phase is explicitly requeste
 - Blocked
 - In review
 - Done
+
+## Current Implementation Snapshot
+
+This snapshot was reconciled against the repository on 2026-07-07. It is not a
+replacement for PR evidence; it tells reviewers which backlog units have concrete
+code, tests, or operations files in place.
+
+| Area | Status | Repository Evidence | Remaining Spec-Driven Checks |
+| --- | --- | --- | --- |
+| Spring backend core | Implemented, verification active | `spring-backend/src/main/java/sg/edu/nus/iss/wellness/` controllers, services, models, repositories, JWT security, Google SSO verifier, streaming chat service | Keep ownership/auth tests green; verify API docs after route changes |
+| Android app | Implemented, UI QA active | `DashboardActivity`, `RecordFormActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`, XML layouts, `ListView` adapters, streaming chat client, dashboard helper tests | Manual compact-screen QA against Figma; keep Dashboard as landing screen |
+| Python AI service | Implemented, live-model smoke optional | FastAPI routes for health, RAG chat, streaming chat, reindex, recommendation agent; Chroma/Ollama clients; five-file curated KB | Run non-integration pytest in CI; live Ollama smoke before demo |
+| Docker/local runtime | Implemented | `docker-compose.yml`, `docker-compose.prod.yml`, `.env.example`, `docker-compose.dotnet-backup.yml`, `docker-compose.sonar.yml` | Clean-machine compose smoke and model pull/reindex check |
+| CI/quality/deployment | Implemented, evidence-gated | `.github/workflows/ci.yml`, `deploy.yml`, `infra.yml`, pinned actions, lockfile verification, SonarQube and Ansible jobs, Terraform/Ansible roots | Capture final Actions/SonarQube evidence; deployment remains optional for local demo |
+| Optional .NET backup backend | Implemented as bonus/cold standby | `dotnet-backend/` endpoints, services, tests, backup Compose override | Keep parity note explicit: Spring remains canonical for `REQ-08` |
+| Optional .NET desktop client | Implemented as bonus client | `desktop-app/` Avalonia app, API client, tests, packaging script | Demo only after mandatory Android flow is reliable |
+
+### Updated Task Flow
+
+```plantuml
+@startuml
+left to right direction
+
+rectangle "Spec Baseline\nT-000..T-103" as Specs
+rectangle "Spring Backend\nT-201..T-204\nT-301/T-404/T-501" as Spring
+rectangle "Android App\nT-302/T-303/T-405/T-504" as Android
+rectangle "Python AI\nT-401..T-403\nT-502/T-503" as Python
+rectangle "Docker + CI\nT-601..T-608" as Ops
+rectangle "Demo + Validation\nT-603..T-605" as Demo
+rectangle ".NET Backup\nT-701..T-704\noptional" as DotNet
+rectangle "Desktop Client\nT-801..T-806\noptional" as Desktop
+
+Specs --> Spring
+Specs --> Android
+Specs --> Python
+Spring --> Android
+Spring --> Python
+Python --> Spring
+Spring --> Ops
+Python --> Ops
+Android --> Demo
+Ops --> Demo
+Spring ..> DotNet : contract parity
+Spring ..> Desktop : REST client parity
+@enduml
+```
 
 ## Phase 0: Spec Review
 
