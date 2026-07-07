@@ -11,5 +11,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
+
+# Run as a non-root user; app files stay root-owned (read/execute only).
+RUN groupadd --system appgroup && \
+    useradd --system --gid appgroup --no-create-home --shell /usr/sbin/nologin appuser
 COPY --from=build /app/publish ./
+USER appuser
+
 ENTRYPOINT ["dotnet", "Wellness.Backup.Api.dll"]
