@@ -37,7 +37,10 @@ async def health() -> dict[str, str]:
     return {"status": "UP"}
 
 
-@app.post("/rag/reindex")
+@app.post(
+    "/rag/reindex",
+    responses={502: {"description": "Could not reach the AI model service (Ollama)"}},
+)
 async def reindex() -> dict[str, int]:
     try:
         return await rag.reindex()
@@ -50,7 +53,10 @@ async def reindex() -> dict[str, int]:
         ) from exc
 
 
-@app.post("/rag/chat", response_model=RagChatResponse)
+@app.post(
+    "/rag/chat",
+    responses={502: {"description": "Could not reach the AI model service (Ollama)"}},
+)
 async def chat(request: RagChatRequest) -> RagChatResponse:
     try:
         return await rag.chat(request)
@@ -78,7 +84,12 @@ async def chat_stream(request: RagChatRequest) -> StreamingResponse:
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
-@app.post("/agent/recommendation/{user_id}", response_model=RecommendationResponse)
+@app.post(
+    "/agent/recommendation/{user_id}",
+    responses={
+        502: {"description": "Recommendation agent workflow failed calling Spring internal APIs or Ollama"}
+    },
+)
 async def recommendation(user_id: int) -> RecommendationResponse:
     try:
         return await agent.generate_recommendation(user_id)
