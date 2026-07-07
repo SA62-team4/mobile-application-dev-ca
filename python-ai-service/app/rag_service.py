@@ -3,6 +3,9 @@
 @author Zhong Cheng
 """
 
+import json
+from collections.abc import AsyncIterator
+
 import chromadb
 from fastapi import HTTPException
 from langsmith import traceable
@@ -12,6 +15,24 @@ from app.knowledge_base import KnowledgeChunk, load_chunks
 from app.models import RagChatRequest, RagChatResponse, SourceSnippet
 from app.ollama_client import OllamaClient
 from app.tracing import strip_self
+
+
+def _sse(payload: dict) -> str:
+    """Format a payload as a single Server-Sent Events ``data:`` frame."""
+    return f"data: {json.dumps(payload)}\n\n"
+
+
+def _reduce_stream_answer(frames: list[str]) -> str:
+    """Rebuild the full answer from streamed SSE frames for a readable trace."""
+    parts: list[str] = []
+    for frame in frames:
+        payload = frame.removeprefix("data:").strip()
+        if not payload:
+            continue
+        chunk = json.loads(payload)
+        if chunk.get("type") == "token":
+            parts.append(chunk.get("text", ""))
+    return "".join(parts)
 
 
 class RagService:
@@ -58,8 +79,35 @@ class RagService:
             modelName=self.settings.generation_model,
         )
 
+    @traceable(
+        run_type="chain",
+        name="rag.chat.stream",
+        process_inputs=strip_self,
+        reduce_fn=_reduce_stream_answer,
+    )
+    async def chat_stream(self, request: RagChatRequest) -> AsyncIterator[str]:
+        """Stream a grounded answer as Server-Sent Events.
+
+        Retrieval runs first (so sources are known up front), then generation
+        tokens are forwarded as they arrive. Each SSE ``data:`` line carries one
+        JSON object tagged with a ``type``: ``sources`` once, ``token`` many
+        times, then a terminal ``done`` (or ``error`` if generation fails).
+        """
+        retrieved = await self.retrieve(request.question)
+        sources = [{"title": chunk.title, "snippet": chunk.snippet} for chunk in retrieved]
+        yield _sse({"type": "sources", "sources": sources})
+
+        prompt = self._build_prompt(request, retrieved)
+        produced = False
+        async for fragment in self.ollama.generate_stream(prompt, num_predict=220):
+            produced = True
+            yield _sse({"type": "token", "text": fragment})
+        if not produced:
+            yield _sse({"type": "token", "text": "I could not generate a response right now. Please try again."})
+        yield _sse({"type": "done", "modelName": self.settings.generation_model})
+
     @traceable(run_type="retriever", name="rag.retrieve", process_inputs=strip_self)
-    async def retrieve(self, question: str, top_k: int = 4) -> list[KnowledgeChunk]:
+    async def retrieve(self, question: str, top_k: int = 3) -> list[KnowledgeChunk]:
         count = self.collection.count()
         if count == 0:
             await self.reindex()
@@ -81,7 +129,10 @@ class RagService:
         return chunks
 
     def _build_prompt(self, request: RagChatRequest, chunks: list[KnowledgeChunk]) -> str:
-        context = "\n\n".join(f"Source: {chunk.title}\n{chunk.snippet}" for chunk in chunks)
+        # Cap each snippet so the grounded prompt stays small and CPU prefill stays fast.
+        context = "\n\n".join(
+            f"Source: {chunk.title}\n{chunk.snippet[:200]}" for chunk in chunks
+        )
         records = "\n".join(
             f"- {record.recordDate}: sleep {record.sleepHours}h, exercise {record.exerciseType or 'none'} "
             f"{record.exerciseMinutes}min, mood {record.moodScore}/5"

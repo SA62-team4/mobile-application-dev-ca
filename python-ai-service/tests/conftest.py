@@ -56,6 +56,12 @@ class FakeOllama:
         self.generate_calls += 1
         return "Deterministic test answer about wellness habits."
 
+    async def generate_stream(self, prompt: str, num_predict: int = 220):
+        """Yield the canned answer as a few fragments, mirroring Ollama streaming."""
+        self.generate_calls += 1
+        for fragment in ("Deterministic ", "streamed answer ", "about wellness habits."):
+            yield fragment
+
 
 @pytest.fixture
 def fake_ollama() -> FakeOllama:

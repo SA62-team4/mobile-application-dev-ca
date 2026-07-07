@@ -299,6 +299,38 @@ Behavior:
 - Python retrieves relevant KB chunks and calls Ollama.
 - Backend saves the final question, answer, source summary, and model name.
 
+### Ask Chatbot (Streaming)
+
+`POST /api/chat/messages/stream`
+
+Same request body as `POST /api/chat/messages`, but the answer streams back token-by-token
+so long responses are not truncated and the user sees progress immediately.
+
+Response `200 OK` with `Content-Type: text/event-stream`. Each Server-Sent Events `data:`
+line carries one JSON frame tagged with a `type`:
+
+```text
+data: {"type":"sources","sources":[{"title":"Sleep Hygiene Basics","snippet":"..."}]}
+
+data: {"type":"token","text":"Try keeping "}
+
+data: {"type":"token","text":"evening exercise moderate."}
+
+data: {"type":"done","id":25,"modelName":"llama3.2:3b","createdAt":"2026-07-01T12:10:00Z","sources":[{"title":"Sleep Hygiene Basics","snippet":"..."}]}
+```
+
+Behavior:
+
+- `sources` is emitted once, before generation, from the retrieved KB chunks.
+- `token` frames carry answer fragments in order; concatenate them to form the full answer.
+- `done` is the terminal success frame, sent only after the backend has persisted the
+  assembled exchange (so a subsequent history load returns the same message).
+- On failure a terminal `{"type":"error","message":"..."}` frame is sent instead; because
+  the `200 OK` status is already committed when streaming starts, errors mid-stream surface
+  as this frame rather than an HTTP error status.
+- The non-streaming `POST /api/chat/messages` remains available as a fallback and for
+  clients that do not consume SSE.
+
 ### List Chat History
 
 `GET /api/chat/messages`
@@ -384,6 +416,27 @@ Response:
   "modelName": "llama3.2:3b"
 }
 ```
+
+### RAG Chat (Streaming)
+
+`POST /rag/chat/stream`
+
+Same request body as `POST /rag/chat`. Returns `Content-Type: text/event-stream`.
+Retrieval runs first so `sources` is known up front, then Ollama generation tokens are
+forwarded as they arrive:
+
+```text
+data: {"type":"sources","sources":[{"title":"Sleep Hygiene Basics","snippet":"..."}]}
+
+data: {"type":"token","text":"A consistent "}
+
+data: {"type":"done","modelName":"llama3.2:3b"}
+```
+
+Spring Boot consumes this stream, forwards `sources`/`token` frames to Android, accumulates
+the full answer, persists it, and emits the enriched `done` frame (with saved id and
+timestamp). If Ollama is unreachable mid-stream, Python emits a terminal
+`{"type":"error","message":"..."}` frame.
 
 ### Agent Recommendation
 

@@ -5,8 +5,11 @@
 
 import logging
 
+import json
+
 import httpx
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 
 from app.agent_service import AgentService
 from app.backend_client import BackendClient
@@ -59,6 +62,22 @@ async def chat(request: RagChatRequest) -> RagChatResponse:
             status_code=502,
             detail=f"Could not reach the AI model service (Ollama) at {settings.ollama_base_url}: {exc}",
         ) from exc
+
+
+@app.post("/rag/chat/stream")
+async def chat_stream(request: RagChatRequest) -> StreamingResponse:
+    async def event_stream():
+        try:
+            async for frame in rag.chat_stream(request):
+                yield frame
+        except httpx.HTTPError as exc:
+            # The stream has already started (200 OK sent), so we cannot switch to a
+            # 502 here; surface the failure as a terminal SSE error event instead.
+            logger.exception("Chat stream could not reach the AI model service at %s", settings.ollama_base_url)
+            message = f"Could not reach the AI model service (Ollama) at {settings.ollama_base_url}: {exc}"
+            yield f"data: {json.dumps({'type': 'error', 'message': message})}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.post("/agent/recommendation/{user_id}", response_model=RecommendationResponse)

@@ -20,7 +20,8 @@ No paid LLM APIs and no cloud-only model dependency.
 
 Default local models:
 
-- Generation: `llama3.2:3b`
+- Generation: `llama3.2:1b` (chosen for faster CPU-only inference on the droplet; override
+  `OLLAMA_GENERATION_MODEL` with `llama3.2:3b` when answer quality matters more than latency)
 - Embeddings: `nomic-embed-text`
 
 Default local runtime:
@@ -66,7 +67,7 @@ rectangle "User Question" as UserQuestion
 rectangle "Query Embedding" as QueryEmbed
 rectangle "Top K Retrieval" as Retrieve
 rectangle "Grounded Prompt" as Prompt
-rectangle "Ollama Generation\nllama3.2:3b" as Generate
+rectangle "Ollama Generation\nllama3.2:1b" as Generate
 rectangle "Answer + Sources" as Answer
 
 KB --> Chunker
@@ -134,6 +135,29 @@ Spring Boot saves:
 - Model name
 - Timestamp
 
+### Streaming Variant
+
+A streaming chat path (`POST /rag/chat/stream` → `POST /api/chat/messages/stream`) exists
+alongside the blocking one so long answers are not truncated and the user sees tokens as
+they are generated. Retrieval runs first (sources are known up front), then Ollama runs with
+`stream=True` and each fragment is forwarded as a Server-Sent Events frame. Spring Boot
+accumulates the fragments, persists the same fields listed above once the stream completes,
+and only then emits the terminal `done` frame — so streamed and non-streamed exchanges are
+stored identically. See `06-plan-api-contracts.md` for the SSE frame protocol.
+
+### CPU Performance Tuning
+
+Generation runs CPU-only on the droplet, so latency is managed rather than eliminated:
+
+- **Model**: `llama3.2:1b` by default (~2-3x faster than 3b on CPU).
+- **Keep-warm**: the prod overlay sets `OLLAMA_KEEP_ALIVE=-1` and `OLLAMA_NUM_PARALLEL=1`, and
+  the deploy warms the generation model, so the first request pays no cold model load and a
+  single request uses every core. See `10-plan-docker-devops.md`.
+- **Small prompt / context**: retrieval uses top-3 chunks with capped snippet length, and
+  generation caps `num_ctx` at 1024, keeping CPU prefill cheap.
+- **Streaming**: tokens are streamed to Android so a long answer is perceived as fast even
+  when total generation time is unchanged.
+
 ## Failure Modes
 
 | Failure | Expected Behavior |
@@ -155,6 +179,9 @@ local/offline, and Ollama remains the only LLM runtime.
 - Instrumented steps use LangSmith's `@traceable` decorator:
   - `rag.chat` (chain), `rag.retrieve` (retriever)
   - `ollama.embed` (embedding) and `ollama.generate` (llm)
+  - The streaming path is traced too: `rag.chat.stream` (chain) and
+    `ollama.generate.stream` (llm). Streamed fragments are reduced back into a single
+    answer string so the run renders like the blocking path.
 - The bound service instance is stripped from traced inputs so runs stay
   readable and never serialise Chroma/HTTP clients.
 - Configuration is env-driven and off by default:
