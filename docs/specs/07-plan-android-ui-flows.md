@@ -194,6 +194,7 @@ Google SSO notes:
 - A "— or —" divider separates email/password from the **Sign in with Google** button.
 - The button uses the Google Sign-In SDK configured with the Web Client ID (`BuildConfig.GOOGLE_WEB_CLIENT_ID`, supplied via `local.properties`) and `requestIdToken()` + `requestEmail()`.
 - The returned Google ID token is exchanged at `POST /api/auth/google`; on success the same `onLoginSuccess` path stores the JWT and navigates onward.
+- The account picture URL (`GoogleSignInAccount.photoUrl`) is captured alongside the ID token and stored via `TokenStore.save(..., photoUrl)` for display on the Profile screen.
 - Requires a Google APIs emulator image and an Android OAuth client registered with the debug SHA-1; setup is in `docs/local-sso-quickstart.md`.
 
 ### Register Screen
@@ -361,6 +362,7 @@ Success:
 
 Content:
 
+- Profile picture
 - Display name
 - Email
 - App version or team name, optional
@@ -368,6 +370,14 @@ Content:
 Actions:
 
 - Logout
+
+Profile picture behavior:
+
+- Shows the user's Google account picture as a circular avatar above the display name.
+- The Google picture URL is captured from the signed-in `GoogleSignInAccount` during Google SSO and persisted locally alongside the JWT (`TokenStore.photoUrl()`). It is not returned by the backend, so it is only available for Google logins.
+- Loaded with Coil (`io.coil-kt:coil`) using `CircleCropTransformation`.
+- Falls back to a placeholder avatar (`ic_profile_placeholder`) for email/password logins, when no picture URL is stored, or while the remote image loads/fails.
+- The picture, display name, email, and app-version line are center-aligned within the profile card.
 
 Logout behavior:
 
