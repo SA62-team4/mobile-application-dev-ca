@@ -8,6 +8,11 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import sg.edu.nus.iss.wellness.R
 import sg.edu.nus.iss.wellness.api.RecommendationResponse
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * Row adapter for the recommendations list.
@@ -60,11 +65,24 @@ class RecommendationAdapter(
 
         if (rec.createdAt != null) {
             holder.createdAt.visibility = View.VISIBLE
-            holder.createdAt.text = "Generated ${rec.createdAt}"
+            holder.createdAt.text = "Generated ${formatGeneratedAt(rec.createdAt)}"
         } else {
             holder.createdAt.visibility = View.GONE
         }
 
         return view
+    }
+
+    private fun formatGeneratedAt(value: String): String {
+        val displayFormatter = DateTimeFormatter
+            .ofPattern("d MMM yyyy, h:mm a", Locale.getDefault())
+            .withZone(ZoneId.systemDefault())
+
+        return runCatching {
+            displayFormatter.format(Instant.parse(value))
+        }.recoverCatching {
+            val localDateTime = LocalDateTime.parse(value)
+            displayFormatter.format(localDateTime.atZone(ZoneId.systemDefault()))
+        }.getOrDefault(value)
     }
 }
