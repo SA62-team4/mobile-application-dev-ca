@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="snackbar_corner_radius">16dp</dimen>
+    <dimen name="snackbar_horizontal_margin">16dp</dimen>
+    <dimen name="snackbar_bottom_margin">24dp</dimen>
+</resources>
