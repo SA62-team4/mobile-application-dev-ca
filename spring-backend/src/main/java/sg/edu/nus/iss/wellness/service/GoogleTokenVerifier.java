@@ -29,8 +29,8 @@ public class GoogleTokenVerifier {
         String clientId = properties.getGoogle().getClientId();
         NimbusJwtDecoder nimbusDecoder = NimbusJwtDecoder.withJwkSetUri(GOOGLE_JWKS_URI).build();
 
-        OAuth2TokenValidator<Jwt> audienceValidator = new JwtClaimValidator<List<String>>(
-                "aud", aud -> aud != null && aud.contains(clientId)
+        OAuth2TokenValidator<Jwt> audienceValidator = new JwtClaimValidator<>(
+                "aud", (List<String> aud) -> aud != null && aud.contains(clientId)
         );
         nimbusDecoder.setJwtValidator(
                 new DelegatingOAuth2TokenValidator<>(JwtValidators.createDefault(), audienceValidator)

@@ -123,7 +123,7 @@ class RecommendationControllerTest {
         when(aiServiceClient.generateRecommendation(testUser.getId())).thenReturn(
                 new RecommendationDtos.RecommendationResponse(
                         1L, "Generated title", "Trend summary", "Recommendation text",
-                        List.of("Do this", "Do that"), "python-agent", java.time.Instant.now()));
+                        List.of("Do this", "Do that"), "python-agent", java.time.Instant.EPOCH));
 
         mockMvc.perform(post("/api/recommendations/generate")
                 .header("Authorization", "Bearer " + token))

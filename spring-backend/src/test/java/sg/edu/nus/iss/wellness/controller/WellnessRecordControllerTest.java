@@ -3,10 +3,14 @@ package sg.edu.nus.iss.wellness.controller;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -122,88 +126,37 @@ class WellnessRecordControllerTest {
         assertThat(savedEntry.get(0).getUser().getId()).isEqualTo(testUser.getId());
     }
 
-    // Test 2 - Mood score cannot have a value above 5. Expected 400 Bad Request.
-    @Test
-    void logEntryWithMoodScoreAbove5_returnsError() throws Exception {
-        var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
-            new BigDecimal("7.5"), //SleepHours
-            "Walking", //ExerciseType
-            30, //ExerciseMinutes
-            6, //Moodscore
-            "Felt good building today"); //Notes
-
+    // Tests 2-5 - Field values outside their allowed ranges are rejected with 400 Bad Request
+    // and nothing is persisted. One parameterized case per boundary rule (mood 1-5, sleep 0-24).
+    @ParameterizedTest(name = "{0} is rejected with 400")
+    @MethodSource("outOfRangeEntries")
+    void logEntryWithOutOfRangeValue_returnsError(String scenario,
+                                                  WellnessDtos.WellnessRecordRequest invalidEntry) throws Exception {
         mockMvc.perform(post("/api/wellness-records")
             .header("Authorization", "Bearer " + token)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(newEntryDetails)))
+            .content(objectMapper.writeValueAsString(invalidEntry)))
                 .andExpect(status().isBadRequest());
 
         var savedEntry = records.findByUserOrderByRecordDateDesc(testUser);
         assertThat(savedEntry).isEmpty();
     }
 
-    // Test 3 - Mood score cannot have a value below 1. Expected 400 Bad Request.
-    @Test
-    void logEntryWithMoodScoreBelow1_returnsError() throws Exception {
-        var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
-            new BigDecimal("7.5"), //SleepHours
-            "Walking", //ExerciseType
-            30, //ExerciseMinutes
-            0, //Moodscore
-            "Felt sad not building today"); //Notes
-
-        mockMvc.perform(post("/api/wellness-records")
-            .header("Authorization", "Bearer " + token)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(newEntryDetails)))
-                .andExpect(status().isBadRequest());
-
-        var savedEntry = records.findByUserOrderByRecordDateDesc(testUser);
-        assertThat(savedEntry).isEmpty();
-    }
-
-    // Test 4 - No. of sleep hours cannot exceed 24 hours. Expected 400 Bad Request.
-    @Test
-    void logEntryWithSleepHoursAbove24_returnsError() throws Exception {
-        var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
-            new BigDecimal("24.01"), //SleepHours
-            "Walking", //ExerciseType
-            30, //ExerciseMinutes
-            4, //Moodscore
-            "Rested very well after building!"); //Notes
-
-        mockMvc.perform(post("/api/wellness-records")
-            .header("Authorization", "Bearer " + token)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(newEntryDetails)))
-                .andExpect(status().isBadRequest());
-
-        var savedEntry = records.findByUserOrderByRecordDateDesc(testUser);
-        assertThat(savedEntry).isEmpty();
-    }
-
-    // Test 5 - No. of sleep hours cannot be less than 0 hours. Expected 400 Bad Request.
-    @Test
-    void logEntryWithSleepHoursBelowZero_returnsError() throws Exception {
-        var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
-            LocalDate.of(2026, Month.JUNE, 30), //RecordDate
-            new BigDecimal("-1"), //SleepHours
-            "Walking", //ExerciseType
-            30, //ExerciseMinutes
-            4, //Moodscore
-            "Couldn't sleep at all!"); //Notes
-
-        mockMvc.perform(post("/api/wellness-records")
-            .header("Authorization", "Bearer " + token)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(newEntryDetails)))
-                .andExpect(status().isBadRequest());
-
-        var savedEntry = records.findByUserOrderByRecordDateDesc(testUser);
-        assertThat(savedEntry).isEmpty();
+    private static Stream<Arguments> outOfRangeEntries() {
+        LocalDate date = LocalDate.of(2026, Month.JUNE, 30);
+        return Stream.of(
+            Arguments.of("mood score above 5",
+                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("7.5"), "Walking", 30, 6,
+                    "Felt good building today")),
+            Arguments.of("mood score below 1",
+                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("7.5"), "Walking", 30, 0,
+                    "Felt sad not building today")),
+            Arguments.of("sleep hours above 24",
+                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("24.01"), "Walking", 30, 4,
+                    "Rested very well after building!")),
+            Arguments.of("sleep hours below 0",
+                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("-1"), "Walking", 30, 4,
+                    "Couldn't sleep at all!")));
     }
 
     // Test 6 - No. of exercise minutes cannot be less than 0 minutes. Expected 400 Bad Request.

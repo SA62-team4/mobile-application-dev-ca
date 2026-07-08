@@ -27,6 +27,8 @@ import sg.edu.nus.iss.wellness.service.GoogleTokenVerifier;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+    private static final String TOKEN_TYPE = "Bearer";
+
     private final AppUserRepository users;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -66,7 +68,7 @@ public class AuthController {
         }
         return new AuthDtos.LoginResponse(
                 jwtService.generateToken(user),
-                "Bearer",
+                TOKEN_TYPE,
                 jwtService.expirySeconds(),
                 DtoMapper.user(user)
         );
@@ -91,7 +93,7 @@ public class AuthController {
         }
         return new AuthDtos.LoginResponse(
                 jwtService.generateToken(user),
-                "Bearer",
+                TOKEN_TYPE,
                 jwtService.expirySeconds(),
                 DtoMapper.user(user)
         );
@@ -127,7 +129,7 @@ public class AuthController {
         }
         return new AuthDtos.LoginResponse(
                 jwtService.generateToken(user),
-                "Bearer",
+                TOKEN_TYPE,
                 jwtService.expirySeconds(),
                 DtoMapper.user(user)
         );
