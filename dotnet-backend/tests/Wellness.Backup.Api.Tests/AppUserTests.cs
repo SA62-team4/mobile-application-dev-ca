@@ -31,4 +31,13 @@ public sealed class AppUserTests
         // Premium is intentionally not expanded into USER until premium auth is wired up.
         Assert.False(NewUser(Role.PremiumUser).HasRole(Role.User));
     }
+
+    [Fact]
+    public void PasswordHash_AllowsNullForSsoOnlyAccounts()
+    {
+        var user = new AppUser(
+            1, "google@example.com", null, "Google User", Role.User, true, DateTime.UtcNow, DateTime.UtcNow);
+
+        Assert.Null(user.PasswordHash);
+    }
 }

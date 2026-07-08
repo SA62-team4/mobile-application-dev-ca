@@ -197,6 +197,7 @@ Google SSO notes:
 - The button uses the Google Sign-In SDK configured with the Web Client ID (`BuildConfig.GOOGLE_WEB_CLIENT_ID`, supplied via `local.properties`) and `requestIdToken()` + `requestEmail()`.
 - The returned Google ID token is exchanged at `POST /api/auth/google`; on success the same `onLoginSuccess` path stores the JWT and navigates onward.
 - The account picture URL (`GoogleSignInAccount.photoUrl`) is captured alongside the ID token and stored via `TokenStore.save(..., photoUrl)` for display on the Profile screen.
+- Google sign-in is also the reactivation path for Google-only deactivated accounts after the backend verifies the Google ID token. Android must show a confirmation dialog before retrying the exchange with `reactivate=true`.
 - Requires a Google APIs emulator image and an Android OAuth client registered with the debug SHA-1; setup is in `docs/local-sso-quickstart.md`.
 
 ### Register Screen
@@ -412,7 +413,7 @@ Behavior:
 
 - Export calls `GET /api/account/export` with the stored JWT.
 - On successful export, Android opens the system share sheet or document-create flow with a `.json` payload. The payload is not silently uploaded anywhere.
-- Delete account first shows a destructive confirmation dialog. Only confirmation calls `DELETE /api/account`.
+- Delete account first shows a destructive confirmation dialog. Email/password users must enter their current password; Google-only users confirm without a password because no app password exists. Only confirmation calls `DELETE /api/account`.
 - On successful account deletion, Android clears the local JWT, clears locally stored profile/photo data, and navigates to Login with the back stack cleared.
 - If export/delete fails because the token expired, Android clears the token and returns to Login.
 

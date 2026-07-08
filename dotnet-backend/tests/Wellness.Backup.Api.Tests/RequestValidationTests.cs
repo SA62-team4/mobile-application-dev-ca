@@ -53,6 +53,20 @@ public sealed class RequestValidationTests
     }
 
     [Fact]
+    public void GoogleAuth_Valid_DoesNotThrow()
+    {
+        RequestValidation.Validate(new GoogleAuthRequest("id-token"));
+    }
+
+    [Fact]
+    public void GoogleAuth_Blank_ThrowsBadRequest()
+    {
+        AssertBadRequest(
+            () => RequestValidation.Validate(new GoogleAuthRequest(" ")),
+            "Google ID token is required");
+    }
+
+    [Fact]
     public void WellnessRecord_Valid_DoesNotThrow()
     {
         RequestValidation.Validate(new WellnessRecordRequest(

@@ -10,14 +10,14 @@ namespace Wellness.Backup.Api.Endpoints;
 /// <summary>
 /// Privacy / data-control routes (S-03), mirrored from the Spring Boot backend:
 /// export a full JSON copy of the caller's data, reversibly deactivate, or
-/// permanently delete (password-confirmed).
+/// permanently delete, password-confirmed for local-password accounts.
 /// </summary>
 /// <remarks>
 /// A wrong password on delete returns 400 — deliberately not 401/403 — because
 /// the shared mobile client treats 401/403 as session expiry and would otherwise
 /// log the user out on a simple typo.
 ///
-/// @author Chua Wei Yi Justin
+/// @author Chua Wei Yi Justin, Tiong Zhong Cheng
 /// </remarks>
 public static class AccountEndpoints
 {
@@ -72,14 +72,17 @@ public static class AccountEndpoints
         {
             var user = await EndpointAuthorization.RequireCurrentUserAsync(context, users, jwtTokenService, cancellationToken);
 
+            if (string.IsNullOrWhiteSpace(user.PasswordHash))
+            {
+                // SSO-only users have no local app password; the valid JWT is the
+                // confirmation after the destructive Android dialog.
+                await users.DeleteAccountAndDataAsync(user.Id, cancellationToken);
+                return Results.NoContent();
+            }
+
             if (string.IsNullOrWhiteSpace(request?.Password))
             {
                 throw ApiException.BadRequest("Password confirmation is required");
-            }
-            if (string.IsNullOrWhiteSpace(user.PasswordHash))
-            {
-                // Google-linked accounts have no local password to confirm against.
-                throw ApiException.BadRequest("Password confirmation is unavailable for Google-linked accounts");
             }
             if (!passwords.Verify(request.Password, user.PasswordHash))
             {

@@ -31,6 +31,7 @@ If the `.NET Backup API` is implemented, it must preserve Spring Boot parity:
 - Same MySQL table and column ownership rules defined in `05-plan-backend-data-model-erd.md`.
 - Same JWT secret, expiry setting, HS256 signing, bearer-token rules, and claims: `sub`, `uid`, `name`, `role`, `iat`, `exp`. The `role` claim carries the canonical enum name (e.g. `USER`).
 - BCrypt password hashes must be compatible with Spring Security so either backend can authenticate users stored by the other.
+- Optional Google SSO (`POST /api/auth/google`) uses the same Web Client ID and ID-token validation rules in Spring and the `.NET Backup API`; SSO-only users have `password_hash = NULL` in the shared schema.
 - Internal Python callbacks must use `X-Internal-Service-Token` and the same internal endpoint request/response shapes.
 - If optional `REQ-23` is implemented in the backup API, account export/delete routes must mirror Spring's request/response shapes and ownership behavior.
 - Spring remains the source of truth when a contract ambiguity appears.
@@ -220,9 +221,12 @@ Request:
 
 ```json
 {
-  "idToken": "<google-id-token>"
+  "idToken": "<google-id-token>",
+  "reactivate": false
 }
 ```
+
+`reactivate` is optional and defaults to `false`. Android sets it to `true` only after a user confirms the reactivation prompt for a deactivated Google-only account.
 
 The backend verifies the token before trusting it:
 
@@ -231,7 +235,7 @@ The backend verifies the token before trusting it:
 - `iss` claim is `accounts.google.com` (or `https://accounts.google.com`).
 - `exp` not expired; `email` claim present.
 
-On success the user is looked up by email; a new user is auto-provisioned (display name from the token, `password_hash = NULL`), an existing user is reused. The backend then issues the **same** JWT format as `/api/auth/login`.
+On success the user is looked up by email; a new user is auto-provisioned (display name from the token, `password_hash = NULL`), an existing user is reused. If a Google-only account was previously deactivated, the backend first returns `403` after verifying the token so Android can ask whether the user wants to reactivate. Only a confirmed retry with `reactivate=true` reactivates that same account before issuing a JWT. The backend then issues the **same** JWT format as `/api/auth/login`.
 
 Response `200 OK`:
 
@@ -252,7 +256,7 @@ Errors:
 
 - `400` if `idToken` is missing or blank.
 - `401` if the token is invalid, expired, or has the wrong audience/issuer.
-- `403` if the matched account is disabled.
+- `403` if the matched account is deactivated and `reactivate` was not confirmed, or if a matched account cannot be reactivated by the verified Google identity.
 
 ### Logout
 
@@ -334,11 +338,22 @@ Rules:
 
 `DELETE /api/account`
 
+Request body for local email/password accounts:
+
+```json
+{
+  "password": "Password123!"
+}
+```
+
+For SSO-only accounts with `password_hash = NULL`, Android may send an empty body field or `null` password after a destructive confirmation because there is no app password to re-enter.
+
 Response `204 No Content`.
 
 Behavior:
 
 - Deletes the authenticated user's wellness records, chat messages, recommendations, and user row in one backend transaction.
+- Local email/password accounts must reconfirm the current password before deletion; SSO-only accounts are authorized by the currently valid JWT because they have no local app password.
 - Does not call Python AI or delete shared RAG knowledge-base/vector assets because the current RAG design has no user-uploaded documents.
 - After success, Android clears the local JWT and returns to Login.
 - A previous stateless JWT for the deleted account must no longer authorize protected endpoints because the user lookup fails.
@@ -347,6 +362,7 @@ Errors:
 
 - `401` for missing/invalid JWT.
 - `404` if the authenticated user row no longer exists.
+- `400` if a local email/password account omits the password or provides the wrong password.
 - `500` using the standard error shape if transactional deletion fails.
 
 ## Wellness Record Endpoints

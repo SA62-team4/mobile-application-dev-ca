@@ -30,6 +30,7 @@ builder.Services.AddSingleton<RecommendationRepository>();
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddSingleton<PasswordService>();
 builder.Services.AddHttpClient<AiServiceClient>();
+builder.Services.AddHttpClient<GoogleTokenVerifier>();
 
 var app = builder.Build();
 

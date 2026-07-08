@@ -38,7 +38,7 @@ import sg.edu.nus.iss.wellness.security.JwtService;
  * export, reversible deactivate + reactivate, and permanent password-confirmed
  * delete.
  *
- * @author Chua Wei Yi Justin
+ * @author Chua Wei Yi Justin, Tiong Zhong Cheng
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -109,6 +109,14 @@ class AccountControllerTest {
         return users.save(other);
     }
 
+    private AppUser seedGoogleOnlyUser() {
+        AppUser googleUser = new AppUser();
+        googleUser.setEmail("google-user@example.com");
+        googleUser.setDisplayName("Google User");
+        googleUser.setPasswordHash(null);
+        return users.save(googleUser);
+    }
+
     // --- EXPORT ---
 
     @Test
@@ -144,6 +152,18 @@ class AccountControllerTest {
     void export_withoutToken_returnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/account/export"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void export_googleOnlyAccount_returnsOwnedData() throws Exception {
+        AppUser googleUser = seedGoogleOnlyUser();
+        seedRecord(googleUser);
+        String googleToken = jwtService.generateToken(googleUser);
+
+        mockMvc.perform(get("/api/account/export").header("Authorization", "Bearer " + googleToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.profile.email").value("google-user@example.com"))
+                .andExpect(jsonPath("$.wellnessRecords.length()").value(1));
     }
 
     // --- DEACTIVATE + REACTIVATE ---
@@ -244,6 +264,42 @@ class AccountControllerTest {
 
         assertThat(users.findById(user.getId())).isPresent();
         assertThat(wellnessRecords.findByUserOrderByRecordDateDesc(user)).hasSize(1);
+    }
+
+    @Test
+    void delete_withoutPasswordForLocalAccount_returnsBadRequestAndKeepsData() throws Exception {
+        seedRecord(user);
+
+        var body = new AccountDtos.DeleteAccountRequest(null);
+        mockMvc.perform(delete("/api/account")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isBadRequest());
+
+        assertThat(users.findById(user.getId())).isPresent();
+        assertThat(wellnessRecords.findByUserOrderByRecordDateDesc(user)).hasSize(1);
+    }
+
+    @Test
+    void delete_googleOnlyAccount_erasesUserAndAllOwnedDataWithoutPassword() throws Exception {
+        AppUser googleUser = seedGoogleOnlyUser();
+        seedRecord(googleUser);
+        seedRecommendation(googleUser);
+        seedChat(googleUser);
+        String googleToken = jwtService.generateToken(googleUser);
+
+        var body = new AccountDtos.DeleteAccountRequest(null);
+        mockMvc.perform(delete("/api/account")
+                        .header("Authorization", "Bearer " + googleToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isNoContent());
+
+        assertThat(users.findById(googleUser.getId())).isEmpty();
+        assertThat(wellnessRecords.findByUserOrderByRecordDateDesc(googleUser)).isEmpty();
+        assertThat(recommendations.findByUserOrderByCreatedAtDesc(googleUser)).isEmpty();
+        assertThat(chatMessages.findByUserOrderByCreatedAtDesc(googleUser)).isEmpty();
     }
 
     @Test

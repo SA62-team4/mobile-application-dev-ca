@@ -4,7 +4,7 @@ namespace Wellness.Backup.Api.Dtos;
 /// DTOs for the privacy / account-management endpoints (S-03), mirrored from the
 /// Spring Boot backend so the exported JSON is identical across both backends.
 /// </summary>
-/// <remarks>@author Chua Wei Yi Justin</remarks>
+/// <remarks>@author Chua Wei Yi Justin, Tiong Zhong Cheng</remarks>
 public sealed record AccountUserProfile(
     long Id,
     string Email,
@@ -28,7 +28,8 @@ public sealed record AccountExport(
     DateTime ExportedAt);
 
 /// <summary>
-/// Password re-confirmation body for the permanent delete. Requiring the current
-/// password guards an irreversible wipe behind a re-authentication step.
+/// Optional password re-confirmation body for the permanent delete. Local
+/// password accounts must provide the current password; SSO-only accounts have
+/// no app password to re-enter, so the authenticated JWT is enough.
 /// </summary>
 public sealed record DeleteAccountRequest(string? Password);

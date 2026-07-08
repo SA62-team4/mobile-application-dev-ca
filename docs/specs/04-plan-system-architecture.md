@@ -7,7 +7,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft baseline |
-| Controls | REQ-08, REQ-09, REQ-10, REQ-13, REQ-14, REQ-16, REQ-23, NFR-03 |
+| Controls | REQ-08, REQ-09, REQ-10, REQ-13, REQ-14, REQ-16, REQ-22, REQ-23, NFR-03 |
 | Primary audience | Full team |
 | Upstream specs | `02-specify-project-requirements.md` |
 | Downstream specs | ERD, API, Android UI, RAG, agent, Docker, test plan |
@@ -20,7 +20,8 @@ left to right direction
 
 rectangle "Android App\nKotlin + XML Layouts" as Android
 rectangle "Desktop App (optional)\n.NET Avalonia (C#)" as Desktop
-rectangle "Spring Boot API\nAuth, Records, Chat,\nRecommendations" as Backend
+rectangle "Spring Boot API\nAuth, SSO, Records, Chat,\nRecommendations" as Backend
+cloud "Google Identity\nID Token Verification" as Google
 rectangle ".NET Backup API\nCold Standby\nSame REST Contracts" as DotNet
 database "MySQL\nTransactional Data" as MySQL
 rectangle "Python FastAPI AI Service\nRAG + Agentic AI" as AI
@@ -31,6 +32,8 @@ rectangle "Ollama Local LLM\nqwen2.5:1.5b\nnomic-embed-text" as Ollama
 Android --> Backend : HTTPS REST + JWT
 Desktop --> Backend : HTTPS REST + JWT\noptional client
 Android ..> DotNet : Optional backup base URL\nsame REST + JWT
+Android --> Google : Google Sign-In SDK\nID token
+Backend --> Google : Verify token claims\nand JWKS
 Backend --> MySQL : JPA / JDBC
 DotNet --> MySQL : MySQL client\nsame schema
 Backend --> AI : HTTP internal API
@@ -51,7 +54,7 @@ The Java Spring Boot backend remains the primary and canonical backend because `
 | --- | --- | --- |
 | Android app | UI, form validation, token storage, REST calls to backend | Direct database access, direct Python AI calls |
 | Desktop app (optional) | UI, form validation, in-memory token storage, REST calls to backend (parity with Android) | Direct database access, direct Python AI calls, persisting JWT to disk |
-| Spring Boot backend | Auth, JWT, authorization, business rules, MySQL persistence, AI service orchestration | Local embedding/vector logic |
+| Spring Boot backend | Auth, Google SSO token exchange, JWT, authorization, business rules, MySQL persistence, AI service orchestration | Local embedding/vector logic |
 | .NET backup backend | Optional cold-standby REST mirror of Spring contracts for backup rehearsal | Replace Spring as the required backend, change API contracts independently |
 | MySQL | Durable transactional data | Store vector embeddings unless specs change |
 | Python AI service | RAG indexing/retrieval, Ollama calls, recommendation generation | Own user authentication or bypass backend authorization |
@@ -245,25 +248,52 @@ Quality rules:
 
 ## Main User Flows
 
-### Login And Wellness CRUD
+### Login, Google SSO, And Wellness CRUD
 
 ```plantuml
 @startuml
 participant User as U
 participant "Android App" as A
 participant "Spring Boot API" as B
+participant "Google Sign-In" as G
 database "MySQL" as D
 
+alt Email/password login
 U -> A: Enter email and password
 A -> B: POST /api/auth/login
 B -> D: Verify user password hash
 B --> A: JWT access token
+else Google SSO login
+U -> A: Tap Sign in with Google
+A -> G: requestIdToken + requestEmail
+G --> A: Google ID token
+A -> B: POST /api/auth/google
+B -> G: Verify signature, issuer,\naudience, expiry, email
+B -> D: Find or create user by email\npassword_hash may be NULL
+alt Deactivated Google-only account
+  B --> A: 403 reactivation confirmation required
+  A --> U: Ask whether to reactivate
+  U -> A: Confirm reactivation
+  A -> B: POST /api/auth/google\n{idToken, reactivate=true}
+  B -> G: Verify token again
+  B -> D: Re-enable user after confirmation
+end
+B --> A: Same internal JWT format
+end
 U -> A: Create wellness record
 A -> B: POST /api/wellness-records with JWT
 B -> D: Save record for authenticated user
 B --> A: Created record
 @enduml
 ```
+
+Google SSO is an alternate authentication entry point only. After Spring Boot
+verifies the Google ID token, Android receives the same internal JWT shape as
+email/password login and all subsequent API calls still go through Spring Boot.
+SSO-provisioned users have a null `password_hash`; a deactivated Google-only
+account can be re-enabled by a fresh verified Google token only after Android
+shows a reactivation confirmation dialog, while local-password accounts continue
+to use the password-based reactivation path.
 
 ### RAG Chatbot With Streaming
 
@@ -327,7 +357,7 @@ B --> A: Recommendation response
 @enduml
 ```
 
-### Account Privacy, Export, And Delete
+### Account Privacy, Export, Deactivate, And Delete
 
 ```plantuml
 @startuml
@@ -346,9 +376,22 @@ alt Export data
   D --> B: Owned rows only
   B --> A: JSON export payload
   A --> U: Share/save JSON using Android share sheet
+else Deactivate account
+  U -> A: Confirm reversible deactivate
+  A -> B: POST /api/account/deactivate\nAuthorization: Bearer JWT
+  B -> D: Set current user enabled=false\nkeep owned data
+  B --> A: 204 No Content
+  A -> A: Clear local token
+  A --> U: Return to Login
 else Delete account
   U -> A: Confirm destructive delete
-  A -> B: DELETE /api/account\nAuthorization: Bearer JWT
+  alt Local password account
+    A -> B: DELETE /api/account\nJWT + password confirmation
+    B -> D: Verify password hash
+  else Google-only account
+    A -> B: DELETE /api/account\nJWT + destructive confirmation only
+    B -> D: Confirm password_hash is NULL
+  end
   B -> D: Delete owned child rows\nthen user row in one transaction
   B --> A: 204 No Content
   A -> A: Clear local token
@@ -361,4 +404,7 @@ Privacy rules:
 
 - Android calls Spring Boot only; it never reads MySQL or calls Python AI directly.
 - Export covers MySQL-owned user data only and excludes password hashes, JWTs, service tokens, and infrastructure details.
+- Deactivation is reversible: Spring Boot disables the user row, keeps owned records, and existing JWTs stop authenticating because enabled users are required during token filtering.
+- Reactivation stays authentication-method aware: local-password accounts use the password-based reactivate endpoint, while Google-only accounts can be restored by a newly verified Google ID token only after Android confirms with the user.
+- Permanent delete requires password confirmation for local-password accounts. Google-only accounts have no app password, so a valid JWT plus the Android destructive confirmation is the server-side authorization path.
 - Account deletion removes the user's transactional MySQL data. RAG source documents and embeddings are shared local knowledge-base assets, not user uploads, so no per-user vector deletion is needed under the current design.

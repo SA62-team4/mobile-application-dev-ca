@@ -7,7 +7,7 @@ package sg.edu.nus.iss.wellness.api
  */
 data class RegisterRequest(val displayName: String, val email: String, val password: String)
 data class LoginRequest(val email: String, val password: String)
-data class GoogleAuthRequest(val idToken: String)
+data class GoogleAuthRequest(val idToken: String, val reactivate: Boolean = false)
 data class UserResponse(val id: Long, val displayName: String, val email: String)
 data class LoginResponse(val token: String, val tokenType: String, val expiresInSeconds: Long, val user: UserResponse)
 
@@ -32,7 +32,7 @@ data class WellnessRecordResponse(
     val updatedAt: String?
 )
 
-data class DeleteAccountRequest(val password: String)
+data class DeleteAccountRequest(val password: String?)
 
 data class ChatRequest(val question: String)
 data class SourceSnippet(val title: String, val snippet: String)
@@ -54,4 +54,3 @@ data class RecommendationResponse(
     val generatedBy: String?,
     val createdAt: String?
 )
-

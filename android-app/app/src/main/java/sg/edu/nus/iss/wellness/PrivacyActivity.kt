@@ -23,11 +23,14 @@ import sg.edu.nus.iss.wellness.databinding.ActivityPrivacyBinding
  * Privacy & data control screen (S-03).
  *
  * Surfaces the app's local-AI privacy posture and lets the user control their
- * data: export a full JSON copy, reversibly deactivate, or permanently delete
- * (password-confirmed). Export uses the Storage Access Framework so it needs no
- * storage permission — the user chooses where the file is written.
+ * data: export a full JSON copy, reversibly deactivate, or permanently delete.
+ * Local-password accounts reconfirm the password; Google-only accounts confirm
+ * through their active app session because no app password exists. Export uses
+ * the Storage Access Framework so it needs no storage permission: the user
+ * chooses where the file is written.
  *
  * @author Chua Wei Yi Justin
+ * @author Tiong Zhong Cheng
  */
 class PrivacyActivity : AppCompatActivity() {
     private val scope = MainScope()
@@ -125,28 +128,25 @@ class PrivacyActivity : AppCompatActivity() {
     private fun confirmDelete() {
         val input = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            hint = "Current password"
+            hint = "Password (leave blank for Google-only)"
         }
         AlertDialog.Builder(this)
             .setTitle("Delete account permanently?")
             .setMessage(
                 "This erases your account and all records, recommendations and chat history. " +
-                    "It cannot be undone. Enter your password to confirm."
+                    "It cannot be undone. Enter your password if this account has one; " +
+                    "Google-only accounts can leave it blank."
             )
             .setView(input)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Delete forever") { _, _ ->
                 val password = input.text?.toString().orEmpty()
-                if (password.isBlank()) {
-                    showStatus("Password is required to delete your account.", error = true)
-                } else {
-                    deleteAccount(password)
-                }
+                deleteAccount(password.takeIf { it.isNotBlank() })
             }
             .show()
     }
 
-    private fun deleteAccount(password: String) {
+    private fun deleteAccount(password: String?) {
         showStatus("Deleting your account...")
         scope.launch {
             runCatching { api().deleteAccount(DeleteAccountRequest(password)) }
@@ -158,7 +158,7 @@ class PrivacyActivity : AppCompatActivity() {
                     // The backend returns 400 (not 401/403) for a wrong password, so the
                     // session interceptor does not log the user out on a simple typo.
                     val message = if (e is HttpException && e.code() == 400) {
-                        "Incorrect password. Your account was not deleted."
+                        "Password required or incorrect. Google-only accounts can leave it blank."
                     } else {
                         "Could not delete your account. Try again."
                     }

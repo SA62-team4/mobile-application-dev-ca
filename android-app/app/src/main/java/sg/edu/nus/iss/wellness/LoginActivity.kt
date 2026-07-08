@@ -29,6 +29,7 @@ import sg.edu.nus.iss.wellness.databinding.ActivityLoginBinding
  * @author Kumaraguru Surya
  * @author Tang Chee Seng
  * @author Chua Wei Yi Justin
+ * @author Tiong Zhong Cheng
  */
 class LoginActivity : AppCompatActivity() {
 
@@ -104,7 +105,7 @@ class LoginActivity : AppCompatActivity() {
                         binding.reactivateButton.isEnabled = true
                         binding.reactivateButton.alpha = 1f
                         showStatus(
-                            "This account is deactivated. Tap \"Reactivate account\" below to restore it.",
+                            "This account is deactivated. Tap \"Reactivate account\" to restore it.",
                             error = true
                         )
                     } else {
@@ -157,18 +158,38 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun exchangeGoogleToken(idToken: String, photoUrl: String?) {
+    private fun exchangeGoogleToken(idToken: String, photoUrl: String?, reactivate: Boolean = false) {
         scope.launch {
             runCatching {
-                showStatus("Signing in with Google...")
-                ApiClient.create(tokenStore).googleLogin(GoogleAuthRequest(idToken))
+                showStatus(if (reactivate) "Reactivating with Google..." else "Signing in with Google...")
+                ApiClient.create(tokenStore).googleLogin(GoogleAuthRequest(idToken, reactivate))
             }.onSuccess { response ->
                 onLoginSuccess(response.token, response.user.displayName, response.user.email, photoUrl)
             }.onFailure { e ->
                 Log.e(TAG, "Backend googleLogin failed", e)
-                showStatus("Google sign-in failed: ${e.message ?: "backend error"}.", error = true)
+                if (!reactivate && e is HttpException && e.code() == 403) {
+                    showGoogleReactivateDialog(idToken, photoUrl)
+                } else {
+                    showStatus("Google sign-in failed: ${e.message ?: "backend error"}.", error = true)
+                }
             }
         }
+    }
+
+    private fun showGoogleReactivateDialog(idToken: String, photoUrl: String?) {
+        AlertDialog.Builder(this)
+            .setTitle("Reactivate Google account?")
+            .setMessage(
+                "This Google account is deactivated. Reactivate it to restore your saved " +
+                    "wellness records, recommendations and chat history?"
+            )
+            .setNegativeButton("Cancel") { _, _ ->
+                showStatus("Google account reactivation cancelled.", error = true)
+            }
+            .setPositiveButton("Reactivate") { _, _ ->
+                exchangeGoogleToken(idToken, photoUrl, reactivate = true)
+            }
+            .show()
     }
 
     private fun showReactivateDialog() {
