@@ -3,6 +3,9 @@ package sg.edu.nus.iss.wellness.api
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -76,27 +79,36 @@ class ChatStreamClient(private val tokenStore: TokenStore) {
             .build()
 
         withContext(Dispatchers.IO) {
-            client.newCall(request).execute().use { response ->
-                if (response.code == 401 || response.code == 403) {
-                    tokenStore.clear()
-                    emit(onEvent, ChatStreamEvent.Error("Session expired. Please sign in again."))
-                    return@use
+            val call = client.newCall(request)
+            val cancellation = currentCoroutineContext()[Job]?.invokeOnCompletion {
+                call.cancel()
+            }
+            try {
+                call.execute().use { response ->
+                    if (response.code == 401 || response.code == 403) {
+                        tokenStore.clear()
+                        emit(onEvent, ChatStreamEvent.Error("Session expired. Please sign in again."))
+                        return@use
+                    }
+                    val source = response.body?.source()
+                    if (!response.isSuccessful || source == null) {
+                        emit(onEvent, ChatStreamEvent.Error("Chatbot unavailable. Please retry."))
+                        return@use
+                    }
+                    while (!source.exhausted()) {
+                        currentCoroutineContext().ensureActive()
+                        val line = source.readUtf8Line() ?: break
+                        if (!line.startsWith("data:")) continue
+                        val payload = line.substring("data:".length).trim()
+                        if (payload.isEmpty()) continue
+                        val event = parse(payload) ?: continue
+                        emit(onEvent, event)
+                        // Stop after terminal frames.
+                        if (event is ChatStreamEvent.Done || event is ChatStreamEvent.Error) break
+                    }
                 }
-                val source = response.body?.source()
-                if (!response.isSuccessful || source == null) {
-                    emit(onEvent, ChatStreamEvent.Error("Chatbot unavailable. Please retry."))
-                    return@use
-                }
-                while (!source.exhausted()) {
-                    val line = source.readUtf8Line() ?: break
-                    if (!line.startsWith("data:")) continue
-                    val payload = line.substring("data:".length).trim()
-                    if (payload.isEmpty()) continue
-                    val event = parse(payload) ?: continue
-                    emit(onEvent, event)
-                    // Stop after terminal frames.
-                    if (event is ChatStreamEvent.Done || event is ChatStreamEvent.Error) break
-                }
+            } finally {
+                cancellation?.dispose()
             }
         }
     }
