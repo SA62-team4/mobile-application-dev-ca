@@ -57,6 +57,37 @@ Quality tooling:
 - `ollama-data`
 - `chroma-data`
 
+```plantuml
+@startuml
+title Local Compose Topology
+
+node "Android Studio\n(host, not Dockerised)" as Android
+
+package "Docker Compose" {
+  node "spring-backend\n:8080" as Spring
+  node "dotnet-backend\n:8082 (optional)" as Dotnet
+  node "python-ai-service\n:8000" as Python
+  node "ollama\n:11434" as Ollama
+  database "mysql\n:3306" as MySQL
+  node "adminer (optional)" as Adminer
+
+  database "mysql-data" as VolMysql
+  database "ollama-data" as VolOllama
+  database "chroma-data" as VolChroma
+}
+
+Android --> Spring : REST + JWT\n(10.0.2.2 / adb reverse)
+Spring --> MySQL
+Spring --> Python : AI_SERVICE_URL
+Dotnet ..> MySQL : backup profile
+Python --> Ollama : OLLAMA_BASE_URL
+Python --> VolChroma : persist index
+Adminer ..> MySQL
+MySQL --> VolMysql
+Ollama --> VolOllama
+@enduml
+```
+
 ## Environment Variables
 
 Create `.env.example` during implementation with:
@@ -290,6 +321,37 @@ Topology and sizing:
 - The Python AI image runs as a non-root user and pre-creates `/data/chroma`
   with app-user ownership so the ChromaDB named volume can be written at startup.
 
+```plantuml
+@startuml
+title Production Deployment Topology (DigitalOcean Droplet)
+
+cloud "Internet" as Net
+node "Android / Desktop\nclients" as Client
+
+node "Ubuntu 24.04 Droplet\n(s-4vcpu-8gb)" as Droplet {
+  node "Caddy\n:80 / :443 (TLS)" as Caddy
+
+  package "wellness-net (internal)" {
+    node "spring-backend\n:8080" as Spring
+    node "python-ai-service\n:8000" as Python
+    node "ollama\n:11434\nKEEP_ALIVE=-1" as Ollama
+    database "mysql\n:3306" as MySQL
+  }
+}
+
+Client --> Net
+Net --> Caddy : HTTPS api.<domain>
+Caddy --> Spring : reverse proxy
+Spring --> MySQL
+Spring --> Python
+Python --> Ollama
+note bottom of Droplet
+  Only 22/80/443 public (cloud firewall).
+  Adminer disabled; MySQL host port removed.
+end note
+@enduml
+```
+
 Infrastructure (`infra/terraform/`):
 
 - Resources: Droplet (cloud-init only creates the `deploy` user and installs
@@ -325,6 +387,34 @@ Deployment (`.github/workflows/`):
   playbook regressions are caught without touching a real droplet.
 - `deploy.yml`/`infra.yml` use a `production` GitHub Environment for an approval
   gate.
+
+```plantuml
+@startuml
+title Deploy Pipeline (deploy.yml)
+
+actor Developer
+participant "GitHub Actions\ndeploy.yml" as CI
+participant "production\nEnvironment gate" as Gate
+participant "GHCR" as GHCR
+participant "Ansible\nsite.yml" as Ansible
+participant "Droplet" as Droplet
+
+Developer -> CI: push to main\n(deploy-relevant paths) or dispatch
+CI -> Gate: request approval
+Gate --> CI: approved
+CI -> CI: build spring-backend +\npython-ai-service images
+CI -> GHCR: push images
+CI -> Ansible: run site.yml (SSH)
+Ansible -> Droplet: bootstrap (Docker, compose)
+Ansible -> Droplet: ship compose/Caddy/KB,\ntemplate .env (0600)
+Droplet -> GHCR: pull images (GHCR_PAT)
+Ansible -> Droplet: prod overlay up -d
+Ansible -> Droplet: ensure models,\nwarm generation model,\nprebuild RAG index
+Ansible -> Droplet: verify HTTPS health endpoint
+Droplet --> Ansible: healthy
+Ansible --> CI: deploy complete
+@enduml
+```
 
 Secrets and variables (GitHub → Settings → Secrets and variables → Actions).
 Store all secrets as **Environment secrets** on the `production` Environment (not

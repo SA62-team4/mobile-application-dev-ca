@@ -200,6 +200,44 @@ Google SSO notes:
 - Google sign-in is also the reactivation path for Google-only deactivated accounts after the backend verifies the Google ID token. Android must show a confirmation dialog before retrying the exchange with `reactivate=true`.
 - Requires a Google APIs emulator image and an Android OAuth client registered with the debug SHA-1; setup is in `docs/local-sso-quickstart.md`.
 
+```plantuml
+@startuml
+title Login Flow (email/password and Google SSO)
+
+actor User
+participant "LoginActivity" as Login
+participant "Google Sign-In SDK" as Google
+participant "Spring Boot" as Backend
+participant "TokenStore" as Store
+
+alt email/password
+  User -> Login: enter email + password, tap Login
+  Login -> Login: validate fields
+  Login -> Backend: POST /api/auth/login
+else Sign in with Google
+  User -> Login: tap Sign in with Google
+  Login -> Google: request idToken + email
+  Google --> Login: idToken + photoUrl
+  Login -> Backend: POST /api/auth/google (idToken)
+  alt account deactivated (Google-only)
+    Backend --> Login: needs reactivation
+    Login -> User: confirmation dialog
+    User -> Login: confirm
+    Login -> Backend: POST /api/auth/google (reactivate=true)
+  end
+end
+
+alt success
+  Backend --> Login: JWT (+ profile)
+  Login -> Store: save(JWT, photoUrl)
+  Login -> Login: navigate to Dashboard
+else failure
+  Backend --> Login: error (invalid creds / network / Google code)
+  Login -> User: error banner, preserve inputs
+end
+@enduml
+```
+
 ### Register Screen
 
 Fields:
@@ -252,6 +290,36 @@ States:
 - Loading dashboard while records and recommendations are fetched.
 - Empty state when there is no logged data yet.
 - Error state when the backend is unreachable.
+
+```plantuml
+@startuml
+title Dashboard Concurrent Load
+
+participant "DashboardActivity" as Dash
+participant "Spring Boot" as Backend
+participant "DashboardDataHelper" as Helper
+
+Dash -> Dash: show loading state
+
+group concurrent load
+  Dash -> Backend: GET wellness records (JWT)
+  & Dash -> Backend: GET recommendations (JWT)
+  Backend --> Dash: records
+  Backend --> Dash: recommendations
+end
+
+alt both empty
+  Dash -> Dash: show empty state (prompt to add first record)
+else backend unreachable
+  Dash -> Dash: show error state (retry)
+else data available
+  Dash -> Helper: consolidate same-day records,\nskip malformed dates
+  Helper -> Helper: weekly averages + badge thresholds
+  Helper --> Dash: snapshot, sparklines, badges
+  Dash -> Dash: render snapshot, metric cards,\nAI teaser, historical records
+end
+@enduml
+```
 
 ### Records Screen
 
@@ -341,6 +409,41 @@ Message display:
 - Assistant answer includes local model name only if it helps the demo.
 - Source titles/snippets are collapsed or visually secondary.
 
+```plantuml
+@startuml
+title Chatbot Send + Streaming
+
+start
+:user types message;
+if (message blank or stream in flight?) then (yes)
+  :keep Send disabled;
+  stop
+endif
+:append user bubble;
+:disable Send, show typing indicator;
+:open SSE POST /api/chat/messages/stream
+ (via ChatStreamClient);
+if (AI service / Ollama available?) then (no)
+  :drop partial bubble;
+  :show friendly error,
+   keep typed question;
+  stop
+endif
+:append live assistant bubble
+ on first token;
+repeat
+  :append streamed token
+   to bubble in place;
+repeat while (more tokens?) is (yes)
+->no;
+:stream completes;
+:reload history so bubble is
+ replaced by persisted server copy;
+:re-enable Send;
+stop
+@enduml
+```
+
 ### Recommendations Screen
 
 Content:
@@ -424,6 +527,40 @@ States:
 - Delete in progress.
 - Friendly error for backend/network failure.
 - Signed-out success after delete.
+
+```plantuml
+@startuml
+title Privacy: Export and Delete Account
+
+start
+if (action?) then (Export data)
+  :GET /api/account/export (JWT);
+  if (success?) then (yes)
+    :open system share / document-create
+     with .json payload;
+  else (token expired)
+    :clear token, return to Login;
+    stop
+  endif
+  stop
+else (Delete account)
+  :show destructive confirmation dialog;
+  if (Google-only account?) then (yes)
+    :confirm without password;
+  else (email/password)
+    :require current password;
+  endif
+  :DELETE /api/account (JWT);
+  if (success?) then (yes)
+    :clear JWT + local profile/photo;
+    :navigate to Login, clear back stack;
+  else (token expired)
+    :clear token, return to Login;
+  endif
+  stop
+endif
+@enduml
+```
 
 ## Wellness Dashboard Logic
 
