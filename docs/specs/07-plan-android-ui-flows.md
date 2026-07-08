@@ -301,11 +301,10 @@ participant "DashboardDataHelper" as Helper
 
 Dash -> Dash: show loading state
 
-par load records
+group concurrent load
   Dash -> Backend: GET wellness records (JWT)
+  & Dash -> Backend: GET recommendations (JWT)
   Backend --> Dash: records
-and load recommendations
-  Dash -> Backend: GET recommendations (JWT)
   Backend --> Dash: recommendations
 end
 
