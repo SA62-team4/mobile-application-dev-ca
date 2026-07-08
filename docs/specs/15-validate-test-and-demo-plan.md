@@ -124,6 +124,15 @@ Manual QA should cover:
 - Physical device demo uses USB debugging, `adb reverse tcp:8080 tcp:8080`, and `WELLNESS_API_BASE_URL=http://127.0.0.1:8080/` rather than a committed LAN IP.
 - Optional `REQ-23`: Profile opens Privacy screen; export opens a JSON share/save flow; delete cancel makes no request; confirmed delete signs out; offline export/delete shows friendly error; expired token returns to Login.
 - Optional `REQ-22` + `REQ-23`: Google-only accounts can export data, delete the account from Privacy, and reactivate a deactivated account by signing in with Google again only after accepting the reactivation confirmation dialog.
+- Optional `S-01`: Android notification permission is requested where required;
+  manually generated recommendations send a local generated-insight broadcast;
+  the scheduled local broadcast can detect a newer recommendation after the
+  demo-friendly first poll of about 30 seconds, then repeat about every 2
+  minutes, and post a notification that opens the Recommendations screen.
+- Android background AI UX: start a chat stream and a recommendation generation,
+  press Home while each is in flight, then reopen the app and confirm the request
+  was not cancelled merely because the app was minimised. If Android recreated
+  the screen, confirm the saved chat/recommendation reloads from Spring Boot.
 
 ## Docker Smoke Tests
 

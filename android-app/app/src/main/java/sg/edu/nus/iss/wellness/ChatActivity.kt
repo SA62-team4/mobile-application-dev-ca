@@ -43,6 +43,7 @@ class ChatActivity : AppCompatActivity() {
     private var progressJob: Job? = null
     private var streamJob: Job? = null
     private var activeQuestion: String? = null
+    private var allowUiUpdates = true
 
     // Source of truth for the visible conversation (oldest first). A live streaming answer
     // is appended here as a pending row (id == 0) and grows in place until persisted.
@@ -100,6 +101,7 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun sendChat(question: String) {
+        allowUiUpdates = true
         binding.statusContainer.removeAllViews()
         activeQuestion = question
         showStopButton()
@@ -118,7 +120,13 @@ class ChatActivity : AppCompatActivity() {
 
         streamJob = scope.launch {
             runCatching {
-                streamClient.stream(question) { event ->
+                streamClient.stream(question) eventHandler@{ event ->
+                    if (!allowUiUpdates) {
+                        if (event is ChatStreamEvent.Done || event is ChatStreamEvent.Error) {
+                            terminal = true
+                        }
+                        return@eventHandler
+                    }
                     when (event) {
                         is ChatStreamEvent.Sources -> {
                             sources = event.sources
@@ -151,6 +159,7 @@ class ChatActivity : AppCompatActivity() {
             }.onFailure {
                 if (it is CancellationException) return@onFailure
                 if (terminal) return@onFailure
+                if (!allowUiUpdates) return@onFailure
                 finishStreaming()
                 dropPendingMessages()
                 showError(
@@ -278,8 +287,11 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        streamJob?.cancel()
+        allowUiUpdates = false
         progressJob?.cancel()
-        scope.cancel()
+        if (isFinishing) {
+            streamJob?.cancel()
+            scope.cancel()
+        }
     }
 }

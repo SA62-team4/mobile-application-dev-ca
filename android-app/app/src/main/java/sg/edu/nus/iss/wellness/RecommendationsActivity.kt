@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -36,6 +37,9 @@ class RecommendationsActivity : AppCompatActivity() {
     private lateinit var api: ApiService
     private lateinit var generateButton: Button
     private lateinit var statusContainer: LinearLayout
+    private var generationStatusJob: Job? = null
+    private var generationProgressJob: Job? = null
+    private var allowUiUpdates = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +64,7 @@ class RecommendationsActivity : AppCompatActivity() {
             binding.bottomNav.recommendationsButton
         )
         wireBottomNav(binding.bottomNav, RecommendationsActivity::class.java)
+        InsightNotificationScheduler.prepare(this)
 
         val headerView = layoutInflater.inflate(R.layout.header_generate_button, binding.recommendationsListView, false)
         generateButton = headerView.findViewById(R.id.generateButton)
@@ -111,6 +116,8 @@ class RecommendationsActivity : AppCompatActivity() {
     }
 
     private fun generateRecommendation() {
+        allowUiUpdates = true
+        cancelGenerationVisuals()
         statusContainer.removeAllViews()
         val (detailsView, progressViews) = addLoadingBlock(statusContainer, "Generating recommendation", "Accessing your 14-day logs...", "AI")
         val (progressBar, percentView) = progressViews
@@ -130,6 +137,7 @@ class RecommendationsActivity : AppCompatActivity() {
                 detailsView.text = message
             }
         }
+        generationStatusJob = statusJob
 
         val progressJob = scope.launch {
             var currentProgress = 0
@@ -147,23 +155,26 @@ class RecommendationsActivity : AppCompatActivity() {
                 }
             }
         }
+        generationProgressJob = progressJob
 
         scope.launch {
             runCatching { api.generateRecommendation() }
                 .onSuccess { generated ->
-                    statusJob.cancel()
-                    progressJob.cancel()
+                    cancelGenerationVisuals()
+                    InsightNotificationScheduler.broadcastGeneratedInsight(applicationContext, generated)
+                    if (!allowUiUpdates) return@onSuccess
                     progressBar.progress = 100
                     percentView.text = "100%"
                     delay(300)
+                    if (!allowUiUpdates) return@onSuccess
                     generateButton.isEnabled = true
                     runCatching { api.recommendations() }
-                        .onSuccess { renderRecommendations(it) }
-                        .onFailure { renderRecommendations(listOf(generated)) }
+                        .onSuccess { if (allowUiUpdates) renderRecommendations(it) }
+                        .onFailure { if (allowUiUpdates) renderRecommendations(listOf(generated)) }
                 }
                 .onFailure {
-                    statusJob.cancel()
-                    progressJob.cancel()
+                    cancelGenerationVisuals()
+                    if (!allowUiUpdates) return@onFailure
                     generateButton.isEnabled = true
                     statusContainer.removeAllViews()
                     showError(
@@ -173,6 +184,13 @@ class RecommendationsActivity : AppCompatActivity() {
                     )
                 }
         }
+    }
+
+    private fun cancelGenerationVisuals() {
+        generationStatusJob?.cancel()
+        generationProgressJob?.cancel()
+        generationStatusJob = null
+        generationProgressJob = null
     }
 
     private fun List<RecommendationResponse>.sortedNewestFirst(): List<RecommendationResponse> =
@@ -189,6 +207,10 @@ class RecommendationsActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        scope.cancel()
+        allowUiUpdates = false
+        cancelGenerationVisuals()
+        if (isFinishing) {
+            scope.cancel()
+        }
     }
 }

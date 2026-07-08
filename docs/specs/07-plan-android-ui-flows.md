@@ -418,6 +418,14 @@ Behavior:
 - Keep the request alive long enough for local Ollama generation, which may take tens of seconds on student laptops.
 - Store and display previous messages loaded from backend.
 - If AI service or Ollama is unavailable, drop the partial bubble, show a friendly error, and keep the typed question available.
+- Minimising the app with an in-flight chat request must not cancel the backend
+  streaming call. If Android keeps the Activity instance alive, the visible
+  assistant bubble continues updating when the app is reopened. If Android
+  destroys the stopped Activity without an explicit user exit, the stream may
+  continue until the backend persists the message; the next Chat screen instance
+  reloads history from Spring Boot.
+- Explicit user cancellation through the Stop button, Back, or bottom-nav
+  navigation may cancel the visible chat request.
 
 Message display:
 
@@ -483,10 +491,102 @@ States:
 - Generating state should explain that local AI may take up to a minute.
 - Empty state before first recommendation.
 - Error if agent service is unavailable.
+- Minimising the app while a recommendation is being generated must not cancel
+  the Spring/Python/Ollama request.
+- If Android destroys the stopped Activity without an explicit user exit, the
+  request may continue and, on success, sends the same local generated-insight
+  broadcast used by the foreground screen. The next Recommendations screen
+  instance reloads the saved recommendation from Spring Boot.
+- Explicit user exit through Back or bottom-nav navigation may cancel the
+  visible generation request.
 
 Success:
 
 - New recommendation appears at top of list.
+
+Scheduled notification stretch:
+
+- After authentication, Android registers a local `AlarmManager` broadcast that
+  periodically checks the Spring Boot recommendations endpoint for a newly saved
+  insight.
+- Demo timing is intentionally short: first poll about 30 seconds after the
+  scheduler is prepared, then about every 2 minutes. Because this uses
+  `setInexactRepeating`, Android may batch the exact firing time for battery
+  efficiency.
+- When a new insight is detected, or when the user manually generates an insight
+  successfully, Android sends an explicit local broadcast handled by an app
+  receiver. The receiver posts a local notification titled "New wellness
+  insight" and opens the Recommendations screen when tapped.
+- Notifications remain local to the device; no FCM, paid service, or direct
+  Python/MySQL access is introduced.
+
+Notification component view:
+
+```plantuml
+@startuml
+left to right direction
+
+actor "Authenticated User" as User
+rectangle "DashboardActivity /\nRecommendationsActivity" as Screens
+rectangle "InsightNotificationScheduler" as Scheduler
+rectangle "AlarmManager" as Alarm
+rectangle "Explicit Local Broadcast" as Broadcast
+rectangle "InsightNotificationReceiver" as Receiver
+rectangle "NotificationManager" as NotificationManager
+rectangle "RecommendationsActivity" as Recommendations
+rectangle "Retrofit ApiService" as Api
+rectangle "Spring Boot API\nGET /api/recommendations" as Spring
+
+User --> Screens : opens authenticated app screen
+Screens --> Scheduler : prepare()
+Scheduler --> Alarm : setInexactRepeating()
+Alarm --> Broadcast : ACTION_POLL_INSIGHTS
+Scheduler --> Broadcast : ACTION_INSIGHT_GENERATED\nmanual generation success
+Broadcast --> Receiver
+Receiver --> Api : recommendations()\nJWT
+Api --> Spring
+Spring --> Api : newest-first recommendations
+Receiver --> NotificationManager : post local notification
+NotificationManager --> Recommendations : tap opens screen
+@enduml
+```
+
+Notification sequence:
+
+```plantuml
+@startuml
+actor "Android User" as User
+participant "DashboardActivity /\nRecommendationsActivity" as Screen
+participant "InsightNotificationScheduler" as Scheduler
+participant "AlarmManager" as Alarm
+participant "InsightNotificationReceiver" as Receiver
+participant "Spring Boot API" as Spring
+participant "NotificationManager" as NotificationManager
+participant "RecommendationsActivity" as Recommendations
+
+User -> Screen: Open authenticated screen
+Screen -> Scheduler: prepare(activity)
+Scheduler -> Screen: request POST_NOTIFICATIONS\non Android 13+
+Scheduler -> Alarm: schedule ACTION_POLL_INSIGHTS\ninexact repeating alarm
+
+alt Manual generated insight
+  User -> Recommendations: Tap Generate recommendation
+  Recommendations -> Spring: POST /api/recommendations/generate\nJWT
+  Spring --> Recommendations: 201 RecommendationResponse
+  Recommendations -> Scheduler: broadcastGeneratedInsight(response)
+  Scheduler -> Receiver: explicit broadcast\nACTION_INSIGHT_GENERATED
+else Scheduled check
+  Alarm -> Receiver: ACTION_POLL_INSIGHTS
+  Receiver -> Spring: GET /api/recommendations\nJWT
+  Spring --> Receiver: newest-first recommendations
+  Receiver -> Receiver: compare latest id with\nlast_notified_recommendation_id
+end
+
+Receiver -> NotificationManager: show "New wellness insight"\nif permitted and unseen
+User -> NotificationManager: Tap notification
+NotificationManager -> Recommendations: open Recommendations screen
+@enduml
+```
 
 ### Profile Screen
 
