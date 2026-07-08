@@ -5,6 +5,8 @@
         <item name="android:statusBarColor">@color/surface</item>
         <item name="android:navigationBarColor">@color/surface</item>
         <item name="android:colorAccent">@color/primary</item>
+        <item name="android:buttonStyle">@style/WellnessButton</item>
+        <item name="buttonStyle">@style/WellnessButton</item>
     </style>
 
     <!-- Re-declare style items for the explicit parent. -->
@@ -14,6 +16,15 @@
         <item name="android:statusBarColor">@color/surface</item>
         <item name="android:navigationBarColor">@color/surface</item>
         <item name="android:colorAccent">@color/primary</item>
+        <item name="android:buttonStyle">@style/WellnessButton</item>
+        <item name="buttonStyle">@style/WellnessButton</item>
+    </style>
+
+    <style name="WellnessButton" parent="@style/Widget.AppCompat.Button">
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">48dp</item>
     </style>
 
 </resources>
