@@ -61,7 +61,7 @@
                 android:visibility="gone"
                 android:padding="12dp"
                 android:layout_marginBottom="14dp"
-                android:textColor="@color/text_on_primary"
+                android:textColor="@color/primary_dark"
                 android:background="@drawable/bg_status_success" />
 
             <Button
@@ -83,7 +83,7 @@
                 android:background="@drawable/bg_button_secondary"
                 android:text="Deactivate account (reversible)"
                 android:textAllCaps="false"
-                android:textColor="@color/text_on_primary"
+                android:textColor="@color/primary"
                 android:textStyle="bold" />
 
             <Button

@@ -84,7 +84,7 @@
                 android:background="@drawable/bg_button_secondary"
                 android:text="Privacy &amp; data"
                 android:textAllCaps="false"
-                android:textColor="@color/text_on_primary"
+                android:textColor="@color/primary"
                 android:textStyle="bold" />
 
             <Button

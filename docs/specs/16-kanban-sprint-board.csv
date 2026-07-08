@@ -19,6 +19,6 @@
 "T-606","Peer-evaluation submission","E6 Demo/Submission","Demo","all","Hardening","Backlog","1","-","Peer eval","Each member submits peer evaluation (5 marks)"
 "S-01","Proactive recommendations: scheduler + notifications","E7 Stretch","Backend + Android","M7 + M1","Stretch","Backlog","5","T-504","Timely","Spring @EnableScheduling + @Scheduled agent run; Android local notification via WorkManager polling for new recommendation"
 "S-02","Wellness trends dashboard","E7 Stretch","Android","M2","Stretch","Backlog","5","T-303","Comprehensive","Dashboard with sleep/exercise/mood summary tiles or simple charts over recent records"
-"S-03","Privacy screen + data export/delete","E7 Stretch","Backend + Android","M4 + M1","Stretch","Backlog","3","T-303","Private; Standout","In-app local-AI privacy statement; delete-account and export-data endpoints wired to UI"
+"S-03","Privacy screen + data export/delete","E7 Stretch","Backend + Android","M4 + M1","Stretch","Backlog","3","T-303","REQ-23; Private; Standout","In-app local-AI privacy statement; Spring account export/delete endpoints (T-901..T-903); export JSON wired to share/save flow; delete account requires confirmation and signs out"
 "S-04","Security hardening","E7 Stretch","Backend","M4","Stretch","Backlog","3","T-205","Secure","Login throttling/lockout; token-expiry UX; cleartext disabled for non-demo builds"
 "S-05","Standout framing in demo","E7 Stretch","Demo","all","Stretch","Backlog","1","-","Standout","Demo intro frames local-AI + agentic combo; one-screen how-it-works explainer"

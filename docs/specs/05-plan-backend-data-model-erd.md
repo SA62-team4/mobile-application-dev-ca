@@ -7,7 +7,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft baseline |
-| Controls | REQ-09, REQ-15, NFR-01 |
+| Controls | REQ-09, REQ-15, REQ-23, NFR-01 |
 | Primary audience | Backend, AI integration, test owners |
 | Upstream specs | `02-specify-project-requirements.md`, `04-plan-system-architecture.md` |
 | Downstream specs | `06-plan-api-contracts.md`, `15-validate-test-and-demo-plan.md` |
@@ -118,6 +118,16 @@ USERS ||--o{ RECOMMENDATIONS : owns
 ## Data Ownership Rule
 
 Every query for wellness records, chat messages, and recommendations must filter by the authenticated user id. The backend must not allow one user to access another user data by guessing ids.
+
+## Account Export And Deletion Rule
+
+The optional privacy stretch feature (`REQ-23`/`S-03`) does not add new MySQL tables. It reuses the existing user-owned tables:
+
+- Export returns the authenticated user's profile fields (`id`, `displayName`, `email`, `role`, `createdAt`) plus owned wellness records, chat messages, and recommendations.
+- Export must never include `password_hash`, JWT claims/tokens, internal service tokens, other users' ids or rows, database connection details, or infrastructure secrets.
+- Delete account removes rows owned by the authenticated user from `WELLNESS_RECORDS`, `CHAT_MESSAGES`, and `RECOMMENDATIONS`, then removes the `USERS` row in the same transaction.
+- The implementation may use database cascades or explicit repository deletes, but the observable result must be no remaining MySQL rows for that user and no access to protected endpoints with the deleted account's previous JWT.
+- RAG knowledge-base files and Chroma embeddings are shared local assets, not user-uploaded content under the current scope, so account deletion does not require a per-user vector-store deletion step.
 
 ## RAG Storage Boundary
 

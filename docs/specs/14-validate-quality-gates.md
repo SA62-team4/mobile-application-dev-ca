@@ -49,6 +49,7 @@ Checklist:
 - No secrets are committed.
 - Valid high or critical Codex Security findings are fixed or explicitly deferred with rationale before merge.
 - Optional `.NET Backup API` changes state that Spring Boot remains canonical for `REQ-08`.
+- Optional privacy (`REQ-23`/`S-03`) PRs include account-export ownership tests, account-deletion transaction/post-delete-token tests, Android manual evidence for export/delete states, and a Codex Security diff scan because account deletion changes user-data handling.
 
 Pass condition:
 
@@ -74,6 +75,7 @@ Checklist:
   the dashboard.
 - Optional backup validation: `.NET Backup API` health/status endpoints match Spring and backup mode uses the same MySQL schema and internal service token header.
 - Optional desktop validation (`REQ-21`): the .NET Avalonia desktop client completes auth, wellness CRUD, chatbot, and recommendation flows against the same running Spring Boot backend, with loading/empty/success/error states and friendly error messages.
+- Optional privacy validation (`REQ-23`): Profile opens the Privacy screen; export returns only the signed-in user's JSON payload; delete account removes the user's MySQL-owned data, clears Android local auth, and prevents the old JWT from accessing protected endpoints.
 
 Pass condition:
 
@@ -100,6 +102,7 @@ Checklist:
 - Final zip contains one integrated solution and video demo.
 - Optional `.NET Backup API` is mentioned only as backup evidence and does not replace the Spring Boot demo path.
 - Optional .NET desktop client, if shown, is presented as a bonus additional client and does not replace the Android demo path.
+- Optional privacy stretch, if shown, is presented as local/private AI trust evidence and does not consume time needed for mandatory Android, Spring, MySQL, RAG, Python agent, and Docker flows.
 
 Pass condition:
 
