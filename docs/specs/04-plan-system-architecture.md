@@ -7,10 +7,40 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft baseline |
-| Controls | REQ-08, REQ-09, REQ-10, REQ-13, REQ-14, REQ-16, REQ-22, REQ-23, NFR-03 |
+| Controls | REQ-01, REQ-08, REQ-09, REQ-10, REQ-12, REQ-13, REQ-14, REQ-16, REQ-22, REQ-23, NFR-03 |
 | Primary audience | Full team |
 | Upstream specs | `02-specify-project-requirements.md` |
 | Downstream specs | ERD, API, Android UI, RAG, agent, Docker, test plan |
+
+## Technology Stack Baseline
+
+This table is the cross-component technology stack reference for the project. The
+component specs below remain the detailed source of truth for behaviour, API
+contracts, schemas, UI flows, AI logic, Docker services, and validation rules.
+
+| Layer | Stack | Repo Evidence | Constraints |
+| --- | --- | --- | --- |
+| Android mobile client | Kotlin, Android Gradle Plugin `8.13.2`, Kotlin Android plugin `2.0.21`, XML layouts, AppCompat, View Binding, Retrofit/Gson/OkHttp, Material Components, Google Play Services Auth for optional SSO | `android-app/build.gradle`, `android-app/app/build.gradle`, `07-plan-android-ui-flows.md` | Android remains outside Docker and calls only the Spring Boot API. It must not call MySQL or Python AI directly. |
+| Java backend | Java `17`, Spring Boot `3.3.5`, Maven, Spring Web, Spring Security, Spring Data JPA, Validation, Actuator, MySQL Connector/J, JJWT `0.12.6`, OAuth2 resource server support for Google token verification | `spring-backend/pom.xml`, `spring-backend/Dockerfile`, `06-plan-api-contracts.md` | Spring Boot is the canonical required backend for `REQ-08`; it owns auth, authorization, business rules, and MySQL writes. |
+| Transactional database | MySQL `8.4` in Docker Compose, JPA-owned schema, named volume `mysql-data`; H2 may be used for isolated backend tests | `docker-compose.yml`, `05-plan-backend-data-model-erd.md` | MySQL stores app transactions only. Vector embeddings and curated RAG source files stay outside MySQL. |
+| Python AI service | Python `3.12` container, FastAPI `0.115.6`, Uvicorn, Pydantic v2, HTTPX, ChromaDB `0.5.23`, LangChain Core/Ollama, optional LangSmith tracing | `python-ai-service/Dockerfile`, `python-ai-service/requirements.txt`, `08-plan-rag-ai-design.md`, `09-plan-agentic-ai-workflow.md` | Python owns RAG retrieval, Ollama calls, and recommendation analysis. It does not own user auth or direct client-facing business rules. |
+| Local AI runtime and vector store | Ollama container, default generation model `qwen2.5:1.5b`, optional slower fallback `llama3.2:3b`, embedding model `nomic-embed-text:latest`, Chroma persistent volume `chroma-data` | `docker-compose.yml`, `08-plan-rag-ai-design.md`, `10-plan-docker-devops.md` | AI must stay free/local by default. Do not introduce paid LLM APIs or cloud-only inference dependencies. |
+| Backend/runtime orchestration | Docker Compose for MySQL, Spring Boot, Python AI, Ollama, Chroma persistence, optional Adminer, optional `.NET Backup API`; Android runs on host/emulator/device | `docker-compose.yml`, `docker-compose.prod.yml`, `docker-compose.dotnet-backup.yml`, `10-plan-docker-devops.md` | Local Compose is the primary demo path. Host-facing ports must be configurable through environment variables. |
+| CI, quality, and deployment | GitHub Actions, Maven/Gradle/Pytest/.NET test jobs, Codex Security evidence, optional SonarQube Community Build, optional DigitalOcean deployment with Terraform, Ansible, Caddy, and GHCR images | `.github/workflows/`, `infra/`, `docker-compose.sonar.yml`, `10-plan-docker-devops.md`, `14-validate-quality-gates.md` | CI must avoid heavyweight live LLM generation. Deployment and SonarQube are evidence paths, not replacements for local demo validation. |
+| Optional backup backend | `.NET 10.0`, ASP.NET Core, `MySql.Data`, `System.IdentityModel.Tokens.Jwt`, `BCrypt.Net-Next` | `dotnet-backend/Wellness.Backup.Api.csproj`, `06-plan-api-contracts.md` | Cold-standby parity only. It must not replace Spring Boot as the required backend. |
+| Optional desktop client | `.NET 10.0`, Avalonia `11.2.1`, CommunityToolkit.Mvvm `8.3.2` | `desktop-app/src/WellnessDesktop/WellnessDesktop.csproj`, `02-specify-project-requirements.md` | Bonus REST client only. It consumes the same Spring Boot contracts and must not replace Android. |
+
+Stack-change rules:
+
+- Changing a framework/runtime family, storage engine, LLM runtime, default model,
+  API client approach, or Docker topology requires updating this section and the
+  controlling component spec in the same PR.
+- Exact patch/minor dependency bumps may be recorded in implementation files
+  only when they do not change the architecture, contracts, demo setup, or
+  validation evidence.
+- No stack change may weaken the CA constraints: Kotlin/XML Android, Java Spring
+  Boot backend, MySQL persistence through backend services, local/free AI, and
+  Dockerised backend/runtime services where practical.
 
 ## Logical Architecture
 
