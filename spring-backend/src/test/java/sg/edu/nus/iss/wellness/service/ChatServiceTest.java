@@ -7,16 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-import sg.edu.nus.iss.wellness.dto.ChatDtos;
 import sg.edu.nus.iss.wellness.model.AppUser;
 import sg.edu.nus.iss.wellness.model.ChatMessage;
-import sg.edu.nus.iss.wellness.model.WellnessRecord;
 import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 import sg.edu.nus.iss.wellness.repository.ChatMessageRepository;
 import sg.edu.nus.iss.wellness.repository.WellnessRecordRepository;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Transactional
 @DisplayName("Chat Service Integration Tests")
-public class ChatServiceTest {
+class ChatServiceTest {
 
     @Autowired
     private ChatMessageRepository chatMessages;

@@ -25,6 +25,7 @@ import sg.edu.nus.iss.wellness.security.JwtService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @DisplayName("Chat Controller Tests")
-public class ChatControllerTest {
+class ChatControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -92,15 +93,18 @@ public class ChatControllerTest {
     }
 
     private void seedWellnessRecords() {
+        // Fixed base date (not the system clock) keeps the seeded data deterministic; the AI
+        // client is mocked, so the recency window does not affect these assertions.
+        LocalDate baseDate = LocalDate.of(2026, Month.JUNE, 30);
         for (int i = 0; i < 7; i++) {
-            WellnessRecord record = new WellnessRecord();
-            record.setUser(testUser);
-            record.setRecordDate(LocalDate.now().minusDays(i));
-            record.setSleepHours(new BigDecimal("7.5"));
-            record.setExerciseType("Running");
-            record.setExerciseMinutes(30);
-            record.setMoodScore(4);
-            wellnessRecords.save(record);
+            WellnessRecord entry = new WellnessRecord();
+            entry.setUser(testUser);
+            entry.setRecordDate(baseDate.minusDays(i));
+            entry.setSleepHours(new BigDecimal("7.5"));
+            entry.setExerciseType("Running");
+            entry.setExerciseMinutes(30);
+            entry.setMoodScore(4);
+            wellnessRecords.save(entry);
         }
     }
 

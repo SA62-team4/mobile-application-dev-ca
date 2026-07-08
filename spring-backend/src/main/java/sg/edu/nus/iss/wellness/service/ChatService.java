@@ -15,6 +15,7 @@ import sg.edu.nus.iss.wellness.repository.ChatMessageRepository;
 import sg.edu.nus.iss.wellness.repository.WellnessRecordRepository;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 /**
@@ -55,7 +56,7 @@ public class ChatService {
     public ChatDtos.ChatResponse askQuestion(AppUser user, String question) {
         LOGGER.debug("Processing chat question for user {} : {}", user.getId(), question);
 
-        List<ChatDtos.RecentRecord> recentRecords = fetchRecentWellnessRecords(user);
+        List<ChatDtos.RecentRecord> recentRecords = loadRecentWellnessRecords(user);
         ChatDtos.AiChatResponse aiResponse = aiServiceClient.chat(
                 new ChatDtos.AiChatRequest(user.getId(), question, recentRecords)
         );
@@ -87,18 +88,27 @@ public class ChatService {
      */
     @Transactional(readOnly = true)
     public List<ChatDtos.RecentRecord> fetchRecentWellnessRecords(AppUser user) {
+        return loadRecentWellnessRecords(user);
+    }
+
+    /**
+     * Shared record-loading logic used by both the transactional entry point above and the
+     * synchronous chat path. Kept private so internal calls do not self-invoke the proxied
+     * {@code @Transactional} method (which would bypass Spring's transaction advice).
+     */
+    private List<ChatDtos.RecentRecord> loadRecentWellnessRecords(AppUser user) {
         return wellnessRecords
                 .findByUserAndRecordDateAfterOrderByRecordDateDesc(
                         user,
-                        LocalDate.now().minusDays(RECENT_DAYS)
+                        LocalDate.now(ZoneId.systemDefault()).minusDays(RECENT_DAYS)
                 )
                 .stream()
-                .map(record -> new ChatDtos.RecentRecord(
-                        record.getRecordDate().toString(),
-                        record.getSleepHours().doubleValue(),
-                        record.getExerciseType(),
-                        record.getExerciseMinutes(),
-                        record.getMoodScore()
+                .map(rec -> new ChatDtos.RecentRecord(
+                        rec.getRecordDate().toString(),
+                        rec.getSleepHours().doubleValue(),
+                        rec.getExerciseType(),
+                        rec.getExerciseMinutes(),
+                        rec.getMoodScore()
                 ))
                 .toList();
     }

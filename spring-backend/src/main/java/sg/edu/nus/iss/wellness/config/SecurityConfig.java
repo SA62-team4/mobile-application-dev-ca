@@ -1,7 +1,6 @@
 package sg.edu.nus.iss.wellness.config;
 
 import java.time.Instant;
-import java.util.List;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -49,6 +48,10 @@ public class SecurityConfig {
                                             AuthenticationProvider authenticationProvider,
                                             ObjectMapper objectMapper) throws Exception {
         return http
+                // Safe to disable: this is a stateless JWT API (SessionCreationPolicy.STATELESS,
+                // no server session or auth cookie), so there is no cookie for a CSRF attack to
+                // ride. Credentials travel in the Authorization header, which browsers do not
+                // attach cross-site automatically.
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -95,12 +98,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+    CorsConfigurationSource corsConfigurationSource(AppProperties properties) {
+        AppProperties.Cors cors = properties.getCors();
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(false);
+        configuration.setAllowedOriginPatterns(cors.getAllowedOriginPatterns());
+        configuration.setAllowedMethods(cors.getAllowedMethods());
+        configuration.setAllowedHeaders(cors.getAllowedHeaders());
+        configuration.setAllowCredentials(cors.isAllowCredentials());
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

@@ -47,7 +47,8 @@ public class JwtService {
 
     public boolean isValid(String token, String expectedSubject) {
         Claims claims = claims(token);
-        return expectedSubject.equals(claims.getSubject()) && claims.getExpiration().after(new Date());
+        return expectedSubject.equals(claims.getSubject())
+                && claims.getExpiration().toInstant().isAfter(Instant.now());
     }
 
     public long expirySeconds() {

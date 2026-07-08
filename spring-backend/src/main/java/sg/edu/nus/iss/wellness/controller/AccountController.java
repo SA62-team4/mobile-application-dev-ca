@@ -2,6 +2,7 @@ package sg.edu.nus.iss.wellness.controller;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.http.HttpHeaders;
@@ -91,7 +92,8 @@ public class AccountController {
         AccountDtos.AccountExport body = new AccountDtos.AccountExport(
                 profile, records, recs, chats, Instant.now());
 
-        String filename = "wellness-export-" + user.getId() + "-" + LocalDate.now() + ".json";
+        String filename = "wellness-export-" + user.getId() + "-"
+                + LocalDate.now(ZoneId.systemDefault()) + ".json";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(body);
