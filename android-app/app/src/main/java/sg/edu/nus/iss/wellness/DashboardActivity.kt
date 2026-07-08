@@ -110,6 +110,7 @@ class DashboardActivity : AppCompatActivity() {
         binding.dashboardListView.addHeaderView(recordsHeader)
 
         binding.dashboardListView.adapter = RecordsAdapter(this, emptyList(), ::openRecordForm) { confirmDelete(it.id) }
+        InsightNotificationScheduler.prepare(this)
 
         loadDashboard()
     }

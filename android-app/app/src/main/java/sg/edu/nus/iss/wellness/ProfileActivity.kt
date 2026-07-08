@@ -69,6 +69,7 @@ class ProfileActivity : AppCompatActivity() {
         binding.logoutButton.setOnClickListener {
             scope.launch {
                 runCatching { ApiClient.create(tokenStore).logout() }
+                InsightNotificationScheduler.cancel(this@ProfileActivity)
                 tokenStore.clear()
                 goToLogin()
             }
