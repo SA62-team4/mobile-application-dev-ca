@@ -114,6 +114,12 @@ Manual QA should cover:
 - Empty states.
 - Network error states.
 - Expired token flow.
+- Chatbot shows visible local-AI progress inside the pending assistant bubble
+  while waiting for the first streamed token, then reuses that bubble for the
+  streamed answer.
+- Chatbot square Stop icon cancels an in-flight streamed answer, removes the
+  unpersisted pending bubble, restores the question text, and returns the
+  control to the normal Send button.
 - Full demo flow on emulator or physical device.
 - Physical device demo uses USB debugging, `adb reverse tcp:8080 tcp:8080`, and `WELLNESS_API_BASE_URL=http://127.0.0.1:8080/` rather than a committed LAN IP.
 - Optional `REQ-23`: Profile opens Privacy screen; export opens a JSON share/save flow; delete cancel makes no request; confirmed delete signs out; offline export/delete shows friendly error; expired token returns to Login.

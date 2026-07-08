@@ -19,7 +19,7 @@ This matrix links each requirement to the specs, implementation evidence, and te
 | REQ-07 | User can delete wellness records | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md` | Delete API, delete confirmation, Figma destructive action pattern | Backend test, demo delete |
 | REQ-08 | Backend uses Java Spring Boot | `04-plan-system-architecture.md`, `10-plan-docker-devops.md` | `spring-backend/` project; optional `.NET Backup API` documented only as cold standby | Spring backend build and health check |
 | REQ-09 | Data is stored and retrieved from MySQL through backend services | `05-plan-backend-data-model-erd.md`, `06-plan-api-contracts.md` | JPA entities/repositories, MySQL container | Persistence tests, DB inspection |
-| REQ-10 | Chatbot accepts questions from Android through backend | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md`, `08-plan-rag-ai-design.md` | Chat endpoint and Android chat screen, Figma chatbot frame and AI waiting/error states | Integration test, demo question |
+| REQ-10 | Chatbot accepts questions from Android through backend | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md`, `08-plan-rag-ai-design.md` | Chat endpoint and Android chat screen, Figma chatbot frame, streaming bubble, and local-AI waiting/progress states | Integration test, demo question |
 | REQ-11 | Chatbot uses basic local RAG | `08-plan-rag-ai-design.md` | KB files, Chroma index, retrieval code | RAG smoke test, source snippets |
 | REQ-12 | LLM is free/local only | `04-plan-system-architecture.md`, `08-plan-rag-ai-design.md`, `10-plan-docker-devops.md` | Ollama configuration, no paid API client | Config review, demo Ollama models |
 | REQ-13 | Python agentic AI retrieves data, analyses trends, generates and saves recommendations | `09-plan-agentic-ai-workflow.md`, `07-plan-android-ui-flows.md` | Python agent workflow, backend internal APIs, Figma recommendation and local AI waiting frames | Agent tests, demo recommendation |
@@ -41,7 +41,7 @@ This matrix links each requirement to the specs, implementation evidence, and te
 | NFR-01 | App must prevent one user from accessing another user's data | `05-plan-backend-data-model-erd.md`, `06-plan-api-contracts.md`, `SECURITY.md` | Ownership tests for every user-owned API, Codex Security scan of auth/ownership changes |
 | NFR-02 | Errors must be user-friendly and not expose stack traces | `06-plan-api-contracts.md`, `07-plan-android-ui-flows.md`, `SECURITY.md`, `10-plan-docker-devops.md` | API error tests, Android manual QA, Figma error-state review, Codex Security review of error/log handling, SonarQube maintainability/reliability issue review |
 | NFR-03 | Demo must work without paid services | `04-plan-system-architecture.md`, `08-plan-rag-ai-design.md`, `10-plan-docker-devops.md`, `SECURITY.md` | Offline/local model demo check, Codex Security review for paid/cloud-only AI or scanner dependencies |
-| NFR-04 | Major screens must show loading, empty, success, and error states | `07-plan-android-ui-flows.md` | Android manual QA checklist, Figma state frames |
+| NFR-04 | Major screens must show loading, empty, success, and error states | `07-plan-android-ui-flows.md` | Android manual QA checklist, Figma state frames, chat progress indicator check |
 | NFR-05 | CI should avoid heavyweight local LLM generation | `10-plan-docker-devops.md` | Workflow review and CI run; SonarQube scans run without Ollama generation |
 
 ## PR Traceability Template
