@@ -28,7 +28,7 @@
     <string name="hint_sleep_hours">Example: 7.5</string>
 
     <string name="label_exercise_type">Exercise type</string>
-    <string name="hint_exercise_type">Example: Running</string>
+    <string name="hint_exercise_type">Choose exercise type</string>
 
     <string name="label_exercise_minutes">Exercise minutes</string>
     <string name="hint_exercise_minutes">Example: 30</string>
