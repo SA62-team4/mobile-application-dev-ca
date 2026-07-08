@@ -8,7 +8,7 @@ namespace Wellness.Backup.Api.Repositories;
 /// <summary>
 /// User-scoped persistence for stored chatbot exchanges.
 /// </summary>
-/// <remarks>@author Tiong Zhong Cheng</remarks>
+/// <remarks>@author Tiong Zhong Cheng, Chua Wei Yi Justin</remarks>
 public sealed class ChatMessageRepository
 {
     private readonly MySqlConnectionFactory _connections;
@@ -63,6 +63,38 @@ public sealed class ChatMessageRepository
         while (await reader.ReadAsync(cancellationToken))
         {
             messages.Add(ReadMessage(reader, []));
+        }
+
+        return messages;
+    }
+
+    /// <summary>
+    /// Reads all of a user's chat exchanges for the account data export, including
+    /// the stored source summary (which the normal history list omits).
+    /// </summary>
+    public async Task<IReadOnlyList<ChatExport>> ListForExportAsync(long userId, CancellationToken cancellationToken)
+    {
+        await using var connection = await _connections.OpenAsync(cancellationToken);
+        await using var command = new MySqlCommand(
+            """
+            SELECT id, user_question, assistant_answer, source_summary, model_name, created_at
+            FROM chat_messages
+            WHERE user_id = @userId
+            ORDER BY created_at DESC
+            """,
+            connection);
+        command.Parameters.AddWithValue("@userId", userId);
+        var messages = new List<ChatExport>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            messages.Add(new ChatExport(
+                reader.GetInt64Value("id"),
+                reader.GetRequiredString("user_question"),
+                reader.GetRequiredString("assistant_answer"),
+                reader.GetOptionalString("source_summary"),
+                reader.GetOptionalString("model_name"),
+                reader.GetUtcDateTime("created_at")));
         }
 
         return messages;

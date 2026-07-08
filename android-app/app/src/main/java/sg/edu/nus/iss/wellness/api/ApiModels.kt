@@ -3,7 +3,7 @@ package sg.edu.nus.iss.wellness.api
 /**
  * API request and response models.
  *
- * @author Kumaraguru Surya, Tiong Zhong Cheng
+ * @author Kumaraguru Surya, Tiong Zhong Cheng, Chua Wei Yi Justin
  */
 data class RegisterRequest(val displayName: String, val email: String, val password: String)
 data class LoginRequest(val email: String, val password: String)
@@ -31,6 +31,8 @@ data class WellnessRecordResponse(
     val createdAt: String?,
     val updatedAt: String?
 )
+
+data class DeleteAccountRequest(val password: String)
 
 data class ChatRequest(val question: String)
 data class SourceSnippet(val title: String, val snippet: String)
