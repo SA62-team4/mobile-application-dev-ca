@@ -46,11 +46,18 @@
     <string name="error_mood_range">Mood score must be 1–5</string>
     <string name="toast_record_saved">Record saved</string>
     <string name="toast_save_failed">Save failed. Check backend connection.</string>
+    <string name="action_send">Send</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_stop">Stop</string>
     <string name="cd_record_date">Record date</string>
 
     <!-- Records list -->
     <string name="records_empty_message">No records yet — try adding one</string>
     <string name="cd_records_loading">Loading wellness records</string>
+
+    <!-- Chat progress -->
+    <string name="chat_progress_initial">Thinking...</string>
+    <string name="chat_progress_rag">Ruminating...</string>
+    <string name="chat_progress_stream">Actioning...</string>
 </resources>
