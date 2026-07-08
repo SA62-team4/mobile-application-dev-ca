@@ -22,22 +22,22 @@
 
     <!-- Record form labels -->
     <string name="label_record_date">Record date</string>
-    <string name="hint_pick_date">Tap to pick date</string>
+    <string name="hint_pick_date">Select date</string>
 
     <string name="label_sleep_hours">Sleep hours (0–24)</string>
-    <string name="hint_sleep_hours">Example: 7.5</string>
+    <string name="hint_sleep_hours">Your answer</string>
 
     <string name="label_exercise_type">Exercise type</string>
     <string name="hint_exercise_type">Choose exercise type</string>
 
     <string name="label_exercise_minutes">Exercise minutes</string>
-    <string name="hint_exercise_minutes">Example: 30</string>
+    <string name="hint_exercise_minutes">Your answer</string>
 
     <string name="label_mood_score">Mood (1–5)</string>
-    <string name="hint_mood_score">Example: 4</string>
+    <string name="hint_mood_score">Your answer</string>
 
     <string name="label_notes">Notes</string>
-    <string name="hint_notes">Optional notes</string>
+    <string name="hint_notes">Your answer</string>
 
     <!-- Record form messages -->
     <string name="record_date_required">Record date is required</string>

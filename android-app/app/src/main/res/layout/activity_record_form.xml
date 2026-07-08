@@ -35,8 +35,9 @@
                 android:layout_marginBottom="4dp"
                 android:labelFor="@id/dateInput"
                 android:text="@string/label_record_date"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/dateInput"
@@ -58,8 +59,9 @@
                 android:layout_marginBottom="4dp"
                 android:labelFor="@id/sleepInput"
                 android:text="@string/label_sleep_hours"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/sleepInput"
@@ -79,8 +81,9 @@
                 android:layout_marginBottom="4dp"
                 android:labelFor="@id/exerciseTypeInput"
                 android:text="@string/label_exercise_type"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <androidx.appcompat.widget.AppCompatSpinner
                 android:id="@+id/exerciseTypeInput"
@@ -100,8 +103,9 @@
                 android:layout_marginBottom="4dp"
                 android:labelFor="@id/exerciseMinutesInput"
                 android:text="@string/label_exercise_minutes"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/exerciseMinutesInput"
@@ -121,8 +125,9 @@
                 android:layout_marginBottom="4dp"
                 android:labelFor="@id/moodInput"
                 android:text="@string/label_mood_score"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/moodInput"
@@ -142,8 +147,9 @@
                 android:layout_marginBottom="4dp"
                 android:labelFor="@id/notesInput"
                 android:text="@string/label_notes"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/notesInput"
