@@ -47,6 +47,16 @@ Recommendations:
 - Saved recommendation belongs to authenticated user.
 - List recommendations returns newest first.
 
+Optional account privacy (`REQ-23`):
+
+- Export endpoint requires JWT.
+- Export payload includes only the authenticated user's profile, wellness records, chat messages, and recommendations.
+- Export payload excludes password hash, raw JWTs, internal service tokens, and other users' rows.
+- Delete account requires JWT and deletes the authenticated user's dependent rows plus user row in one transaction.
+- Delete account requires password reconfirmation for local accounts and works for Google-only accounts without an app password.
+- A previous JWT for a deleted account no longer grants access to protected endpoints.
+- Delete account does not delete another user's data.
+
 Optional `.NET Backup API`:
 
 - Status and health endpoints match Spring response shapes.
@@ -104,6 +114,8 @@ Manual QA should cover:
 - Expired token flow.
 - Full demo flow on emulator or physical device.
 - Physical device demo uses USB debugging, `adb reverse tcp:8080 tcp:8080`, and `WELLNESS_API_BASE_URL=http://127.0.0.1:8080/` rather than a committed LAN IP.
+- Optional `REQ-23`: Profile opens Privacy screen; export opens a JSON share/save flow; delete cancel makes no request; confirmed delete signs out; offline export/delete shows friendly error; expired token returns to Login.
+- Optional `REQ-22` + `REQ-23`: Google-only accounts can export data, delete the account from Privacy, and reactivate a deactivated account by signing in with Google again only after accepting the reactivation confirmation dialog.
 
 ## Docker Smoke Tests
 
@@ -137,7 +149,7 @@ Demo data should be populated through repeatable backend-controlled seed logic o
 
 Prepare one demo user:
 
-- Email: `demo@example.com`
+- Email: `demo@wellness.test`
 - Password: documented only in local demo notes, not committed as a secret.
 
 Prepare at least five wellness records showing trends:
@@ -155,6 +167,7 @@ Prepare RAG questions:
 
 Seed/reset acceptance:
 
+- `tools/scripts/seed-data.sh` can populate the demo user and trend records through backend APIs.
 - Running the seed process twice must not create uncontrolled duplicate demo users.
 - The team can reset demo data before rehearsal.
 - Demo data supports but does not replace showing at least one live create, update, and delete action.
@@ -182,6 +195,10 @@ Optional backup demo note:
 Optional desktop demo note:
 
 - If time permits, briefly show the .NET Avalonia desktop client logging in and reading the same wellness records as Android against the same Spring Boot backend, as cross-platform bonus evidence (`REQ-21`). Do not let it displace the mandatory Android flow.
+
+Optional privacy demo note:
+
+- If time permits, briefly show the Privacy screen's local AI statement, export-data action, and delete-account confirmation as private/standout evidence (`REQ-23`). Use a throwaway demo account for confirmed deletion so the core seeded demo flow remains intact.
 
 ## Submission Checklist
 

@@ -30,6 +30,11 @@ public static class RequestValidation
         NotBlank(request.Password, "Password is required");
     }
 
+    public static void Validate(GoogleAuthRequest request)
+    {
+        NotBlank(request.IdToken, "Google ID token is required");
+    }
+
     public static void Validate(WellnessRecordRequest request)
     {
         if (request.RecordDate is null)

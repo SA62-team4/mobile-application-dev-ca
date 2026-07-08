@@ -3,8 +3,12 @@ package sg.edu.nus.iss.wellness
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.View
+import android.widget.EditText
+import android.widget.LinearLayout
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -13,6 +17,7 @@ import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import sg.edu.nus.iss.wellness.api.ApiClient
 import sg.edu.nus.iss.wellness.api.GoogleAuthRequest
 import sg.edu.nus.iss.wellness.api.LoginRequest
@@ -23,6 +28,8 @@ import sg.edu.nus.iss.wellness.databinding.ActivityLoginBinding
  *
  * @author Kumaraguru Surya
  * @author Tang Chee Seng
+ * @author Chua Wei Yi Justin
+ * @author Tiong Zhong Cheng
  */
 class LoginActivity : AppCompatActivity() {
 
@@ -91,10 +98,19 @@ class LoginActivity : AppCompatActivity() {
                     ApiClient.create(tokenStore).login(LoginRequest(email, password))
                 }.onSuccess { response ->
                     onLoginSuccess(response.token, response.user.displayName, response.user.email)
-                }.onFailure {
-                    binding.statusText.visibility = View.VISIBLE
-                    binding.statusText.setBackgroundResource(R.drawable.bg_status_error)
-                    binding.statusText.text = "Login failed. Check your credentials or backend connection."
+                }.onFailure { error ->
+                    if (error is HttpException && error.code() == 403) {
+                        // Account is deactivated (not bad credentials). Unlock the standing
+                        // Reactivate button and point the user at it; active users never reach here.
+                        binding.reactivateButton.isEnabled = true
+                        binding.reactivateButton.alpha = 1f
+                        showStatus(
+                            "This account is deactivated. Tap \"Reactivate account\" to restore it.",
+                            error = true
+                        )
+                    } else {
+                        showStatus("Login failed. Check your credentials or backend connection.", error = true)
+                    }
                 }
             }
         }
@@ -113,6 +129,10 @@ class LoginActivity : AppCompatActivity() {
 
         binding.registerButton.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
+        }
+
+        binding.reactivateButton.setOnClickListener {
+            showReactivateDialog()
         }
     }
 
@@ -138,16 +158,86 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun exchangeGoogleToken(idToken: String, photoUrl: String?) {
+    private fun exchangeGoogleToken(idToken: String, photoUrl: String?, reactivate: Boolean = false) {
         scope.launch {
             runCatching {
-                showStatus("Signing in with Google...")
-                ApiClient.create(tokenStore).googleLogin(GoogleAuthRequest(idToken))
+                showStatus(if (reactivate) "Reactivating with Google..." else "Signing in with Google...")
+                ApiClient.create(tokenStore).googleLogin(GoogleAuthRequest(idToken, reactivate))
             }.onSuccess { response ->
                 onLoginSuccess(response.token, response.user.displayName, response.user.email, photoUrl)
             }.onFailure { e ->
                 Log.e(TAG, "Backend googleLogin failed", e)
-                showStatus("Google sign-in failed: ${e.message ?: "backend error"}.", error = true)
+                if (!reactivate && e is HttpException && e.code() == 403) {
+                    showGoogleReactivateDialog(idToken, photoUrl)
+                } else {
+                    showStatus("Google sign-in failed: ${e.message ?: "backend error"}.", error = true)
+                }
+            }
+        }
+    }
+
+    private fun showGoogleReactivateDialog(idToken: String, photoUrl: String?) {
+        AlertDialog.Builder(this)
+            .setTitle("Reactivate Google account?")
+            .setMessage(
+                "This Google account is deactivated. Reactivate it to restore your saved " +
+                    "wellness records, recommendations and chat history?"
+            )
+            .setNegativeButton("Cancel") { _, _ ->
+                showStatus("Google account reactivation cancelled.", error = true)
+            }
+            .setPositiveButton("Reactivate") { _, _ ->
+                exchangeGoogleToken(idToken, photoUrl, reactivate = true)
+            }
+            .show()
+    }
+
+    private fun showReactivateDialog() {
+        val density = resources.displayMetrics.density
+        val pad = (16 * density).toInt()
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad, pad, 0)
+        }
+        val emailField = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            hint = "Email"
+            // Prefill from the login field as a convenience; still a separate prompt.
+            setText(binding.emailInput.text?.toString().orEmpty())
+        }
+        val passwordField = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            hint = "Password"
+        }
+        container.addView(emailField)
+        container.addView(passwordField)
+
+        AlertDialog.Builder(this)
+            .setTitle("Reactivate account")
+            .setMessage("Enter your credentials to restore a deactivated account.")
+            .setView(container)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Reactivate") { _, _ ->
+                val email = emailField.text?.toString()?.trim().orEmpty()
+                val password = passwordField.text?.toString().orEmpty()
+                if (email.isBlank() || password.isBlank()) {
+                    showStatus("Email and password are required to reactivate.", error = true)
+                } else {
+                    reactivate(email, password)
+                }
+            }
+            .show()
+    }
+
+    private fun reactivate(email: String, password: String) {
+        scope.launch {
+            runCatching {
+                showStatus("Reactivating your account...")
+                ApiClient.create(tokenStore).reactivate(LoginRequest(email, password))
+            }.onSuccess { response ->
+                onLoginSuccess(response.token, response.user.displayName, response.user.email)
+            }.onFailure {
+                showStatus("Could not reactivate. Check your credentials and try again.", error = true)
             }
         }
     }

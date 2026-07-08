@@ -8,7 +8,7 @@
 | --- | --- |
 | Status | Draft baseline |
 | Owner | Whole team |
-| Last reviewed | Not yet reviewed |
+| Last reviewed | 2026-07-07 |
 | Depends on | Assignment PDF |
 | Feeds | Architecture, ERD, API, Android UI, RAG, agent, Docker, test specs |
 
@@ -83,6 +83,7 @@ Optional bonus requirement:
 | --- | --- |
 | REQ-21 | Optional .NET (Avalonia) desktop client consumes the Spring Boot REST API for auth, wellness CRUD, chatbot, and recommendations. It is an additional client only and must not replace Android, the backend, or any mandatory requirement. |
 | REQ-22 | Optional Google SSO lets a user sign in with a Google account. The Android client obtains a Google ID token and the backend verifies it, then issues the same internal JWT used by email/password login. It is an additional login path only and must not replace email/password auth or the JWT model. |
+| REQ-23 | Optional privacy screen, authenticated account data export, and account deletion make the local/private AI architecture visible to the user. Android must call Spring Boot for export/delete; Spring Boot exports and deletes only the authenticated user's MySQL-owned data. |
 
 ## Mock Data Requirement
 
@@ -126,7 +127,8 @@ The project assumes a 7-person team.
 | Code quality | Layered packages, DTOs, services, repositories, tests, author comments |
 | UI and UX | Clear XML screens, bottom navigation, loading and error states |
 | System design | Architecture diagrams, ERD, API spec, Docker plan |
-| Bonus or advanced features | Basic local RAG, Dockerisation, optional AWS staging, agentic recommendations, optional .NET desktop client (REQ-21) |
+| Bonus or advanced features | Basic local RAG, Dockerisation, DigitalOcean deployment automation, optional AWS discussion, agentic recommendations, optional .NET desktop client (REQ-21), optional Google SSO (REQ-22) |
+| Privacy and trust | Local AI privacy explanation, user-owned account export, and account deletion when optional stretch `REQ-23` is included |
 
 ## Definition Of Done
 

@@ -18,6 +18,7 @@ import sg.edu.nus.iss.wellness.ui.wireBottomNav
  *
  * @author Abu Bakar Nasir
  * @author Tiong Zhong Cheng
+ * @author Chua Wei Yi Justin
  */
 class ProfileActivity : AppCompatActivity() {
     private val scope = MainScope()
@@ -61,6 +62,10 @@ class ProfileActivity : AppCompatActivity() {
         )
         wireBottomNav(binding.bottomNav, ProfileActivity::class.java)
 
+        binding.privacyButton.setOnClickListener {
+            startActivity(Intent(this, PrivacyActivity::class.java))
+        }
+
         binding.logoutButton.setOnClickListener {
             scope.launch {
                 runCatching { ApiClient.create(tokenStore).logout() }
@@ -71,7 +76,10 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun goToLogin() {
-        startActivity(Intent(this, LoginActivity::class.java))
+        // Clear the whole task so Back cannot reveal the stale Dashboard after logout.
+        val intent = Intent(this, LoginActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        startActivity(intent)
         finish()
     }
 

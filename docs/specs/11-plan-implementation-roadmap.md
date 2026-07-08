@@ -19,6 +19,7 @@ Define the build order for the future implementation phase so the team can work 
 | 6 | Docker, CI, deployment, and security review | Compose stack, GitHub Actions CI (incl. Ansible lint) + deploy/infra workflows, Terraform infra, Ansible config + deploy, DigitalOcean deployment, Codex Security scan guidance, smoke checks, setup docs stable |
 | 7 | Demo hardening | Seed data, video script, final testing, zipped submission checklist complete |
 | Optional 8 | .NET backup rehearsal | Cold-standby `.NET Backup API` mirrors Spring contracts on port `8082` without replacing Spring |
+| Optional 9 | Privacy stretch | Android Privacy screen plus Spring account export/delete endpoints work end to end without weakening the local demo path |
 
 ## Recommended Build Order
 
@@ -36,6 +37,7 @@ Define the build order for the future implementation phase so the team can work 
 12. Add Docker Compose, health checks, CI, and `SECURITY.md` Codex Security scan guidance.
 13. Finalize ERD/API/setup/demo docs, security review evidence, and author comments.
 14. Optional: add `.NET Backup API` scaffold, backup Compose override, parity smoke checks, and Codex Security scan evidence after Spring contracts are stable.
+15. Optional: implement `REQ-23` privacy screen and account export/delete only after Android Profile and backend ownership tests are stable.
 
 ## Parallel Work Streams
 
@@ -49,6 +51,7 @@ Define the build order for the future implementation phase so the team can work 
 | RAG service | Member 6 | AI service scaffold and KB format agreed | Chatbot |
 | Agent/Docker/CI | Member 7 | Backend internal API contract agreed | Recommendation demo, integration |
 | .NET backup backend | Member 7 | Spring API contracts and MySQL schema stable | Optional backup rehearsal only |
+| Privacy stretch | Members 4 + 1 | Backend ownership checks and Android Profile stable | Optional private/standout demo evidence |
 
 ## Milestone Acceptance
 
@@ -93,6 +96,14 @@ Define the build order for the future implementation phase so the team can work 
 - Backup API uses the same MySQL schema, JWT secret, BCrypt-compatible passwords, and JSON/error shapes as Spring.
 - Backup Compose override exposes .NET on host port `8082`.
 - Contract smoke checks can target either Spring `8080` or .NET `8082` with `BASE_URL`.
+
+### Optional Milestone G: Privacy Stretch Ready
+
+- Profile links to a Privacy screen that explains local AI and data ownership.
+- `GET /api/account/export` returns only the authenticated user's export payload.
+- `DELETE /api/account` removes the authenticated user's account data transactionally.
+- Android export opens a share/save flow; Android delete clears local auth and returns to Login.
+- Ownership/security tests cover cross-user export isolation and post-delete token behavior.
 
 ## Risk Controls
 

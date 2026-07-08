@@ -67,7 +67,7 @@ public sealed class EndpointAuthorizationTests
         var context = new DefaultHttpContext();
         if (authorization is not null)
         {
-            context.Request.Headers["Authorization"] = authorization;
+            context.Request.Headers.Authorization = authorization;
         }
         return context;
     }

@@ -30,6 +30,7 @@ builder.Services.AddSingleton<RecommendationRepository>();
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddSingleton<PasswordService>();
 builder.Services.AddHttpClient<AiServiceClient>();
+builder.Services.AddHttpClient<GoogleTokenVerifier>();
 
 var app = builder.Build();
 
@@ -43,11 +44,8 @@ app.MapAuthEndpoints();
 app.MapWellnessRecordEndpoints();
 app.MapChatEndpoints();
 app.MapRecommendationEndpoints();
+app.MapAccountEndpoints();
 app.MapInternalEndpoints();
-app.MapMethods("/{*path}", ["OPTIONS"], () => Results.NoContent());
+app.MapMethods("/{*path}", ["OPTIONS"], (string path) => Results.NoContent());
 
 app.Run();
-
-public partial class Program
-{
-}

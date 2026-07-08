@@ -6,7 +6,9 @@
 
 This file translates the spec plan into implementation-ready task units. It corresponds to the Spec Kit **Tasks** step.
 
-Do not execute these tasks until the implementation phase is explicitly requested.
+Implementation is now active. Treat the table below as the original traceable
+task contract, and use the status snapshot to understand which planned units
+already have repository evidence.
 
 ## Task Status Values
 
@@ -15,6 +17,52 @@ Do not execute these tasks until the implementation phase is explicitly requeste
 - Blocked
 - In review
 - Done
+
+## Current Implementation Snapshot
+
+This snapshot was reconciled against the repository on 2026-07-07. It is not a
+replacement for PR evidence; it tells reviewers which backlog units have concrete
+code, tests, or operations files in place.
+
+| Area | Status | Repository Evidence | Remaining Spec-Driven Checks |
+| --- | --- | --- | --- |
+| Spring backend core | Implemented, verification active | `spring-backend/src/main/java/sg/edu/nus/iss/wellness/` controllers, services, models, repositories, JWT security, Google SSO verifier, streaming chat service | Keep ownership/auth tests green; verify API docs after route changes |
+| Android app | Implemented, UI QA active | `DashboardActivity`, `RecordFormActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`, XML layouts, `ListView` adapters, streaming chat client, dashboard helper tests | Manual compact-screen QA against Figma; keep Dashboard as landing screen |
+| Python AI service | Implemented, live-model smoke optional | FastAPI routes for health, RAG chat, streaming chat, reindex, recommendation agent; Chroma/Ollama clients; five-file curated KB | Run non-integration pytest in CI; live Ollama smoke before demo |
+| Docker/local runtime | Implemented | `docker-compose.yml`, `docker-compose.prod.yml`, `.env.example`, `docker-compose.dotnet-backup.yml`, `docker-compose.sonar.yml` | Clean-machine compose smoke and model pull/reindex check |
+| CI/quality/deployment | Implemented, evidence-gated | `.github/workflows/ci.yml`, `deploy.yml`, `infra.yml`, pinned actions, lockfile verification, SonarQube and Ansible jobs, Terraform/Ansible roots | Capture final Actions/SonarQube evidence; deployment remains optional for local demo |
+| Optional .NET backup backend | Implemented as bonus/cold standby | `dotnet-backend/` endpoints, services, tests, backup Compose override | Keep parity note explicit: Spring remains canonical for `REQ-08` |
+| Optional .NET desktop client | Implemented as bonus client | `desktop-app/` Avalonia app, API client, tests, packaging script | Demo only after mandatory Android flow is reliable |
+
+### Updated Task Flow
+
+```plantuml
+@startuml
+left to right direction
+
+rectangle "Spec Baseline\nT-000..T-103" as Specs
+rectangle "Spring Backend\nT-201..T-204\nT-301/T-404/T-501" as Spring
+rectangle "Android App\nT-302/T-303/T-405/T-504" as Android
+rectangle "Python AI\nT-401..T-403\nT-502/T-503" as Python
+rectangle "Docker + CI\nT-601..T-608" as Ops
+rectangle "Demo + Validation\nT-603..T-605" as Demo
+rectangle ".NET Backup\nT-701..T-704\noptional" as DotNet
+rectangle "Desktop Client\nT-801..T-806\noptional" as Desktop
+
+Specs --> Spring
+Specs --> Android
+Specs --> Python
+Spring --> Android
+Spring --> Python
+Python --> Spring
+Spring --> Ops
+Python --> Ops
+Android --> Demo
+Ops --> Demo
+Spring ..> DotNet : contract parity
+Spring ..> Desktop : REST client parity
+@enduml
+```
 
 ## Phase 0: Spec Review
 
@@ -104,6 +152,16 @@ These tasks are optional bonus evidence (`REQ-21`). The desktop client is an add
 | T-804 | REQ-21, REQ-10 | Implement chatbot screen with answer and source snippets | Bonus owner | T-803, T-404 | Chat works from desktop |
 | T-805 | REQ-21, REQ-13 | Implement recommendations screen (generate and list) | Bonus owner | T-803, T-503 | Recommendation visible in desktop |
 | T-806 | REQ-21, REQ-16, NFR-05 | Add `dotnet build`/`dotnet test` CI job and DTO/ApiClient unit tests | Bonus owner | T-801 | Desktop job passes in CI without LLM dependency |
+
+## Optional Phase 9: Privacy Stretch
+
+These tasks are optional stretch evidence (`REQ-23`) mapped to sprint card `S-03`. They should be pulled only after the mandatory Android Profile flow, backend ownership checks, and demo-critical AI flows are stable.
+
+| Task ID | Requirement IDs | Task | Owner | Depends On | Done When |
+| --- | --- | --- | --- | --- | --- |
+| T-901 | REQ-23, NFR-01, NFR-02 | Implement Spring account export and account deletion endpoints | Member 4 | T-204, T-301, T-404, T-501 | `GET /api/account/export` returns only the current user's profile, records, chats, and recommendations without secrets; `DELETE /api/account` transactionally removes the user's owned rows and user row |
+| T-902 | REQ-23, NFR-04 | Implement Android Privacy screen launched from Profile | Member 1 | T-302, T-303, T-901 | Screen explains local AI/data path, export opens a JSON share/save flow, delete requires confirmation, successful delete clears local auth and returns to Login |
+| T-903 | REQ-23, NFR-01, NFR-02 | Add privacy/export/delete validation evidence | Members 4 + 1 | T-901, T-902 | Backend tests cover export ownership and post-delete access; Android manual QA covers export, cancel delete, confirmed delete, offline failure, and expired-token handling |
 
 ## Implementation Rule
 
