@@ -7,7 +7,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft baseline |
-| Controls | REQ-01, REQ-02, REQ-04 through REQ-07, REQ-10, REQ-13, NFR-02, NFR-04 |
+| Controls | REQ-01, REQ-02, REQ-04 through REQ-07, REQ-10, REQ-13, REQ-23, NFR-02, NFR-04 |
 | Primary audience | Android owners, backend owners, demo owner |
 | Upstream specs | `02-specify-project-requirements.md`, `06-plan-api-contracts.md` |
 | Downstream specs | Android layouts, ViewModels, manual QA checklist |
@@ -147,6 +147,7 @@ rectangle "Add/Edit Record" as Record
 rectangle "Chatbot" as Chat
 rectangle "Recommendations" as Recs
 rectangle "Profile" as Profile
+rectangle "Privacy" as Privacy
 
 Dashboard <--> Chat
 Dashboard <--> Recs
@@ -156,6 +157,7 @@ Chat <--> Profile
 Recs <--> Profile
 Dashboard --> Record
 Dashboard --> Recs
+Profile --> Privacy
 @enduml
 ```
 
@@ -365,10 +367,12 @@ Content:
 - Profile picture
 - Display name
 - Email
+- Privacy and data controls entry point (optional `REQ-23` / `S-03`)
 - App version or team name, optional
 
 Actions:
 
+- Privacy and data
 - Logout
 
 Profile picture behavior:
@@ -385,6 +389,40 @@ Logout behavior:
 - Clear local JWT.
 - Navigate to login screen.
 - If backend call fails, still allow local logout after confirmation.
+
+### Privacy Screen (optional — REQ-23 / S-03)
+
+Launched from Profile using an explicit `Intent`. This is a trust and data-control screen, not an onboarding or marketing page.
+
+Content:
+
+- Plain-language statement that wellness records, chat history, and recommendations are stored by the Spring Boot backend in MySQL for the logged-in account.
+- Plain-language statement that AI runs locally through the Python AI service, Chroma, and Ollama; Android never sends wellness questions directly to Python or MySQL.
+- Short data path summary: Android -> Spring Boot -> MySQL/Python AI -> local Ollama.
+- Export section showing what will be included: profile, wellness records, chat messages, and recommendations.
+- Delete-account section warning that deletion removes account data from MySQL and signs the user out.
+
+Actions:
+
+- Export data.
+- Delete account.
+- Back to Profile.
+
+Behavior:
+
+- Export calls `GET /api/account/export` with the stored JWT.
+- On successful export, Android opens the system share sheet or document-create flow with a `.json` payload. The payload is not silently uploaded anywhere.
+- Delete account first shows a destructive confirmation dialog. Only confirmation calls `DELETE /api/account`.
+- On successful account deletion, Android clears the local JWT, clears locally stored profile/photo data, and navigates to Login with the back stack cleared.
+- If export/delete fails because the token expired, Android clears the token and returns to Login.
+
+States:
+
+- Loading/exporting.
+- Export success.
+- Delete in progress.
+- Friendly error for backend/network failure.
+- Signed-out success after delete.
 
 ## Wellness Dashboard Logic
 
@@ -470,6 +508,7 @@ Major workflows must have explicit visual states:
 | Chatbot | Typing/thinking indicator | Empty history with prompt suggestions | Preserve typed question and show retry message | New saved chat appears in history |
 | Recommendations | Loading existing recommendations | Empty recommendations state with Generate action | Agent/Ollama unavailable retry message | New recommendation appears at top |
 | Profile | Optional logout progress | Not applicable | Backend logout failure still allows confirmed local logout | Token cleared and Login shown |
+| Privacy | Export/delete progress | Not applicable | Export/delete failure message; expired token returns to Login | Export share sheet opens, or account deleted and Login shown |
 
 The local AI waiting state must explain that generation can take up to a minute and must prevent duplicate chat or recommendation submissions.
 
@@ -482,4 +521,5 @@ The local AI waiting state must explain that generation can take up to a minute 
 - No screen calls MySQL or Python AI service directly.
 - Required form validation works before network requests.
 - Loading, empty, success, and error states exist for major workflows.
+- Optional `REQ-23` Privacy screen explains local AI and account data controls, exports through Spring Boot only, and requires confirmation before account deletion.
 - Android screens can be visually checked against the Figma file during manual QA.

@@ -7,7 +7,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft baseline |
-| Controls | REQ-08, REQ-09, REQ-10, REQ-13, REQ-14, REQ-16, NFR-03 |
+| Controls | REQ-08, REQ-09, REQ-10, REQ-13, REQ-14, REQ-16, REQ-23, NFR-03 |
 | Primary audience | Full team |
 | Upstream specs | `02-specify-project-requirements.md` |
 | Downstream specs | ERD, API, Android UI, RAG, agent, Docker, test plan |
@@ -326,3 +326,39 @@ B -> D: Save recommendation
 B --> A: Recommendation response
 @enduml
 ```
+
+### Account Privacy, Export, And Delete
+
+```plantuml
+@startuml
+participant User as U
+participant "Android Privacy Screen" as A
+participant "Spring Boot API" as B
+database "MySQL" as D
+
+U -> A: Open privacy screen from Profile
+A --> U: Show local AI + data path statement
+
+alt Export data
+  U -> A: Tap Export data
+  A -> B: GET /api/account/export\nAuthorization: Bearer JWT
+  B -> D: Load current user's profile,\nrecords, chats, recommendations
+  D --> B: Owned rows only
+  B --> A: JSON export payload
+  A --> U: Share/save JSON using Android share sheet
+else Delete account
+  U -> A: Confirm destructive delete
+  A -> B: DELETE /api/account\nAuthorization: Bearer JWT
+  B -> D: Delete owned child rows\nthen user row in one transaction
+  B --> A: 204 No Content
+  A -> A: Clear local token
+  A --> U: Return to Login
+end
+@enduml
+```
+
+Privacy rules:
+
+- Android calls Spring Boot only; it never reads MySQL or calls Python AI directly.
+- Export covers MySQL-owned user data only and excludes password hashes, JWTs, service tokens, and infrastructure details.
+- Account deletion removes the user's transactional MySQL data. RAG source documents and embeddings are shared local knowledge-base assets, not user uploads, so no per-user vector deletion is needed under the current design.

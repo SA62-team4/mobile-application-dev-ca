@@ -43,6 +43,7 @@ app.MapAuthEndpoints();
 app.MapWellnessRecordEndpoints();
 app.MapChatEndpoints();
 app.MapRecommendationEndpoints();
+app.MapAccountEndpoints();
 app.MapInternalEndpoints();
 app.MapMethods("/{*path}", ["OPTIONS"], (string path) => Results.NoContent());
 

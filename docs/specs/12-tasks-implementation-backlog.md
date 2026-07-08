@@ -153,6 +153,16 @@ These tasks are optional bonus evidence (`REQ-21`). The desktop client is an add
 | T-805 | REQ-21, REQ-13 | Implement recommendations screen (generate and list) | Bonus owner | T-803, T-503 | Recommendation visible in desktop |
 | T-806 | REQ-21, REQ-16, NFR-05 | Add `dotnet build`/`dotnet test` CI job and DTO/ApiClient unit tests | Bonus owner | T-801 | Desktop job passes in CI without LLM dependency |
 
+## Optional Phase 9: Privacy Stretch
+
+These tasks are optional stretch evidence (`REQ-23`) mapped to sprint card `S-03`. They should be pulled only after the mandatory Android Profile flow, backend ownership checks, and demo-critical AI flows are stable.
+
+| Task ID | Requirement IDs | Task | Owner | Depends On | Done When |
+| --- | --- | --- | --- | --- | --- |
+| T-901 | REQ-23, NFR-01, NFR-02 | Implement Spring account export and account deletion endpoints | Member 4 | T-204, T-301, T-404, T-501 | `GET /api/account/export` returns only the current user's profile, records, chats, and recommendations without secrets; `DELETE /api/account` transactionally removes the user's owned rows and user row |
+| T-902 | REQ-23, NFR-04 | Implement Android Privacy screen launched from Profile | Member 1 | T-302, T-303, T-901 | Screen explains local AI/data path, export opens a JSON share/save flow, delete requires confirmation, successful delete clears local auth and returns to Login |
+| T-903 | REQ-23, NFR-01, NFR-02 | Add privacy/export/delete validation evidence | Members 4 + 1 | T-901, T-902 | Backend tests cover export ownership and post-delete access; Android manual QA covers export, cancel delete, confirmed delete, offline failure, and expired-token handling |
+
 ## Implementation Rule
 
 Every future implementation PR should list:

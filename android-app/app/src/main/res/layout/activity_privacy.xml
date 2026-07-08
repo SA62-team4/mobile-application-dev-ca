@@ -13,7 +13,7 @@
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:text="Profile"
+        android:text="Privacy &amp; data"
         android:textColor="@color/text_primary"
         android:textSize="22sp"
         android:textStyle="bold" />
@@ -36,70 +36,65 @@
                 android:background="@drawable/bg_app_card"
                 android:layout_marginBottom="14dp">
 
-                <ImageView
-                    android:id="@+id/profileImage"
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="12dp"
-                    android:contentDescription="Profile picture"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_profile_placeholder" />
-
                 <TextView
-                    android:id="@+id/displayNameText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
+                    android:text="How your data is handled"
                     android:textColor="@color/text_primary"
-                    android:paddingBottom="6dp"
-                     />
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
 
                 <TextView
-                    android:id="@+id/emailText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:textSize="14sp"
                     android:textColor="@color/text_secondary"
-                    android:paddingBottom="6dp"
-                     />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:text="SA62 Wellness App | Version 1.0"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_secondary" />
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="4dp"
+                    android:text="• AI runs locally. Recommendations and the wellness chatbot are generated on a self-hosted Ollama model. Your entries are never sent to any third-party AI cloud.\n\n• You control your data. Export a full copy of everything stored about you at any time, or remove it.\n\n• Deactivate is reversible. Your account is hidden and sign-in is blocked, but your records, recommendations and chat history are kept. Reactivate anytime by signing in again.\n\n• Delete is permanent. This erases your account and all associated data from the server and cannot be undone — export first if you want a copy.\n\nNote: your data is stored securely on the app's server database, not only on this device." />
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:padding="12dp"
+                android:layout_marginBottom="14dp"
+                android:textColor="@color/primary_dark"
+                android:background="@drawable/bg_status_success" />
+
             <Button
-                android:id="@+id/privacyButton"
+                android:id="@+id/exportButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_button_primary"
+                android:text="Export my data"
+                android:textAllCaps="false"
+                android:textColor="@color/text_on_primary"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/deactivateButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_button_secondary"
-                android:text="Privacy &amp; data"
+                android:text="Deactivate account (reversible)"
                 android:textAllCaps="false"
                 android:textColor="@color/primary"
                 android:textStyle="bold" />
 
             <Button
-                android:id="@+id/logoutButton"
+                android:id="@+id/deleteButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:background="@drawable/bg_button_destructive"
-                android:text="Logout"
+                android:text="Delete account permanently"
                 android:textAllCaps="false"
                 android:textColor="@color/text_on_primary"
                 android:textStyle="bold" />
         </LinearLayout>
     </ScrollView>
-
-    <include
-        android:id="@+id/bottomNav"
-        layout="@layout/bottom_nav_bar" />
 </LinearLayout>

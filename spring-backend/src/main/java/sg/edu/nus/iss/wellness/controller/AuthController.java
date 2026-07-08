@@ -1,10 +1,15 @@
 package sg.edu.nus.iss.wellness.controller;
 
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.validation.Valid;
 import sg.edu.nus.iss.wellness.dto.AuthDtos;
 import sg.edu.nus.iss.wellness.error.ApiException;
 import sg.edu.nus.iss.wellness.model.AppUser;
@@ -16,7 +21,8 @@ import sg.edu.nus.iss.wellness.service.GoogleTokenVerifier;
 /**
  * Handles account registration and stateless JWT login/logout.
  *
- * @author Kumaraguru Surya, Tiong Zhong Cheng
+ * @author Kumaraguru Surya, Tiong Zhong Cheng, Chua Wei Yi Justin
+ * 
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -53,6 +59,35 @@ public class AuthController {
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        }
+        if (!user.isEnabled()) {
+            // Distinct 403 so the client can offer reactivation instead of a generic failure.
+            throw new ApiException(HttpStatus.FORBIDDEN, "Account is deactivated. Reactivate to continue.");
+        }
+        return new AuthDtos.LoginResponse(
+                jwtService.generateToken(user),
+                "Bearer",
+                jwtService.expirySeconds(),
+                DtoMapper.user(user)
+        );
+    }
+
+    /**
+     * Reactivates a previously deactivated account and logs the user back in.
+     * Verifies the same credentials as login, then re-enables the account so all
+     * retained data (records, recommendations, chat history) becomes accessible
+     * again. Idempotent: an already-enabled account simply logs in.
+     */
+    @PostMapping("/reactivate")
+    public AuthDtos.LoginResponse reactivate(@Valid @RequestBody AuthDtos.LoginRequest request) {
+        AppUser user = users.findByEmail(request.email().toLowerCase())
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        }
+        if (!user.isEnabled()) {
+            user.setEnabled(true);
+            user = users.save(user);
         }
         return new AuthDtos.LoginResponse(
                 jwtService.generateToken(user),

@@ -9,7 +9,7 @@ namespace Wellness.Backup.Api.Endpoints;
 /// <summary>
 /// Authentication routes mirrored from the Spring Boot backend.
 /// </summary>
-/// <remarks>@author Tiong Zhong Cheng</remarks>
+/// <remarks>@author Tiong Zhong Cheng, Chua Wei Yi Justin</remarks>
 public static class AuthEndpoints
 {
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
@@ -60,6 +60,44 @@ public static class AuthEndpoints
             {
                 logger.LogWarning(".NET backup login failed because password verification failed for user {Email}", email);
                 throw ApiException.Unauthorized("Invalid email or password");
+            }
+
+            if (!user.Enabled)
+            {
+                // Distinct 403 so the client can offer reactivation instead of a generic failure.
+                throw ApiException.Forbidden("Account is deactivated. Reactivate to continue.");
+            }
+
+            var userResponse = new UserResponse(user.Id, user.DisplayName, user.Email);
+            return Results.Ok(new LoginResponse(
+                jwtTokenService.GenerateToken(user),
+                "Bearer",
+                jwtTokenService.ExpirySeconds,
+                userResponse));
+        });
+
+        // Reactivates a previously deactivated account and logs the user back in.
+        // Verifies the same credentials as login, re-enables the account, then
+        // returns a token. Idempotent: an already-enabled account simply logs in.
+        group.MapPost("/reactivate", async (
+            LoginRequest request,
+            UserRepository users,
+            PasswordService passwords,
+            JwtTokenService jwtTokenService,
+            CancellationToken cancellationToken) =>
+        {
+            RequestValidation.Validate(request);
+            var email = request.Email!.Trim().ToLowerInvariant();
+            var user = await users.FindByEmailAsync(email, cancellationToken);
+            if (user is null || !passwords.Verify(request.Password!, user.PasswordHash))
+            {
+                throw ApiException.Unauthorized("Invalid email or password");
+            }
+
+            if (!user.Enabled)
+            {
+                await users.SetEnabledAsync(user.Id, true, cancellationToken);
+                user = user with { Enabled = true };
             }
 
             var userResponse = new UserResponse(user.Id, user.DisplayName, user.Email);

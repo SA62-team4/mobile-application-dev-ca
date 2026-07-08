@@ -5,7 +5,7 @@ import retrofit2.http.*
 /**
  * Retrofit contract for the Spring Boot backend.
  *
- * @author Kumaraguru Surya, Tiong Zhong Cheng
+ * @author Kumaraguru Surya, Tiong Zhong Cheng, Chua Wei Yi Justin
  */
 interface ApiService {
     @POST("api/auth/register")
@@ -43,5 +43,24 @@ interface ApiService {
 
     @POST("api/recommendations/generate")
     suspend fun generateRecommendation(): RecommendationResponse
+
+    // --- Privacy / account management (S-03) ---
+
+    /** Full JSON copy of the caller's data. Returned as a raw body so it can be
+     *  written verbatim to a user-chosen file. */
+    @GET("api/account/export")
+    suspend fun exportAccountData(): retrofit2.Response<okhttp3.ResponseBody>
+
+    /** Reversible: disables the account and blocks sign-in, keeps all data. */
+    @POST("api/account/deactivate")
+    suspend fun deactivateAccount()
+
+    /** Permanent: password-confirmed erasure of the account and all its data. */
+    @HTTP(method = "DELETE", path = "api/account", hasBody = true)
+    suspend fun deleteAccount(@Body request: DeleteAccountRequest)
+
+    /** Re-enables a deactivated account and logs the user back in. */
+    @POST("api/auth/reactivate")
+    suspend fun reactivate(@Body request: LoginRequest): LoginResponse
 }
 

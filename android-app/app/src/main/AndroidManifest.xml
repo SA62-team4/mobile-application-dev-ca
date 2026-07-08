@@ -10,6 +10,7 @@
         android:theme="@style/AppTheme">
         <activity android:name=".RegisterActivity" />
         <activity android:name=".ProfileActivity" />
+        <activity android:name=".PrivacyActivity" />
         <activity
             android:name=".ChatActivity"
             android:theme="@style/AppTheme.Chat"
