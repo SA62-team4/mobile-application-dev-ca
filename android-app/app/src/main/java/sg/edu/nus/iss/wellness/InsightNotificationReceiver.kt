@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.content.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -118,9 +119,7 @@ class InsightNotificationReceiver : BroadcastReceiver() {
 
     private fun saveLastNotifiedId(context: Context, id: Long) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit()
-            .putLong(KEY_LAST_ID, id)
-            .apply()
+            .edit { putLong(KEY_LAST_ID, id) }
     }
 
     private companion object {

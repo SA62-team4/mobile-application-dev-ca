@@ -100,6 +100,14 @@ class ChatActivity : AppCompatActivity() {
         loadChatHistory()
     }
 
+    /** Mutable state carried across the streaming callbacks for one question. */
+    private class StreamState {
+        val answer = StringBuilder()
+        var sources: List<SourceSnippet> = emptyList()
+        // Ignore late stream failures after terminal frames.
+        var terminal = false
+    }
+
     private fun sendChat(question: String) {
         allowUiUpdates = true
         binding.statusContainer.removeAllViews()
@@ -113,62 +121,62 @@ class ChatActivity : AppCompatActivity() {
         renderMessages()
         showChatProgress(pendingIndex, question)
 
-        val answer = StringBuilder()
-        var sources: List<SourceSnippet> = emptyList()
-        // Ignore late stream failures after terminal frames.
-        var terminal = false
-
+        val state = StreamState()
         streamJob = scope.launch {
             runCatching {
-                streamClient.stream(question) eventHandler@{ event ->
-                    if (!allowUiUpdates) {
-                        if (event is ChatStreamEvent.Done || event is ChatStreamEvent.Error) {
-                            terminal = true
-                        }
-                        return@eventHandler
-                    }
-                    when (event) {
-                        is ChatStreamEvent.Sources -> {
-                            sources = event.sources
-                            updatePending(pendingIndex, question, getString(R.string.chat_progress_rag), sources)
-                        }
-                        is ChatStreamEvent.Token -> {
-                            hideChatProgress()
-                            answer.append(event.text)
-                            updatePending(pendingIndex, question, answer.toString(), sources)
-                        }
-                        is ChatStreamEvent.Done -> {
-                            terminal = true
-                            finishStreaming()
-                            // Replace the pending row with the persisted server copy (correct
-                            // id, timestamp, and stored sources) by reloading history.
-                            loadChatHistory()
-                        }
-                        is ChatStreamEvent.Error -> {
-                            terminal = true
-                            finishStreaming()
-                            dropPendingMessages()
-                            showError(
-                                binding.statusContainer,
-                                event.message,
-                                "Keep your question and retry when services are running."
-                            )
-                        }
-                    }
+                streamClient.stream(question) { event ->
+                    handleStreamEvent(state, event, pendingIndex, question)
                 }
-            }.onFailure {
-                if (it is CancellationException) return@onFailure
-                if (terminal) return@onFailure
-                if (!allowUiUpdates) return@onFailure
+            }.onFailure { onStreamFailure(state, it) }
+        }
+    }
+
+    private fun handleStreamEvent(state: StreamState, event: ChatStreamEvent, pendingIndex: Int, question: String) {
+        if (!allowUiUpdates) {
+            if (event is ChatStreamEvent.Done || event is ChatStreamEvent.Error) state.terminal = true
+            return
+        }
+        when (event) {
+            is ChatStreamEvent.Sources -> {
+                state.sources = event.sources
+                updatePending(pendingIndex, question, getString(R.string.chat_progress_rag), state.sources)
+            }
+            is ChatStreamEvent.Token -> {
+                hideChatProgress()
+                state.answer.append(event.text)
+                updatePending(pendingIndex, question, state.answer.toString(), state.sources)
+            }
+            is ChatStreamEvent.Done -> {
+                state.terminal = true
+                finishStreaming()
+                // Replace the pending row with the persisted server copy (correct
+                // id, timestamp, and stored sources) by reloading history.
+                loadChatHistory()
+            }
+            is ChatStreamEvent.Error -> {
+                state.terminal = true
                 finishStreaming()
                 dropPendingMessages()
                 showError(
                     binding.statusContainer,
-                    apiErrorMessage("Chatbot unavailable", it),
+                    event.message,
                     "Keep your question and retry when services are running."
                 )
             }
         }
+    }
+
+    private fun onStreamFailure(state: StreamState, throwable: Throwable) {
+        if (throwable is CancellationException) return
+        if (state.terminal) return
+        if (!allowUiUpdates) return
+        finishStreaming()
+        dropPendingMessages()
+        showError(
+            binding.statusContainer,
+            apiErrorMessage("Chatbot unavailable", throwable),
+            "Keep your question and retry when services are running."
+        )
     }
 
     private fun stopChat() {

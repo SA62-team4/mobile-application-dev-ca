@@ -47,6 +47,15 @@ Checklist:
   `.NET Backup API`.
 - Spring backend SonarQube evidence includes the JaCoCo XML report generated at
   `spring-backend/target/site/jacoco/jacoco.xml` from a Maven `verify` run.
+- Android SonarQube evidence includes the JaCoCo XML coverage report generated at
+  `android-app/app/build/reports/coverage/test/debug/report.xml` from the
+  `createDebugUnitTestCoverageReport` Gradle task (enabled via `enableUnitTestCoverage`),
+  referenced by `sonar.coverage.jacoco.xmlReportPaths` in
+  `android-app/sonar-project.properties`.
+- Android release traffic is TLS-only: the manifest applies
+  `res/xml/network_security_config.xml` with `cleartextTrafficPermitted="false"`
+  by default, permitting clear-text HTTP only for local development hosts
+  (`10.0.2.2`, `localhost`, `127.0.0.1`).
 - Security-sensitive PRs include Codex Security diff scan evidence according to `SECURITY.md`.
 - No paid/cloud LLM dependency is introduced.
 - No direct Android-to-MySQL or Android-to-Python path is introduced.

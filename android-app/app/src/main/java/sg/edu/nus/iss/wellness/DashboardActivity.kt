@@ -156,7 +156,7 @@ class DashboardActivity : AppCompatActivity() {
                 return@launch
             }
 
-            val records = recordsResult.getOrElse { err ->
+            val records = recordsResult.getOrElse { _ ->
                 showFetchError("Could not load dashboard.", "Check that the backend is reachable from the emulator.")
                 return@launch
             }

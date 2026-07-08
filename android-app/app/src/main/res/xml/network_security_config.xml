@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network security policy for the wellness app.
+
+  Production traffic (e.g. https://sa62wellness.duckdns.org) must use TLS: the
+  base config forbids clear text. Clear-text HTTP is permitted only for the local
+  development backends the emulator/device reaches during testing, so the default
+  http://10.0.2.2:8080 dev build keeps working while release builds stay HTTPS-only.
+
+  @author Tiong Zhong Cheng
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>
