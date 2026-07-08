@@ -58,19 +58,23 @@ class RecordFormActivity : AppCompatActivity() {
         selectedDate = runCatching {
             LocalDate.parse(intent.getStringExtra(Constants.EXTRA_RECORD_DATE))
         }.getOrDefault(LocalDate.now())
-        binding.dateInput.setText(selectedDate.toString())
-        binding.sleepInput.setText(intent.getDoubleExtra(Constants.EXTRA_RECORD_SLEEP_HOURS, 7.0).toString())
-        val weightKg = intent.getDoubleExtra(Constants.EXTRA_RECORD_WEIGHT_KG, Double.NaN)
-        binding.weightInput.setText(if (weightKg.isNaN()) "" else weightKg.toString())
+        if (isEdit) {
+            binding.dateInput.setText(selectedDate.toString())
+            binding.sleepInput.setText(intent.getDoubleExtra(Constants.EXTRA_RECORD_SLEEP_HOURS, 0.0).toString())
+            val weightKg = intent.getDoubleExtra(Constants.EXTRA_RECORD_WEIGHT_KG, Double.NaN)
+            binding.weightInput.setText(if (weightKg.isNaN()) "" else weightKg.toString())
+        }
         val exerciseType = if (isEdit) {
             intent.getStringExtra(Constants.EXTRA_RECORD_EXERCISE_TYPE)
         } else {
-            "Walking"
+            null
         }
         binding.exerciseTypeInput.setSelection(ExerciseTypeOptions.selectedIndexFor(exerciseType))
-        binding.exerciseMinutesInput.setText(intent.getIntExtra(Constants.EXTRA_RECORD_EXERCISE_MINUTES, 20).toString())
-        binding.moodInput.setText(intent.getIntExtra(Constants.EXTRA_RECORD_MOOD_SCORE, 3).toString())
-        binding.notesInput.setText(intent.getStringExtra(Constants.EXTRA_RECORD_NOTES) ?: "")
+        if (isEdit) {
+            binding.exerciseMinutesInput.setText(intent.getIntExtra(Constants.EXTRA_RECORD_EXERCISE_MINUTES, 0).toString())
+            binding.moodInput.setText(intent.getIntExtra(Constants.EXTRA_RECORD_MOOD_SCORE, 3).toString())
+            binding.notesInput.setText(intent.getStringExtra(Constants.EXTRA_RECORD_NOTES) ?: "")
+        }
 
         binding.dateInput.setOnClickListener { showDatePicker() }
         binding.saveButton.setOnClickListener { save() }

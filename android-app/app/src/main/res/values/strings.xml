@@ -27,10 +27,10 @@
 
     <!-- Record form labels -->
     <string name="label_record_date">Record date</string>
-    <string name="hint_pick_date">Tap to pick date</string>
+    <string name="hint_pick_date">Select date</string>
 
     <string name="label_sleep_hours">Sleep hours (0–24)</string>
-    <string name="hint_sleep_hours">Example: 7.5</string>
+    <string name="hint_sleep_hours">Your answer</string>
 
     <string name="label_weight_kg">Weight (kg)</string>
     <string name="hint_weight_kg">Optional: 65.4</string>
@@ -39,13 +39,13 @@
     <string name="hint_exercise_type">Choose exercise type</string>
 
     <string name="label_exercise_minutes">Exercise minutes</string>
-    <string name="hint_exercise_minutes">Example: 30</string>
+    <string name="hint_exercise_minutes">Your answer</string>
 
     <string name="label_mood_score">Mood (1–5)</string>
-    <string name="hint_mood_score">Example: 4</string>
+    <string name="hint_mood_score">Your answer</string>
 
     <string name="label_notes">Notes</string>
-    <string name="hint_notes">Optional notes</string>
+    <string name="hint_notes">Your answer</string>
 
     <!-- Record form messages -->
     <string name="record_date_required">Record date is required</string>
@@ -55,11 +55,18 @@
     <string name="error_mood_range">Mood score must be 1–5</string>
     <string name="toast_record_saved">Record saved</string>
     <string name="toast_save_failed">Save failed. Check backend connection.</string>
+    <string name="action_send">Send</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_stop">Stop</string>
     <string name="cd_record_date">Record date</string>
 
     <!-- Records list -->
     <string name="records_empty_message">No records yet — try adding one</string>
     <string name="cd_records_loading">Loading wellness records</string>
+
+    <!-- Chat progress -->
+    <string name="chat_progress_initial">Thinking...</string>
+    <string name="chat_progress_rag">Ruminating...</string>
+    <string name="chat_progress_stream">Actioning...</string>
 </resources>

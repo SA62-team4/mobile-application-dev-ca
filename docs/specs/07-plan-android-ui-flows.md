@@ -396,14 +396,21 @@ Content:
 
 - Scrollable chat history.
 - Message input field.
-- Send button.
+- Send button. While a response is streaming, the same control becomes a square
+  Stop icon button.
 - Source snippets are still returned by the backend and stored, but are not shown in the
   chat UI; the answer reads standalone.
 
 Behavior:
 
-- Send button disabled for blank messages, and while a stream is in flight to prevent duplicate submissions.
-- Show typing/loading indicator until the first streamed token arrives.
+- Send button disabled for blank messages. While a stream is in flight, the
+  button changes to a square Stop icon; tapping Stop cancels the active stream, removes the
+  unpersisted partial assistant bubble, restores the question to the input, and
+  does not save a chat message.
+- Show local-AI progress inside the pending assistant chat bubble while a stream
+  is in flight. The bubble cycles short status text such as "Thinking...",
+  "Ruminating...", and "Actioning..." with an animated typing-dot cadence until
+  the first streamed token arrives, then the same bubble grows with the answer.
 - The answer streams in token-by-token: a live assistant bubble is appended immediately and
   grows in place (via `ChatStreamClient` consuming the `POST /api/chat/messages/stream` SSE
   endpoint) so long answers are never truncated. When the stream completes, history is
@@ -424,14 +431,22 @@ title Chatbot Send + Streaming
 
 start
 :user types message;
-if (message blank or stream in flight?) then (yes)
+if (message blank?) then (yes)
   :keep Send disabled;
   stop
 endif
 :append user bubble;
-:disable Send, show typing indicator;
+:change Send to square Stop icon,
+ show assistant typing bubble;
 :open SSE POST /api/chat/messages/stream
  (via ChatStreamClient);
+if (user taps Stop?) then (yes)
+  :cancel SSE call;
+  :remove pending assistant bubble;
+  :restore question in input;
+  :change Stop back to Send;
+  stop
+endif
 if (AI service / Ollama available?) then (no)
   :drop partial bubble;
   :show friendly error,

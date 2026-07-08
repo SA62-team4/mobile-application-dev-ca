@@ -73,10 +73,22 @@
             android:layout_height="56dp"
             android:layout_marginStart="8dp"
             android:background="@drawable/bg_button_primary"
-            android:text="Send"
+            android:text="@string/action_send"
             android:textAllCaps="false"
             android:textColor="@color/text_on_primary"
             android:textStyle="bold" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/stopButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_button_primary"
+            android:contentDescription="@string/action_stop"
+            android:padding="16dp"
+            android:scaleType="center"
+            android:src="@drawable/ic_stop_square"
+            android:visibility="gone" />
     </LinearLayout>
 
     <include

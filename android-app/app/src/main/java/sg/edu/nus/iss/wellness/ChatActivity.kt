@@ -2,12 +2,17 @@ package sg.edu.nus.iss.wellness
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import sg.edu.nus.iss.wellness.adapter.ChatAdapter
 import sg.edu.nus.iss.wellness.api.ApiClient
@@ -35,6 +40,9 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var api: ApiService
     private lateinit var streamClient: ChatStreamClient
     private lateinit var adapter: ChatAdapter
+    private var progressJob: Job? = null
+    private var streamJob: Job? = null
+    private var activeQuestion: String? = null
 
     // Source of truth for the visible conversation (oldest first). A live streaming answer
     // is appended here as a pending row (id == 0) and grows in place until persisted.
@@ -82,6 +90,7 @@ class ChatActivity : AppCompatActivity() {
                 sendChat(text)
             }
         }
+        binding.stopButton.setOnClickListener { stopChat() }
         binding.swipeRefresh.setOnRefreshListener { loadChatHistory() }
 
         adapter = ChatAdapter(this, emptyList())
@@ -92,44 +101,44 @@ class ChatActivity : AppCompatActivity() {
 
     private fun sendChat(question: String) {
         binding.statusContainer.removeAllViews()
-        addStateBlock(binding.statusContainer, "Thinking", "Local RAG and Ollama may take a little while.", "AI")
-        binding.sendButton.isEnabled = false
+        activeQuestion = question
+        showStopButton()
         binding.questionInput.setText("")
 
         // Append the live answer row.
         val pendingIndex = messages.size
-        messages.add(pendingMessage(question, "", emptyList()))
+        messages.add(pendingMessage(question, getString(R.string.chat_progress_initial), emptyList()))
         renderMessages()
+        showChatProgress(pendingIndex, question)
 
         val answer = StringBuilder()
         var sources: List<SourceSnippet> = emptyList()
         // Ignore late stream failures after terminal frames.
         var terminal = false
 
-        scope.launch {
+        streamJob = scope.launch {
             runCatching {
                 streamClient.stream(question) { event ->
                     when (event) {
                         is ChatStreamEvent.Sources -> {
-                            binding.statusContainer.removeAllViews()
                             sources = event.sources
-                            updatePending(pendingIndex, question, answer.toString(), sources)
+                            updatePending(pendingIndex, question, getString(R.string.chat_progress_rag), sources)
                         }
                         is ChatStreamEvent.Token -> {
-                            binding.statusContainer.removeAllViews()
+                            hideChatProgress()
                             answer.append(event.text)
                             updatePending(pendingIndex, question, answer.toString(), sources)
                         }
                         is ChatStreamEvent.Done -> {
                             terminal = true
-                            binding.sendButton.isEnabled = true
+                            finishStreaming()
                             // Replace the pending row with the persisted server copy (correct
                             // id, timestamp, and stored sources) by reloading history.
                             loadChatHistory()
                         }
                         is ChatStreamEvent.Error -> {
                             terminal = true
-                            binding.sendButton.isEnabled = true
+                            finishStreaming()
                             dropPendingMessages()
                             showError(
                                 binding.statusContainer,
@@ -140,8 +149,9 @@ class ChatActivity : AppCompatActivity() {
                     }
                 }
             }.onFailure {
+                if (it is CancellationException) return@onFailure
                 if (terminal) return@onFailure
-                binding.sendButton.isEnabled = true
+                finishStreaming()
                 dropPendingMessages()
                 showError(
                     binding.statusContainer,
@@ -150,6 +160,61 @@ class ChatActivity : AppCompatActivity() {
                 )
             }
         }
+    }
+
+    private fun stopChat() {
+        val questionToRestore = activeQuestion.orEmpty()
+        streamJob?.cancel()
+        finishStreaming()
+        dropPendingMessages()
+        binding.questionInput.setText(questionToRestore)
+        binding.questionInput.setSelection(binding.questionInput.text.length)
+    }
+
+    private fun finishStreaming() {
+        hideChatProgress()
+        streamJob = null
+        activeQuestion = null
+        showSendButton()
+    }
+
+    private fun showStopButton() {
+        binding.sendButton.visibility = View.GONE
+        binding.stopButton.visibility = View.VISIBLE
+        binding.stopButton.isEnabled = true
+    }
+
+    private fun showSendButton() {
+        binding.stopButton.visibility = View.GONE
+        binding.sendButton.visibility = View.VISIBLE
+        binding.sendButton.isEnabled = true
+    }
+
+    private fun showChatProgress(pendingIndex: Int, question: String) {
+        val phases = listOf(
+            getString(R.string.chat_progress_initial),
+            getString(R.string.chat_progress_rag),
+            getString(R.string.chat_progress_stream)
+        )
+        progressJob?.cancel()
+        progressJob = scope.launch {
+            var index = 0
+            var dotCount = 0
+            while (isActive) {
+                delay(450)
+                dotCount = (dotCount + 1) % 4
+                if (dotCount == 0) {
+                    index = (index + 1) % phases.size
+                }
+                val text = phases[index].trimEnd('.') + ".".repeat(dotCount.coerceAtLeast(1))
+                updatePending(pendingIndex, question, text, emptyList())
+            }
+        }
+    }
+
+    private fun hideChatProgress() {
+        progressJob?.cancel()
+        progressJob = null
     }
 
     private fun pendingMessage(question: String, answer: String, sources: List<SourceSnippet>) =
@@ -213,6 +278,8 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        streamJob?.cancel()
+        progressJob?.cancel()
         scope.cancel()
     }
 }
