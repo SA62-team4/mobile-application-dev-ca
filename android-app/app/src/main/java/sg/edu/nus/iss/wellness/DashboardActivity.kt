@@ -16,15 +16,18 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import sg.edu.nus.iss.wellness.adapter.RecordsAdapter
 import sg.edu.nus.iss.wellness.api.ApiClient
 import sg.edu.nus.iss.wellness.api.ApiService
+import sg.edu.nus.iss.wellness.api.AccountProfileResponse
 import sg.edu.nus.iss.wellness.api.RecommendationResponse
 import sg.edu.nus.iss.wellness.api.WellnessRecordResponse
 import sg.edu.nus.iss.wellness.dashboard.DailySnapshot
+import sg.edu.nus.iss.wellness.dashboard.BodyMetricsSummary
 import sg.edu.nus.iss.wellness.dashboard.DashboardDataHelper
 import sg.edu.nus.iss.wellness.dashboard.DateRangeFilter
 import sg.edu.nus.iss.wellness.dashboard.InsightTeaser
@@ -58,6 +61,7 @@ class DashboardActivity : AppCompatActivity() {
     private var activeFilter: DateRangeFilter? = null
     private var cachedRecords: List<WellnessRecordResponse> = emptyList()
     private var cachedRecommendations: List<RecommendationResponse> = emptyList()
+    private var cachedProfile: AccountProfileResponse? = null
 
     private val recordFormLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -137,23 +141,34 @@ class DashboardActivity : AppCompatActivity() {
     private fun loadDashboard() {
         showLoading("Loading dashboard", "Fetching your latest wellness data.")
         scope.launch {
-            val records = runCatching { api.records() }.getOrElse { err ->
-                if (err is HttpException && err.code() in listOf(401, 403)) {
-                    tokenStore.clear()
-                    goToLogin()
-                } else {
-                    showFetchError("Could not load dashboard.", "Check that the backend is reachable from the emulator.")
-                }
+            val recordsDeferred = async { runCatching { api.records() } }
+            val recommendationsDeferred = async { runCatching { api.recommendations() } }
+            val profileDeferred = async { runCatching { api.profile() } }
+
+            val recordsResult = recordsDeferred.await()
+            val recommendationsResult = recommendationsDeferred.await()
+            val profileResult = profileDeferred.await()
+
+            if (isAuthFailure(recordsResult.exceptionOrNull()) || isAuthFailure(recommendationsResult.exceptionOrNull()) || isAuthFailure(profileResult.exceptionOrNull())) {
+                tokenStore.clear()
+                goToLogin()
                 return@launch
             }
-            val recommendations = runCatching { api.recommendations() }.getOrDefault(emptyList())
+
+            val records = recordsResult.getOrElse { err ->
+                showFetchError("Could not load dashboard.", "Check that the backend is reachable from the emulator.")
+                return@launch
+            }
+            val recommendations = recommendationsResult.getOrDefault(emptyList())
+            val profile = profileResult.getOrNull()
             cachedRecords = records
             cachedRecommendations = recommendations
-            renderDashboard(records, recommendations)
+            cachedProfile = profile
+            renderDashboard(records, recommendations, profile)
         }
     }
 
-    private fun renderDashboard(records: List<WellnessRecordResponse>, recommendations: List<RecommendationResponse>) {
+    private fun renderDashboard(records: List<WellnessRecordResponse>, recommendations: List<RecommendationResponse>, profile: AccountProfileResponse?) {
         showContent()
         snapshotContainer.removeAllViews()
         metricsContainer.removeAllViews()
@@ -162,6 +177,7 @@ class DashboardActivity : AppCompatActivity() {
         val aggregates = DashboardDataHelper.aggregateByDate(records)
         val snapshot = DashboardDataHelper.buildDailySnapshot(aggregates)
         val summary = DashboardDataHelper.computeWeeklySummary(aggregates)
+        val bodyMetrics = DashboardDataHelper.buildBodyMetricsSummary(aggregates, profile?.heightCm)
 
         renderSnapshotTiles(snapshot)
 
@@ -172,10 +188,14 @@ class DashboardActivity : AppCompatActivity() {
         val sleepSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.SLEEP, primaryColor)
         val actSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.ACTIVITY, greenColor)
         val moodSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.MOOD, amberColor)
+        val weightSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.WEIGHT, primaryColor)
+        val bmiSeries = DashboardDataHelper.buildBmiSparklineSeries(aggregates, profile?.heightCm, greenColor)
 
         metricsContainer.addView(buildMetricCard("Sleep", "💤", summary, sleepSeries, summary.sleepBadge, MetricType.SLEEP))
         metricsContainer.addView(buildMetricCard("Activity", "🏃", summary, actSeries, summary.activityBadge, MetricType.ACTIVITY))
         metricsContainer.addView(buildMetricCard("Mood", "😊", summary, moodSeries, summary.moodBadge, MetricType.MOOD))
+        metricsContainer.addView(buildWeightCard(bodyMetrics, weightSeries))
+        metricsContainer.addView(buildBodyMetricsCard(bodyMetrics, bmiSeries))
 
         val teaser = DashboardDataHelper.buildInsightTeaser(recommendations)
         renderInsightCard(teaser) {
@@ -297,6 +317,62 @@ class DashboardActivity : AppCompatActivity() {
         MetricType.SLEEP -> "Avg ${summary.averageSleepHours} h · ${summary.recordCount} days logged"
         MetricType.ACTIVITY -> "${summary.exerciseDays} active days · ${summary.totalExerciseMinutes} min total"
         MetricType.MOOD -> "Avg mood ${summary.averageMoodScore} / 5"
+        MetricType.WEIGHT -> "${summary.recordCount} days of recent records"
+    }
+
+    private fun buildWeightCard(summary: BodyMetricsSummary, series: SparklineDataSeries): LinearLayout {
+        val cardView = card()
+        cardView.addView(accent("⚖️  Weight"))
+
+        if (summary.latestWeightKg == null) {
+            cardView.addView(body("No weight logged yet. Add a weight value to see your trend."))
+            return cardView
+        }
+
+        cardView.addView(body("Latest ${summary.latestWeightKg} kg"))
+        summary.latestWeightDate?.let { cardView.addView(caption("Latest log $it")) }
+
+        if (series.points.isEmpty()) {
+            cardView.addView(body("Add more weight entries to see a trend line."))
+        } else {
+            cardView.addView(SparklineView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ).withBottomMargin(dp(4))
+                setData(series)
+            })
+        }
+        return cardView
+    }
+
+    private fun buildBodyMetricsCard(summary: BodyMetricsSummary, series: SparklineDataSeries): LinearLayout {
+        val cardView = card()
+        cardView.addView(accent("📏 BMI"))
+
+        if (summary.heightCm == null) {
+            cardView.addView(body("Add your height in Profile to calculate BMI."))
+            return cardView
+        }
+
+        cardView.addView(body("Height ${summary.heightCm.toInt()} cm"))
+        if (summary.latestWeightKg != null) {
+            cardView.addView(body("Latest weight ${summary.latestWeightKg} kg"))
+        }
+        if (summary.bmi == null) {
+            cardView.addView(body("Add a recent weight entry to calculate BMI."))
+        } else {
+            cardView.addView(title("BMI ${summary.bmi}", 18))
+        }
+
+        if (series.points.size >= 2) {
+            cardView.addView(SparklineView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ).withBottomMargin(dp(4))
+                setData(series)
+            })
+        }
+        return cardView
     }
 
     private fun renderInsightCard(teaser: InsightTeaser?, onTap: () -> Unit) {
@@ -387,6 +463,7 @@ class DashboardActivity : AppCompatActivity() {
             intent.putExtra(Constants.EXTRA_RECORD_ID, record.id)
             intent.putExtra(Constants.EXTRA_RECORD_DATE, record.recordDate)
             intent.putExtra(Constants.EXTRA_RECORD_SLEEP_HOURS, record.sleepHours)
+            record.weightKg?.let { intent.putExtra(Constants.EXTRA_RECORD_WEIGHT_KG, it) }
             intent.putExtra(Constants.EXTRA_RECORD_EXERCISE_TYPE, record.exerciseType)
             intent.putExtra(Constants.EXTRA_RECORD_EXERCISE_MINUTES, record.exerciseMinutes)
             intent.putExtra(Constants.EXTRA_RECORD_MOOD_SCORE, record.moodScore)
@@ -394,6 +471,8 @@ class DashboardActivity : AppCompatActivity() {
         }
         recordFormLauncher.launch(intent)
     }
+
+    private fun isAuthFailure(error: Throwable?): Boolean = error is HttpException && error.code() in listOf(401, 403)
 
     private fun confirmDelete(id: Long) {
         AlertDialog.Builder(this)

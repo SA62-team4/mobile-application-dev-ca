@@ -4,13 +4,13 @@
 
 ## Spec Metadata
 
-| Field | Value |
-| --- | --- |
-| Status | Draft baseline |
-| Controls | REQ-01, REQ-02, REQ-04 through REQ-07, REQ-10, REQ-13, REQ-23, NFR-02, NFR-04 |
-| Primary audience | Android owners, backend owners, demo owner |
-| Upstream specs | `02-specify-project-requirements.md`, `06-plan-api-contracts.md` |
-| Downstream specs | Android layouts, ViewModels, manual QA checklist |
+| Field            | Value                                                                         |
+| ---------------- | ----------------------------------------------------------------------------- |
+| Status           | Draft baseline                                                                |
+| Controls         | REQ-01, REQ-02, REQ-04 through REQ-07, REQ-10, REQ-13, REQ-23, NFR-02, NFR-04 |
+| Primary audience | Android owners, backend owners, demo owner                                    |
+| Upstream specs   | `02-specify-project-requirements.md`, `06-plan-api-contracts.md`              |
+| Downstream specs | Android layouts, ViewModels, manual QA checklist                              |
 
 ## Figma UI Specification
 
@@ -23,7 +23,7 @@ The Figma file is the visual handoff for Android XML implementation. It contains
 - `02 Auth`: login and register phone frames.
 - `03 App Screens`: dashboard, add/edit record, chatbot, recommendations, and profile phone frames.
 - `04 States`: loading, empty, error, success, and local AI waiting phone frames.
-- `05 Dashboard`: today's snapshot tiles, the Sleep/Activity/Mood metric cards with sparklines and status badges, the AI insight teaser, and the historical records list with the date-range filter chip.
+- `05 Dashboard`: today's snapshot tiles, the Sleep/Activity/Mood metric cards with interactive sparklines and status badges, the weight trend card, the BMI summary with its own trend sparkline, the AI insight teaser, and the historical records list with the date-range filter chip.
 
 The Dashboard is the authenticated landing view. It replaces the raw records list as the first tab while keeping the historical record cards rendered beneath the summary section. The data, aggregation, and threshold rules that drive these frames are defined in [Wellness Dashboard Logic](#wellness-dashboard-logic) below.
 
@@ -48,25 +48,25 @@ Use the Figma design tokens as the Android XML resource target. Resource names m
 
 ### Color Roles
 
-| Role | Figma token | Android target | Usage |
-| --- | --- | --- | --- |
-| Primary | `color/bg/primary` | `@color/primary` | Primary buttons, selected nav item, positive wellness accents |
-| Secondary | `color/bg/secondary` | `@color/secondary` | Secondary information accents |
-| App background | `color/bg/app` | `@color/bg_app` | Screen background |
-| Surface | `color/bg/surface` | `@color/bg_surface` | Cards, forms, top bar, bottom navigation |
-| Subtle surface | `color/bg/subtle` | `@color/bg_subtle` | Recommendation cards, selected states, soft wellness panels |
-| Warning | `color/bg/warning` | `@color/warning` | Caution or slow local AI notices |
-| Error | `color/bg/error` | `@color/error` | Validation and service failure states |
-| Text primary | `color/text/primary` | `@color/text_primary` | Main content text |
-| Text secondary | `color/text/secondary` | `@color/text_secondary` | Metadata, helper text, secondary copy |
-| Text on primary | `color/text/on-primary` | `@color/text_on_primary` | Text on primary/error filled buttons |
-| Border default | `color/border/default` | `@color/border_default` | Cards and text field outlines |
-| Border focus | `color/border/focus` | `@color/border_focus` | Focused text fields and selected controls |
+| Role            | Figma token             | Android target           | Usage                                                         |
+| --------------- | ----------------------- | ------------------------ | ------------------------------------------------------------- |
+| Primary         | `color/bg/primary`      | `@color/primary`         | Primary buttons, selected nav item, positive wellness accents |
+| Secondary       | `color/bg/secondary`    | `@color/secondary`       | Secondary information accents                                 |
+| App background  | `color/bg/app`          | `@color/bg_app`          | Screen background                                             |
+| Surface         | `color/bg/surface`      | `@color/bg_surface`      | Cards, forms, top bar, bottom navigation                      |
+| Subtle surface  | `color/bg/subtle`       | `@color/bg_subtle`       | Recommendation cards, selected states, soft wellness panels   |
+| Warning         | `color/bg/warning`      | `@color/warning`         | Caution or slow local AI notices                              |
+| Error           | `color/bg/error`        | `@color/error`           | Validation and service failure states                         |
+| Text primary    | `color/text/primary`    | `@color/text_primary`    | Main content text                                             |
+| Text secondary  | `color/text/secondary`  | `@color/text_secondary`  | Metadata, helper text, secondary copy                         |
+| Text on primary | `color/text/on-primary` | `@color/text_on_primary` | Text on primary/error filled buttons                          |
+| Border default  | `color/border/default`  | `@color/border_default`  | Cards and text field outlines                                 |
+| Border focus    | `color/border/focus`    | `@color/border_focus`    | Focused text fields and selected controls                     |
 | Badge excellent | `color/badge/excellent` | `@color/badge_excellent` | "Excellent" status pill on dashboard metric cards (`#2E7D32`) |
-| Badge good | `color/badge/good` | `@color/badge_good` | "Good" status pill on dashboard metric cards (`#00695C`) |
-| Badge fair | `color/badge/fair` | `@color/badge_fair` | "Fair" status pill on dashboard metric cards (`#E65100`) |
-| Metric line/bar | `color/metric/green` | `@color/metric_green` | Activity sparkline bars (`#43A047`) |
-| Metric accent | `color/metric/amber` | `@color/metric_amber` | Mood sparkline line and dots (`#FB8C00`) |
+| Badge good      | `color/badge/good`      | `@color/badge_good`      | "Good" status pill on dashboard metric cards (`#00695C`)      |
+| Badge fair      | `color/badge/fair`      | `@color/badge_fair`      | "Fair" status pill on dashboard metric cards (`#E65100`)      |
+| Metric line/bar | `color/metric/green`    | `@color/metric_green`    | Activity sparkline bars (`#43A047`)                           |
+| Metric accent   | `color/metric/amber`    | `@color/metric_amber`    | Mood sparkline line and dots (`#FB8C00`)                      |
 
 Status-badge colors map directly to the weekly-average thresholds in [Wellness Dashboard Logic](#status-badge-thresholds). "Below Target" reuses `@color/error` and "No Data" reuses `@color/text_secondary`; Sleep sparklines reuse `@color/secondary` (blue).
 
@@ -162,7 +162,6 @@ Profile --> Privacy
 ```
 
 Each authenticated screen (`DashboardActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`) is a separate `AppCompatActivity` including the same shared bottom-navigation XML bar. Tapping a bar item fires an explicit `Intent` to the corresponding Activity — there is no single "Home Shell" hosting fragments or swapped views. The Dashboard screen is the landing screen: it surfaces today's snapshot, weekly trends, and the historical records list. The AI insight teaser on the Dashboard deep-links into the Recommendations screen, and the add/edit record flow is opened from within the Dashboard's records section.
-
 
 ## Screens
 
@@ -272,15 +271,17 @@ Content, top to bottom:
 
 - **Today's snapshot**: three horizontal tiles showing today's Sleep hours, Activity minutes, and Mood score. If there is no entry for today, fall back to the most recent day's values with a "No entry today" note and the fallback date.
 - **Metric cards** for Sleep, Activity, and Mood, each with:
-  - A sparkline trend chart (Sleep blue line, Activity green bars skipping zero-exercise days, Mood amber line with dots).
+  - A sparkline trend chart (Sleep blue line, Activity green bars skipping zero-exercise days, Mood amber line with dots). Tapping or dragging a chart reveals a per-point value tooltip.
   - A weekly stat line (for example, "Avg 7.2 h · 6 days logged") over the past 7 calendar days.
   - A status badge pill (Excellent, Good, Fair, Below Target, No Data) derived from the weekly average.
+- **Weight summary**: a trend card showing recent logged weight values and the latest weight.
+- **BMI summary**: a card showing the current height from the profile, the derived BMI from the latest logged weight, and a BMI trend sparkline over the 7-day window.
 - **AI insight teaser**: a card previewing the newest recommendation (title plus excerpt truncated to 120 characters). Tapping it opens the Recommendations tab; when none exist it shows a prompt to generate one.
 - **Historical records** section: the scrollable record cards, with a `📅 Filter` action that opens a start-date then end-date picker and filters the list in memory. An active filter shows a dismissible chip to clear it.
 
 Behavior:
 
-- Loads wellness records and AI recommendations concurrently.
+- Loads wellness records, profile data, and AI recommendations concurrently.
 - Multiple records logged on the same day are consolidated for calculations (sum activity minutes, average sleep and mood).
 - Records with malformed/unparseable dates are skipped silently so the screen does not crash.
 - The date-range filter is client-side only and triggers no extra API calls.
@@ -360,6 +361,7 @@ Fields:
   on placeholder text after values are entered.
 - Date picker for record date
 - Sleep hours numeric input
+- Weight numeric input
 - Exercise type predefined spinner/drop-down list, not free text. Options: No
   exercise, Walking, Running, Cycling, Swimming, Strength training, Yoga,
   Sports, and Other.
@@ -377,6 +379,7 @@ Validation:
 
 - Date required.
 - Sleep hours between 0 and 24.
+- Weight must be positive when provided.
 - Exercise type must come from the predefined list; selecting No exercise sends
   a null/blank exercise type through the existing backend contract.
 - Exercise minutes 0 or greater.
@@ -492,11 +495,13 @@ Content:
 - Profile picture
 - Display name
 - Email
+- Height field and save action for BMI calculation
 - Privacy and data controls entry point (optional `REQ-23` / `S-03`)
 - App version or team name, optional
 
 Actions:
 
+- Save height
 - Privacy and data
 - Logout
 
@@ -507,6 +512,7 @@ Profile picture behavior:
 - Loaded with Coil (`io.coil-kt:coil`) using `CircleCropTransformation`.
 - Falls back to a placeholder avatar (`ic_profile_placeholder`) for email/password logins, when no picture URL is stored, or while the remote image loads/fails.
 - The picture, display name, email, and app-version line are center-aligned within the profile card.
+- Height is loaded from and saved to the backend profile endpoint. The Profile screen owns the current height used by dashboard BMI calculations.
 
 Logout behavior:
 
@@ -596,21 +602,24 @@ This section defines the data, aggregation, and threshold rules behind the Dashb
 
 Three cards represent Sleep, Activity, and Mood. Each shows a sparkline trend chart, a weekly stat line, and a status badge.
 
+Weight is shown as its own trend card based on recent wellness records. Height is shown in the Profile screen and used for BMI.
+
 - Sparklines are drawn with a custom Canvas view (`SparklineView`) so no external charting dependency is added:
   - Sleep: blue line chart with a dot at the latest point.
   - Activity: green bar chart that skips zero-exercise days.
   - Mood: amber line chart with dots on all logged points.
 - Weekly stat line summarizes the past 7 calendar days, for example "Avg 7.2 h · 6 days logged".
+- Sparklines are interactive: tapping or dragging along a chart highlights the nearest point and shows a compact tooltip with that day and value (unit-aware, for example "Mon 66 kg" or "Wed 3.5 /5"). Each series carries a unit suffix — hours, minutes, "/5" for mood, and "kg" for weight; BMI is unitless. While scrubbing, the chart requests that the parent scroll view not intercept the gesture.
 
 ### Status Badge Thresholds
 
 Status badges derive from the weekly averages. Comparisons are rounded to 1 decimal place to avoid floating-point edge cases (for example, an average sleep of `6.99` rounds to `7.0` and earns Good).
 
-| Metric | Excellent | Good | Fair | Below Target |
-| --- | --- | --- | --- | --- |
-| Sleep average | ≥ 8.0 h | 7.0 – 7.9 h | 6.0 – 6.9 h | < 6.0 h |
-| Active days | ≥ 5 days | 3 – 4 days | 1 – 2 days | 0 days |
-| Mood average | ≥ 4.0 | 3.0 – 3.9 | 2.0 – 2.9 | < 2.0 |
+| Metric        | Excellent | Good        | Fair        | Below Target |
+| ------------- | --------- | ----------- | ----------- | ------------ |
+| Sleep average | ≥ 8.0 h   | 7.0 – 7.9 h | 6.0 – 6.9 h | < 6.0 h      |
+| Active days   | ≥ 5 days  | 3 – 4 days  | 1 – 2 days  | 0 days       |
+| Mood average  | ≥ 4.0     | 3.0 – 3.9   | 2.0 – 2.9   | < 2.0        |
 
 Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color/badge_excellent`, Good `@color/badge_good`, Fair `@color/badge_fair`, Below Target `@color/error`, No Data `@color/text_secondary`.
 
@@ -625,6 +634,15 @@ Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color
 - A `📅 Filter` action opens a start-date then end-date `DatePickerDialog` sequence and filters the list in memory; no extra API calls are triggered.
 - When a filter is active, a dismissible chip appears to clear it. Range filtering is inclusive on both boundaries.
 
+### Body Metrics And BMI
+
+- Weight is tracked in wellness records and summarized from the recent record history.
+- Height is a profile value and is loaded from the authenticated profile endpoint.
+- BMI is derived from the latest weight and current height using the standard formula: weight in kilograms divided by height in metres squared.
+- The BMI card also renders a trend sparkline: one BMI point per weighted day over the 7-day window, computed from that day's weight and the constant profile height. The line is shown once at least two weighted days exist.
+- The BMI card uses the same white surface styling as the Sleep, Activity, Mood, and Weight cards.
+- If either weight or height is missing, the BMI card shows a friendly empty state instead of failing.
+
 ### Multi-Log Aggregation And Safety
 
 - Deduplication: when a user logs multiple records on the same day, they are consolidated for calculations — sum exercise minutes, average sleep hours, and average mood score.
@@ -633,13 +651,12 @@ Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color
 ### Implementation Notes
 
 - `DashboardDataHelper`: pure-Kotlin helper for aggregation, date grouping, badge thresholds, and date filtering. Having no Android SDK dependency, it is unit-testable on the local JVM.
-- `SparklineView`: lightweight custom `View` that overrides `onDraw` to render lines, round-rect bars, and axis labels on the native `Canvas`.
+- `SparklineView`: lightweight custom `View` that overrides `onDraw` to render lines, round-rect bars, and axis labels on the native `Canvas`. It records point positions during draw and handles touch events (`onTouchEvent`) to hit-test the nearest point and draw a value tooltip.
 - `DashboardActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`: one `AppCompatActivity` per authenticated screen, each inflating its own XML layout via View Binding. `DashboardActivity` is the landing screen and loads wellness records and recommendations concurrently.
-
 
 ### Dashboard Tests
 
-- JVM unit tests (`DashboardDataHelperTest`) cover deduplication (averaging vs. summing), defensive date parsing, rounding margins, and date-filter boundary inclusivity.
+- JVM unit tests (`DashboardDataHelperTest`) cover deduplication (averaging vs. summing), defensive date parsing, rounding margins, date-filter boundary inclusivity, BMI summary calculation, and the derived BMI sparkline series (per-day points and the empty-when-no-height case).
 - Manual checks: load under 2 seconds, graceful empty states with zero data or an offline backend, and safe multi-tab navigation.
 
 ## User Experience Rules
@@ -657,17 +674,17 @@ Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color
 
 Major workflows must have explicit visual states:
 
-| Workflow | Loading | Empty | Error | Success |
-| --- | --- | --- | --- | --- |
-| Dashboard | Loading dashboard while records and recommendations load | Empty state with prompt to add first record | Backend unreachable retry message | Snapshot, metric cards, teaser, and records render |
-| Login | Disable login button and show progress | Not applicable | Inline banner for invalid credentials or network failure | Navigate to Dashboard |
-| Register | Disable register button and show progress | Not applicable | Inline validation and friendly backend error | Success message, then Login |
-| Records | Loading records state | Empty records state with Add record action | Retry state for backend/network failure | Refreshed list after save/delete |
-| Add/Edit Record | Save in progress | Not applicable | Inline field errors and save failure message | Return to Records and refresh |
-| Chatbot | Typing/thinking indicator | Empty history with prompt suggestions | Preserve typed question and show retry message | New saved chat appears in history |
-| Recommendations | Loading existing recommendations | Empty recommendations state with Generate action | Agent/Ollama unavailable retry message | New recommendation appears at top |
-| Profile | Optional logout progress | Not applicable | Backend logout failure still allows confirmed local logout | Token cleared and Login shown |
-| Privacy | Export/delete progress | Not applicable | Export/delete failure message; expired token returns to Login | Export share sheet opens, or account deleted and Login shown |
+| Workflow        | Loading                                                  | Empty                                            | Error                                                         | Success                                                      |
+| --------------- | -------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------ |
+| Dashboard       | Loading dashboard while records and recommendations load | Empty state with prompt to add first record      | Backend unreachable retry message                             | Snapshot, metric cards, teaser, and records render           |
+| Login           | Disable login button and show progress                   | Not applicable                                   | Inline banner for invalid credentials or network failure      | Navigate to Dashboard                                        |
+| Register        | Disable register button and show progress                | Not applicable                                   | Inline validation and friendly backend error                  | Success message, then Login                                  |
+| Records         | Loading records state                                    | Empty records state with Add record action       | Retry state for backend/network failure                       | Refreshed list after save/delete                             |
+| Add/Edit Record | Save in progress                                         | Not applicable                                   | Inline field errors and save failure message                  | Return to Records and refresh                                |
+| Chatbot         | Typing/thinking indicator                                | Empty history with prompt suggestions            | Preserve typed question and show retry message                | New saved chat appears in history                            |
+| Recommendations | Loading existing recommendations                         | Empty recommendations state with Generate action | Agent/Ollama unavailable retry message                        | New recommendation appears at top                            |
+| Profile         | Optional logout progress                                 | Not applicable                                   | Backend logout failure still allows confirmed local logout    | Token cleared and Login shown                                |
+| Privacy         | Export/delete progress                                   | Not applicable                                   | Export/delete failure message; expired token returns to Login | Export share sheet opens, or account deleted and Login shown |
 
 The local AI waiting state must explain that generation can take up to a minute and must prevent duplicate chat or recommendation submissions.
 

@@ -91,6 +91,7 @@ class WellnessRecordControllerTest {
         wellnessRecord.setUser(owner);
         wellnessRecord.setRecordDate(date);
         wellnessRecord.setSleepHours(new BigDecimal("7.0"));
+        wellnessRecord.setWeightKg(new BigDecimal("65.0"));
         wellnessRecord.setExerciseType("Walking");
         wellnessRecord.setExerciseMinutes(30);
         wellnessRecord.setMoodScore(moodScore);
@@ -105,6 +106,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
             LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
+            new BigDecimal("65.0"), //WeightKg
             "Walking", //ExerciseType
             30, //ExerciseMinutes
             5, //Moodscore
@@ -146,16 +148,16 @@ class WellnessRecordControllerTest {
         LocalDate date = LocalDate.of(2026, Month.JUNE, 30);
         return Stream.of(
             Arguments.of("mood score above 5",
-                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("7.5"), "Walking", 30, 6,
+                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("7.5"), new BigDecimal("65.0"), "Walking", 30, 6,
                     "Felt good building today")),
             Arguments.of("mood score below 1",
-                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("7.5"), "Walking", 30, 0,
+                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("7.5"), new BigDecimal("65.0"), "Walking", 30, 0,
                     "Felt sad not building today")),
             Arguments.of("sleep hours above 24",
-                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("24.01"), "Walking", 30, 4,
+                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("24.01"), new BigDecimal("65.0"), "Walking", 30, 4,
                     "Rested very well after building!")),
             Arguments.of("sleep hours below 0",
-                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("-1"), "Walking", 30, 4,
+                new WellnessDtos.WellnessRecordRequest(date, new BigDecimal("-1"), new BigDecimal("65.0"), "Walking", 30, 4,
                     "Couldn't sleep at all!")));
     }
 
@@ -165,6 +167,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
             LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("8"), //SleepHours
+            new BigDecimal("65.0"), //WeightKg
             "NIL", //ExerciseType
             -1, //ExerciseMinutes
             4, //Moodscore
@@ -186,6 +189,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
             null, //RecordDate
             new BigDecimal("12"), //SleepHours
+            new BigDecimal("65.0"), //WeightKg
             "Walking", //ExerciseType
             30, //ExerciseMinutes
             4, //Moodscore
@@ -207,6 +211,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
             LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             null, //SleepHours
+            new BigDecimal("65.0"), //WeightKg
             "Walking", //ExerciseType
             30, //ExerciseMinutes
             4, //Moodscore
@@ -228,6 +233,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
             LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
+            new BigDecimal("65.0"), //WeightKg
             "Walking", //ExerciseType
             30, //ExerciseMinutes
             null, //Moodscore
@@ -249,6 +255,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
             LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
+            new BigDecimal("65.0"), //WeightKg
             "Walking", //ExerciseType
             null, //ExerciseMinutes
             4, //Moodscore
@@ -270,6 +277,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
             LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("0.0"), //SleepHours (lower bound)
+            new BigDecimal("65.0"), //WeightKg
             "Walking", //ExerciseType
             0, //ExerciseMinutes (lower bound)
             1, //Moodscore (lower bound)
@@ -293,6 +301,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
             LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("24.0"), //SleepHours (upper bound)
+            new BigDecimal("65.0"), //WeightKg
             "Walking", //ExerciseType
             120, //ExerciseMinutes
             5, //Moodscore (upper bound)
@@ -315,6 +324,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
             LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
+            new BigDecimal("65.0"), //WeightKg
             null, //ExerciseType (optional)
             30, //ExerciseMinutes
             4, //Moodscore
@@ -337,6 +347,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
             LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
+            new BigDecimal("65.0"), //WeightKg
             "Walking", //ExerciseType
             30, //ExerciseMinutes
             5, //Moodscore
@@ -357,6 +368,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest(
             LocalDate.of(2026, Month.JUNE, 30),
             new BigDecimal("7.5"),
+            new BigDecimal("65.0"),
             "Walking",
             30,
             5,
@@ -380,6 +392,7 @@ class WellnessRecordControllerTest {
         var newEntryDetails = new WellnessDtos.WellnessRecordRequest (
             LocalDate.of(2026, Month.JUNE, 30), //RecordDate
             new BigDecimal("7.5"), //SleepHours
+            new BigDecimal("65.0"), //WeightKg
             "Taking over the world", //ExerciseType
             30, //ExerciseMinutes
             5, //Moodscore
@@ -498,7 +511,7 @@ class WellnessRecordControllerTest {
         WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, Month.JUNE, 30), 3);
 
         var changes = new WellnessDtos.WellnessRecordRequest(
-                LocalDate.of(2026, Month.JUNE, 30), new BigDecimal("8.0"), "Running", 45, 5, "Good day!");
+            LocalDate.of(2026, Month.JUNE, 30), new BigDecimal("8.0"), new BigDecimal("65.0"), "Running", 45, 5, "Good day!");
 
         mockMvc.perform(put("/api/wellness-records/{id}", seededBob.getId())
                         .header("Authorization", "Bearer " + token)
@@ -521,7 +534,7 @@ class WellnessRecordControllerTest {
         WellnessRecord seededBob = seedRecord(testUser, LocalDate.of(2026, Month.JUNE, 30), 3);
 
         var moodScoreChange = new WellnessDtos.WellnessRecordRequest(
-                LocalDate.of(2026, Month.JUNE, 30), new BigDecimal("8.0"), "Running", 45, 10, "Best day ever!");
+            LocalDate.of(2026, Month.JUNE, 30), new BigDecimal("8.0"), new BigDecimal("65.0"), "Running", 45, 10, "Best day ever!");
 
         mockMvc.perform(put("/api/wellness-records/{id}", seededBob.getId())
                         .header("Authorization", "Bearer " + token)
@@ -545,7 +558,7 @@ class WellnessRecordControllerTest {
         WellnessRecord seededGru = seedRecord(testUser2, LocalDate.of(2026, Month.JULY, 1), 5);
 
         var moodScoreChange = new WellnessDtos.WellnessRecordRequest(
-                LocalDate.of(2026, Month.JUNE, 30), new BigDecimal("8.0"), "Running", 45, 3, "Best day ever!");
+            LocalDate.of(2026, Month.JUNE, 30), new BigDecimal("8.0"), new BigDecimal("65.0"), "Running", 45, 3, "Best day ever!");
 
         mockMvc.perform(put("/api/wellness-records/{id}", seededGru.getId())
                     .header("Authorization", "Bearer " + token)
