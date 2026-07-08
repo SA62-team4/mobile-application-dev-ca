@@ -103,6 +103,8 @@ Unit or instrumentation tests should cover:
 - Login form validation.
 - Register form validation.
 - Wellness record form validation.
+- Wellness record exercise type is selected from the predefined list rather than
+  entered as free text.
 - API client attaches JWT after login.
 - Logout clears local JWT.
 

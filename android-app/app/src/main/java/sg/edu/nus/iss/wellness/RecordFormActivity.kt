@@ -5,6 +5,7 @@ import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.MainScope
@@ -52,13 +53,19 @@ class RecordFormActivity : AppCompatActivity() {
 
         binding.titleText.text = if (isEdit) "Edit record" else "Add record"
         binding.deleteButton.visibility = if (isEdit) View.VISIBLE else View.GONE
+        setupExerciseTypeSpinner()
 
         selectedDate = runCatching {
             LocalDate.parse(intent.getStringExtra(Constants.EXTRA_RECORD_DATE))
         }.getOrDefault(LocalDate.now())
         binding.dateInput.setText(selectedDate.toString())
         binding.sleepInput.setText(intent.getDoubleExtra(Constants.EXTRA_RECORD_SLEEP_HOURS, 7.0).toString())
-        binding.exerciseTypeInput.setText(intent.getStringExtra(Constants.EXTRA_RECORD_EXERCISE_TYPE) ?: "Walking")
+        val exerciseType = if (isEdit) {
+            intent.getStringExtra(Constants.EXTRA_RECORD_EXERCISE_TYPE)
+        } else {
+            "Walking"
+        }
+        binding.exerciseTypeInput.setSelection(ExerciseTypeOptions.selectedIndexFor(exerciseType))
         binding.exerciseMinutesInput.setText(intent.getIntExtra(Constants.EXTRA_RECORD_EXERCISE_MINUTES, 20).toString())
         binding.moodInput.setText(intent.getIntExtra(Constants.EXTRA_RECORD_MOOD_SCORE, 3).toString())
         binding.notesInput.setText(intent.getStringExtra(Constants.EXTRA_RECORD_NOTES) ?: "")
@@ -67,6 +74,17 @@ class RecordFormActivity : AppCompatActivity() {
         binding.saveButton.setOnClickListener { save() }
         binding.deleteButton.setOnClickListener { confirmDelete() }
         binding.cancelButton.setOnClickListener { finish() }
+    }
+
+    private fun setupExerciseTypeSpinner() {
+        ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            ExerciseTypeOptions.options
+        ).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            binding.exerciseTypeInput.adapter = adapter
+        }
     }
 
     private fun showDatePicker() {
@@ -137,7 +155,7 @@ class RecordFormActivity : AppCompatActivity() {
         return WellnessRecordRequest(
             recordDate = selectedDate.toString(),
             sleepHours = sleepHours!!,
-            exerciseType = binding.exerciseTypeInput.text.toString().trim().ifBlank { null },
+            exerciseType = ExerciseTypeOptions.requestValueAt(binding.exerciseTypeInput.selectedItemPosition),
             exerciseMinutes = exerciseMinutes!!,
             moodScore = moodScore!!,
             notes = binding.notesInput.text.toString().trim().ifBlank { null }
@@ -155,6 +173,7 @@ class RecordFormActivity : AppCompatActivity() {
         binding.saveButton.isEnabled = !saving
         binding.deleteButton.isEnabled = !saving
         binding.cancelButton.isEnabled = !saving
+        binding.exerciseTypeInput.isEnabled = !saving
     }
 
     private fun confirmDelete() {

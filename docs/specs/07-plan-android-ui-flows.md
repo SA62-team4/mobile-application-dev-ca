@@ -356,9 +356,13 @@ States:
 
 Fields:
 
+- Every field shows a visible label above its input so users do not have to rely
+  on placeholder text after values are entered.
 - Date picker for record date
 - Sleep hours numeric input
-- Exercise type text input or simple spinner
+- Exercise type predefined spinner/drop-down list, not free text. Options: No
+  exercise, Walking, Running, Cycling, Swimming, Strength training, Yoga,
+  Sports, and Other.
 - Exercise minutes numeric input
 - Mood score selector from 1 to 5
 - Notes multiline text
@@ -373,6 +377,8 @@ Validation:
 
 - Date required.
 - Sleep hours between 0 and 24.
+- Exercise type must come from the predefined list; selecting No exercise sends
+  a null/blank exercise type through the existing backend contract.
 - Exercise minutes 0 or greater.
 - Mood score between 1 and 5.
 - Notes optional.
