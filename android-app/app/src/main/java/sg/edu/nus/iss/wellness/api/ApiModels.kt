@@ -14,6 +14,7 @@ data class LoginResponse(val token: String, val tokenType: String, val expiresIn
 data class WellnessRecordRequest(
     val recordDate: String,
     val sleepHours: Double,
+    val weightKg: Double?,
     val exerciseType: String?,
     val exerciseMinutes: Int,
     val moodScore: Int,
@@ -24,6 +25,7 @@ data class WellnessRecordResponse(
     val id: Long,
     val recordDate: String,
     val sleepHours: Double,
+    val weightKg: Double?,
     val exerciseType: String?,
     val exerciseMinutes: Int,
     val moodScore: Int,
@@ -31,6 +33,16 @@ data class WellnessRecordResponse(
     val createdAt: String?,
     val updatedAt: String?
 )
+
+data class AccountProfileResponse(
+    val id: Long,
+    val displayName: String,
+    val email: String,
+    val heightCm: Double?,
+    val createdAt: String?
+)
+
+data class AccountProfileUpdateRequest(val heightCm: Double?)
 
 data class DeleteAccountRequest(val password: String?)
 

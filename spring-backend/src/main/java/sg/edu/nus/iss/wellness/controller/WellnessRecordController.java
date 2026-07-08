@@ -82,6 +82,10 @@ public class WellnessRecordController {
     private void apply(WellnessRecord wellnessRecord, WellnessDtos.WellnessRecordRequest request) {
         wellnessRecord.setRecordDate(request.recordDate());
         wellnessRecord.setSleepHours(request.sleepHours());
+        if (request.weightKg() != null && request.weightKg().signum() <= 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Weight must be positive");
+        }
+        wellnessRecord.setWeightKg(request.weightKg());
         wellnessRecord.setExerciseType(request.exerciseType());
         wellnessRecord.setExerciseMinutes(request.exerciseMinutes());
         wellnessRecord.setMoodScore(request.moodScore());

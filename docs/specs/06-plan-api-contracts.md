@@ -4,12 +4,12 @@
 
 ## Spec Metadata
 
-| Field | Value |
-| --- | --- |
-| Status | Draft baseline |
-| Controls | REQ-02 through REQ-13, REQ-23, NFR-01, NFR-02 |
-| Primary audience | Backend, Android, Python AI service, test owners |
-| Upstream specs | `04-plan-system-architecture.md`, `05-plan-backend-data-model-erd.md` |
+| Field            | Value                                                                         |
+| ---------------- | ----------------------------------------------------------------------------- |
+| Status           | Draft baseline                                                                |
+| Controls         | REQ-02 through REQ-13, REQ-23, NFR-01, NFR-02                                 |
+| Primary audience | Backend, Android, Python AI service, test owners                              |
+| Upstream specs   | `04-plan-system-architecture.md`, `05-plan-backend-data-model-erd.md`         |
 | Downstream specs | Android implementation, backend implementation, Python service clients, tests |
 
 ## API Principles
@@ -182,6 +182,51 @@ Validation:
 - Email is required and unique.
 - Password is required and should be at least 8 characters.
 - Display name is required.
+
+### Account Profile
+
+`GET /api/account/profile`
+
+Returns the authenticated user's profile fields needed by the Profile screen and BMI calculation.
+
+Response `200 OK`:
+
+```json
+{
+  "id": 1,
+  "displayName": "Asha Tan",
+  "email": "asha@example.com",
+  "heightCm": 170,
+  "createdAt": "2026-07-01T10:30:00Z"
+}
+```
+
+`PUT /api/account/profile`
+
+Request:
+
+```json
+{
+  "heightCm": 170
+}
+```
+
+Response `200 OK`:
+
+```json
+{
+  "id": 1,
+  "displayName": "Asha Tan",
+  "email": "asha@example.com",
+  "heightCm": 170,
+  "createdAt": "2026-07-01T10:30:00Z"
+}
+```
+
+Validation:
+
+- Height is optional, but when provided it must be positive.
+- Only the authenticated owner may read or update the profile.
 
 ### Login
 
@@ -377,6 +422,7 @@ Request:
 {
   "recordDate": "2026-07-01",
   "sleepHours": 7.5,
+  "weightKg": 65.4,
   "exerciseType": "Walking",
   "exerciseMinutes": 30,
   "moodScore": 4,
@@ -391,6 +437,7 @@ Response `201 Created`:
   "id": 10,
   "recordDate": "2026-07-01",
   "sleepHours": 7.5,
+  "weightKg": 65.4,
   "exerciseType": "Walking",
   "exerciseMinutes": 30,
   "moodScore": 4,
@@ -412,6 +459,7 @@ Response `200 OK`:
     "id": 10,
     "recordDate": "2026-07-01",
     "sleepHours": 7.5,
+    "weightKg": 65.4,
     "exerciseType": "Walking",
     "exerciseMinutes": 30,
     "moodScore": 4,

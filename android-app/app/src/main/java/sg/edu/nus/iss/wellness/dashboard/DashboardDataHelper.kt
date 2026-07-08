@@ -22,6 +22,7 @@ data class DailySnapshot(
 data class DayAggregate(
     val date: LocalDate,
     val sleepHours: Double,
+    val weightKg: Double?,
     val exerciseMinutes: Int,
     val moodScore: Double,
     val hasData: Boolean = true
@@ -48,14 +49,23 @@ enum class MetricBadge(val displayText: String, val colorHex: String) {
 
 enum class SparklineMode { LINE, BAR }
 
-enum class MetricType { SLEEP, ACTIVITY, MOOD }
+enum class MetricType { SLEEP, ACTIVITY, MOOD, WEIGHT }
+
+data class BodyMetricsSummary(
+    val latestWeightKg: Double?,
+    val latestWeightDate: LocalDate?,
+    val heightCm: Double?,
+    val bmi: Double?
+)
 
 data class SparklineDataSeries(
     val points: List<Float>,
     val dates: List<String>,
     val mode: SparklineMode,
     val color: Int,
-    val dotsAtAllPoints: Boolean = false
+    val dotsAtAllPoints: Boolean = false,
+    /** Unit shown after a value when a point is tapped, e.g. " kg" or " /5". */
+    val valueSuffix: String = ""
 )
 
 data class InsightTeaser(
@@ -82,9 +92,11 @@ object DashboardDataHelper {
 
         return grouped.entries.map { (date, pairs) ->
             val recs = pairs.map { it.second }
+            val weights = recs.mapNotNull { it.weightKg }
             DayAggregate(
                 date = date,
                 sleepHours = round1dp(recs.map { it.sleepHours }.average()),
+                weightKg = weights.takeIf { it.isNotEmpty() }?.let { round1dp(it.average()) },
                 exerciseMinutes = recs.sumOf { it.exerciseMinutes },
                 moodScore = round1dp(recs.map { it.moodScore.toDouble() }.average())
             )
@@ -151,22 +163,78 @@ object DashboardDataHelper {
         val week = aggregates.filter { !it.date.isBefore(weekAgo) && !it.date.isAfter(today) }
 
         val mode = if (metricType == MetricType.ACTIVITY) SparklineMode.BAR else SparklineMode.LINE
-        val points = week.map { agg ->
-            when (metricType) {
-                MetricType.SLEEP -> agg.sleepHours.toFloat()
-                MetricType.ACTIVITY -> agg.exerciseMinutes.toFloat()
-                MetricType.MOOD -> agg.moodScore.toFloat()
+        val plotted = if (metricType == MetricType.WEIGHT) {
+            week.mapNotNull { agg -> agg.weightKg?.let { agg.date to it } }
+        } else {
+            week.map { agg ->
+                val value = when (metricType) {
+                    MetricType.SLEEP -> agg.sleepHours
+                    MetricType.ACTIVITY -> agg.exerciseMinutes.toDouble()
+                    MetricType.MOOD -> agg.moodScore
+                    MetricType.WEIGHT -> error("Weight is handled above")
+                }
+                agg.date to value
             }
         }
-        val dates = week.map { agg ->
-            agg.date.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
+        val points = plotted.map { it.second.toFloat() }
+        val dates = plotted.map { agg ->
+            agg.first.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
         }
         return SparklineDataSeries(
             points = points,
             dates = dates,
             mode = mode,
             color = color,
-            dotsAtAllPoints = metricType == MetricType.MOOD
+            dotsAtAllPoints = metricType == MetricType.MOOD || metricType == MetricType.WEIGHT,
+            valueSuffix = when (metricType) {
+                MetricType.SLEEP -> " h"
+                MetricType.ACTIVITY -> " min"
+                MetricType.MOOD -> " /5"
+                MetricType.WEIGHT -> " kg"
+            }
+        )
+    }
+
+    /** Builds a 7-day BMI sparkline from weighted days and the constant profile height. */
+    fun buildBmiSparklineSeries(
+        aggregates: List<DayAggregate>,
+        heightCm: Double?,
+        color: Int
+    ): SparklineDataSeries {
+        val today = LocalDate.now()
+        val weekAgo = today.minusDays(6)
+        val week = aggregates.filter { !it.date.isBefore(weekAgo) && !it.date.isAfter(today) }
+
+        val heightM = heightCm?.takeIf { it > 0.0 }?.div(100.0)
+        val plotted = if (heightM == null) {
+            emptyList()
+        } else {
+            week.mapNotNull { agg -> agg.weightKg?.let { agg.date to round1dp(it / (heightM * heightM)) } }
+        }
+        return SparklineDataSeries(
+            points = plotted.map { it.second.toFloat() },
+            dates = plotted.map { it.first.dayOfWeek.name.take(3).lowercase().replaceFirstChar { c -> c.uppercase() } },
+            mode = SparklineMode.LINE,
+            color = color,
+            dotsAtAllPoints = true
+        )
+    }
+
+    /** Summarises the latest weight and derived BMI from the profile height. */
+    fun buildBodyMetricsSummary(aggregates: List<DayAggregate>, heightCm: Double?): BodyMetricsSummary {
+        val latest = aggregates.lastOrNull()
+        val latestWeight = latest?.weightKg
+        val bmi = if (latestWeight != null && heightCm != null && heightCm > 0.0) {
+            val heightM = heightCm / 100.0
+            round1dp(latestWeight / (heightM * heightM))
+        } else {
+            null
+        }
+        return BodyMetricsSummary(
+            latestWeightKg = latestWeight,
+            latestWeightDate = latest?.date,
+            heightCm = heightCm,
+            bmi = bmi
         )
     }
 

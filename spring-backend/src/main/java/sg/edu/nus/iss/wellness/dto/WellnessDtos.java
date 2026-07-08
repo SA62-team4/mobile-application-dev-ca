@@ -28,6 +28,9 @@ import jakarta.validation.constraints.NotNull;
             @DecimalMax(value = "24.0", message = "must be between 0 and 24")
             BigDecimal sleepHours,
 
+            @DecimalMin(value = "0.0", inclusive = false, message = "must be positive")
+            BigDecimal weightKg,
+
             String exerciseType,
 
             @NotNull(message = "is required")
@@ -47,6 +50,7 @@ import jakarta.validation.constraints.NotNull;
             Long id,
             LocalDate recordDate,
             BigDecimal sleepHours,
+            BigDecimal weightKg,
             String exerciseType,
             Integer exerciseMinutes,
             Integer moodScore,

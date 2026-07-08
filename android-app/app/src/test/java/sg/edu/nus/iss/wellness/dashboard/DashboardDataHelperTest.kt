@@ -20,6 +20,7 @@ class DashboardDataHelperTest {
         id: Long = 1,
         date: String = LocalDate.now().toString(),
         sleep: Double = 7.0,
+        weight: Double? = 65.0,
         exMin: Int = 30,
         mood: Int = 3,
         notes: String? = null
@@ -27,6 +28,7 @@ class DashboardDataHelperTest {
         id = id,
         recordDate = date,
         sleepHours = sleep,
+        weightKg = weight,
         exerciseType = "Walking",
         exerciseMinutes = exMin,
         moodScore = mood,
@@ -47,6 +49,7 @@ class DashboardDataHelperTest {
         assertEquals(1, aggregates.size)
         val agg = aggregates.first()
         assertEquals(7.0, agg.sleepHours, 0.01)   // (6+8)/2 = 7.0
+        assertEquals(65.0, agg.weightKg!!, 0.01)     // (65+65)/2 = 65.0
         assertEquals(60, agg.exerciseMinutes)       // 20+40
         assertEquals(3.0, agg.moodScore, 0.01)     // (2+4)/2 = 3.0
     }
@@ -61,8 +64,22 @@ class DashboardDataHelperTest {
         assertEquals(1, aggregates.size)
         val agg = aggregates.first()
         assertEquals(7.0, agg.sleepHours, 0.01)   // (6+8)/2
+        assertEquals(65.0, agg.weightKg!!, 0.01)
         assertEquals(60, agg.exerciseMinutes)       // 10+50
         assertEquals(3.0, agg.moodScore, 0.01)     // (2+4)/2
+    }
+
+    @Test
+    fun `same day weight logs are averaged for dashboard trend`() {
+        val today = LocalDate.now().toString()
+        val aggregates = DashboardDataHelper.aggregateByDate(
+            listOf(
+                record(id = 1, date = today, weight = 64.0),
+                record(id = 2, date = today, weight = 66.0)
+            )
+        )
+        assertEquals(1, aggregates.size)
+        assertEquals(65.0, aggregates.first().weightKg!!, 0.01)
     }
 
     // Verifies malformed dates are skipped without failing the aggregation process
@@ -159,5 +176,54 @@ class DashboardDataHelperTest {
         }
         val summary = DashboardDataHelper.computeWeeklySummary(DashboardDataHelper.aggregateByDate(records))
         assertEquals(MetricBadge.GOOD, summary.moodBadge)
+    }
+
+    @Test
+    fun `body metrics summary calculates bmi from latest weight and height`() {
+        val today = LocalDate.now()
+        val aggregates = DashboardDataHelper.aggregateByDate(
+            listOf(
+                record(id = 1, date = today.minusDays(1).toString(), weight = 64.0),
+                record(id = 2, date = today.toString(), weight = 66.0)
+            )
+        )
+
+        val summary = DashboardDataHelper.buildBodyMetricsSummary(aggregates, 170.0)
+
+        assertNotNull(summary.latestWeightKg)
+        assertEquals(66.0, summary.latestWeightKg!!, 0.01)
+        assertEquals(170.0, summary.heightCm!!, 0.01)
+        assertEquals(22.8, summary.bmi!!, 0.1)
+    }
+
+    // BMI sparkline plots one point per weighted day, derived from the constant height
+    @Test
+    fun `bmi sparkline series derives a point per weighted day from height`() {
+        val today = LocalDate.now()
+        val aggregates = DashboardDataHelper.aggregateByDate(
+            listOf(
+                record(id = 1, date = today.minusDays(1).toString(), weight = 64.0),
+                record(id = 2, date = today.toString(), weight = 66.0)
+            )
+        )
+
+        val series = DashboardDataHelper.buildBmiSparklineSeries(aggregates, 170.0, 0)
+
+        assertEquals(2, series.points.size)
+        assertEquals(22.1f, series.points[0], 0.1f)
+        assertEquals(22.8f, series.points[1], 0.1f)
+    }
+
+    // Without a height there is no way to compute BMI, so the series stays empty
+    @Test
+    fun `bmi sparkline series is empty when height is missing`() {
+        val today = LocalDate.now()
+        val aggregates = DashboardDataHelper.aggregateByDate(
+            listOf(record(id = 1, date = today.toString(), weight = 66.0))
+        )
+
+        val series = DashboardDataHelper.buildBmiSparklineSeries(aggregates, null, 0)
+
+        assertTrue(series.points.isEmpty())
     }
 }
