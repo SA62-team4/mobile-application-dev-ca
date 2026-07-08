@@ -60,6 +60,8 @@ class RecordFormActivity : AppCompatActivity() {
         }.getOrDefault(LocalDate.now())
         binding.dateInput.setText(selectedDate.toString())
         binding.sleepInput.setText(intent.getDoubleExtra(Constants.EXTRA_RECORD_SLEEP_HOURS, 7.0).toString())
+        val weightKg = intent.getDoubleExtra(Constants.EXTRA_RECORD_WEIGHT_KG, Double.NaN)
+        binding.weightInput.setText(if (weightKg.isNaN()) "" else weightKg.toString())
         val exerciseType = if (isEdit) {
             intent.getStringExtra(Constants.EXTRA_RECORD_EXERCISE_TYPE)
         } else {
@@ -129,6 +131,7 @@ class RecordFormActivity : AppCompatActivity() {
         val dateText = binding.dateInput.text.toString().trim()
         val parsedDate = runCatching { LocalDate.parse(dateText) }.getOrNull()
         val sleepHours = binding.sleepInput.text.toString().trim().toDoubleOrNull()
+        val weightKg = binding.weightInput.text.toString().trim().takeIf { it.isNotEmpty() }?.toDoubleOrNull()
         val exerciseMinutes = binding.exerciseMinutesInput.text.toString().trim().toIntOrNull()
         val moodScore = binding.moodInput.text.toString().trim().toIntOrNull()
 
@@ -139,6 +142,10 @@ class RecordFormActivity : AppCompatActivity() {
         }
         if (sleepHours == null || sleepHours < 0.0 || sleepHours > 24.0) {
             binding.sleepInput.error = "Sleep hours must be 0-24."
+            valid = false
+        }
+        if (weightKg != null && weightKg <= 0.0) {
+            binding.weightInput.error = "Weight must be greater than 0."
             valid = false
         }
         if (exerciseMinutes == null || exerciseMinutes < 0) {
@@ -155,6 +162,7 @@ class RecordFormActivity : AppCompatActivity() {
         return WellnessRecordRequest(
             recordDate = selectedDate.toString(),
             sleepHours = sleepHours!!,
+            weightKg = weightKg,
             exerciseType = ExerciseTypeOptions.requestValueAt(binding.exerciseTypeInput.selectedItemPosition),
             exerciseMinutes = exerciseMinutes!!,
             moodScore = moodScore!!,
@@ -165,6 +173,7 @@ class RecordFormActivity : AppCompatActivity() {
     private fun clearErrors() {
         binding.dateInput.error = null
         binding.sleepInput.error = null
+        binding.weightInput.error = null
         binding.exerciseMinutesInput.error = null
         binding.moodInput.error = null
     }

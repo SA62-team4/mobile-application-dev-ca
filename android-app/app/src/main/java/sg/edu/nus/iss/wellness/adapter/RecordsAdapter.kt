@@ -44,7 +44,8 @@ class RecordsAdapter(
 
         val record = items[position]
         holder.date.text = record.recordDate
-        holder.summary.text = "Sleep ${record.sleepHours}h | ${record.exerciseType ?: "No exercise"} ${record.exerciseMinutes}min | Mood ${record.moodScore}/5"
+        val weightPart = record.weightKg?.let { " | Weight ${it}kg" }.orEmpty()
+        holder.summary.text = "Sleep ${record.sleepHours}h${weightPart} | ${record.exerciseType ?: "No exercise"} ${record.exerciseMinutes}min | Mood ${record.moodScore}/5"
         holder.notes.text = record.notes.orEmpty().ifBlank { "No notes added." }
         holder.editButton.setOnClickListener { onEdit(record) }
         holder.deleteButton.setOnClickListener { onDelete(record) }

@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +67,7 @@ class AccountControllerTest {
         user.setEmail("dana@example.com");
         user.setPasswordHash(passwordEncoder.encode(PASSWORD));
         user.setDisplayName("Dana");
+        user.setHeightCm(new BigDecimal("170.0"));
         user = users.save(user);
         token = jwtService.generateToken(user);
     }
@@ -130,6 +132,7 @@ class AccountControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.profile.email").value("dana@example.com"))
                 .andExpect(jsonPath("$.profile.displayName").value("Dana"))
+            .andExpect(jsonPath("$.profile.heightCm").value(170.0))
                 .andExpect(jsonPath("$.wellnessRecords.length()").value(1))
                 .andExpect(jsonPath("$.recommendations.length()").value(1))
                 .andExpect(jsonPath("$.chatMessages.length()").value(1))
@@ -165,6 +168,28 @@ class AccountControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.profile.email").value("google-user@example.com"))
                 .andExpect(jsonPath("$.wellnessRecords.length()").value(1));
+    }
+
+    @Test
+    void profile_returnsCurrentHeight() throws Exception {
+        mockMvc.perform(get("/api/account/profile").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("dana@example.com"))
+                .andExpect(jsonPath("$.heightCm").value(170.0));
+    }
+
+    @Test
+    void profile_updatePersistsHeight() throws Exception {
+        var body = new AccountDtos.ProfileUpdateRequest(new BigDecimal("172.5"));
+
+        mockMvc.perform(put("/api/account/profile")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.heightCm").value(172.5));
+
+        assertThat(users.findById(user.getId()).orElseThrow().getHeightCm()).isEqualByComparingTo(new BigDecimal("172.5"));
     }
 
     // --- DEACTIVATE + REACTIVATE ---

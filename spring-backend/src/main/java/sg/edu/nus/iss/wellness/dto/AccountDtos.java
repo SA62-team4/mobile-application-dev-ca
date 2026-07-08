@@ -20,8 +20,15 @@ public final class AccountDtos {
             Long id,
             String email,
             String displayName,
+            java.math.BigDecimal heightCm,
             String role,
             Instant createdAt
+    ) {
+    }
+
+    /** Profile update payload for the authenticated owner. */
+    public record ProfileUpdateRequest(
+            java.math.BigDecimal heightCm
     ) {
     }
 

@@ -1,6 +1,7 @@
 package sg.edu.nus.iss.wellness.model;
 
 import java.time.Instant;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
@@ -39,6 +40,9 @@ public class AppUser implements UserDetails {
 
     @Column(nullable = false, name = "display_name")
     private String displayName;
+
+    @Column(name = "height_cm", precision = 5, scale = 1)
+    private BigDecimal heightCm;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
@@ -95,6 +99,14 @@ public class AppUser implements UserDetails {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public BigDecimal getHeightCm() {
+        return heightCm;
+    }
+
+    public void setHeightCm(BigDecimal heightCm) {
+        this.heightCm = heightCm;
     }
 
     public Role getRole() {

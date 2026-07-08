@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -74,10 +75,7 @@ public class AccountController {
     @GetMapping("/export")
     public ResponseEntity<AccountDtos.AccountExport> export() {
         AppUser user = currentUserService.requireCurrentUser();
-
-        AccountDtos.UserProfile profile = new AccountDtos.UserProfile(
-                user.getId(), user.getEmail(), user.getDisplayName(),
-                user.getRole() == null ? null : user.getRole().name(), user.getCreatedAt());
+        AccountDtos.UserProfile profile = profileOf(user);
 
         var records = wellnessRecords.findByUserOrderByRecordDateDesc(user).stream()
                 .map(DtoMapper::wellness).toList();
@@ -97,6 +95,22 @@ public class AccountController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(body);
+    }
+
+    @GetMapping("/profile")
+    public AccountDtos.UserProfile profile() {
+        return profileOf(currentUserService.requireCurrentUser());
+    }
+
+    @PutMapping("/profile")
+    @Transactional
+    public AccountDtos.UserProfile updateProfile(@Valid @RequestBody AccountDtos.ProfileUpdateRequest request) {
+        AppUser user = currentUserService.requireCurrentUser();
+        if (request.heightCm() != null && request.heightCm().signum() <= 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Height must be positive");
+        }
+        user.setHeightCm(request.heightCm());
+        return profileOf(users.save(user));
     }
 
     @PostMapping("/deactivate")
@@ -138,5 +152,15 @@ public class AccountController {
         recommendations.deleteByUser(user);
         wellnessRecords.deleteByUser(user);
         users.delete(user);
+    }
+
+    private AccountDtos.UserProfile profileOf(AppUser user) {
+        return new AccountDtos.UserProfile(
+                user.getId(),
+                user.getEmail(),
+                user.getDisplayName(),
+                user.getHeightCm(),
+                user.getRole() == null ? null : user.getRole().name(),
+                user.getCreatedAt());
     }
 }

@@ -20,12 +20,20 @@
     <string name="action_edit">Edit</string>
     <string name="action_delete">Delete</string>
 
+    <!-- Profile -->
+    <string name="label_height_cm">Height (cm)</string>
+    <string name="hint_height_cm">Example: 170</string>
+    <string name="action_save_height">Save height</string>
+
     <!-- Record form labels -->
     <string name="label_record_date">Record date</string>
     <string name="hint_pick_date">Tap to pick date</string>
 
     <string name="label_sleep_hours">Sleep hours (0–24)</string>
     <string name="hint_sleep_hours">Example: 7.5</string>
+
+    <string name="label_weight_kg">Weight (kg)</string>
+    <string name="hint_weight_kg">Optional: 65.4</string>
 
     <string name="label_exercise_type">Exercise type</string>
     <string name="hint_exercise_type">Choose exercise type</string>
@@ -42,6 +50,7 @@
     <!-- Record form messages -->
     <string name="record_date_required">Record date is required</string>
     <string name="error_sleep_range">Sleep hours must be 0–24</string>
+    <string name="error_weight_positive">Weight must be greater than 0</string>
     <string name="error_exercise_minutes">Exercise minutes must be 0 or more</string>
     <string name="error_mood_range">Mood score must be 1–5</string>
     <string name="toast_record_saved">Record saved</string>
