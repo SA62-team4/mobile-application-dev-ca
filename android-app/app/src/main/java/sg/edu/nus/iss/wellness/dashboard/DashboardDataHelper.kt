@@ -63,7 +63,9 @@ data class SparklineDataSeries(
     val dates: List<String>,
     val mode: SparklineMode,
     val color: Int,
-    val dotsAtAllPoints: Boolean = false
+    val dotsAtAllPoints: Boolean = false,
+    /** Unit shown after a value when a point is tapped, e.g. " kg" or " /5". */
+    val valueSuffix: String = ""
 )
 
 data class InsightTeaser(
@@ -183,7 +185,38 @@ object DashboardDataHelper {
             dates = dates,
             mode = mode,
             color = color,
-            dotsAtAllPoints = metricType == MetricType.MOOD || metricType == MetricType.WEIGHT
+            dotsAtAllPoints = metricType == MetricType.MOOD || metricType == MetricType.WEIGHT,
+            valueSuffix = when (metricType) {
+                MetricType.SLEEP -> " h"
+                MetricType.ACTIVITY -> " min"
+                MetricType.MOOD -> " /5"
+                MetricType.WEIGHT -> " kg"
+            }
+        )
+    }
+
+    /** Builds a 7-day BMI sparkline from weighted days and the constant profile height. */
+    fun buildBmiSparklineSeries(
+        aggregates: List<DayAggregate>,
+        heightCm: Double?,
+        color: Int
+    ): SparklineDataSeries {
+        val today = LocalDate.now()
+        val weekAgo = today.minusDays(6)
+        val week = aggregates.filter { !it.date.isBefore(weekAgo) && !it.date.isAfter(today) }
+
+        val heightM = heightCm?.takeIf { it > 0.0 }?.div(100.0)
+        val plotted = if (heightM == null) {
+            emptyList()
+        } else {
+            week.mapNotNull { agg -> agg.weightKg?.let { agg.date to round1dp(it / (heightM * heightM)) } }
+        }
+        return SparklineDataSeries(
+            points = plotted.map { it.second.toFloat() },
+            dates = plotted.map { it.first.dayOfWeek.name.take(3).lowercase().replaceFirstChar { c -> c.uppercase() } },
+            mode = SparklineMode.LINE,
+            color = color,
+            dotsAtAllPoints = true
         )
     }
 

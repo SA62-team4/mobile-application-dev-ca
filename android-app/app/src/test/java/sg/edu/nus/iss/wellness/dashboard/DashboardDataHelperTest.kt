@@ -195,4 +195,35 @@ class DashboardDataHelperTest {
         assertEquals(170.0, summary.heightCm!!, 0.01)
         assertEquals(22.8, summary.bmi!!, 0.1)
     }
+
+    // BMI sparkline plots one point per weighted day, derived from the constant height
+    @Test
+    fun `bmi sparkline series derives a point per weighted day from height`() {
+        val today = LocalDate.now()
+        val aggregates = DashboardDataHelper.aggregateByDate(
+            listOf(
+                record(id = 1, date = today.minusDays(1).toString(), weight = 64.0),
+                record(id = 2, date = today.toString(), weight = 66.0)
+            )
+        )
+
+        val series = DashboardDataHelper.buildBmiSparklineSeries(aggregates, 170.0, 0)
+
+        assertEquals(2, series.points.size)
+        assertEquals(22.1f, series.points[0], 0.1f)
+        assertEquals(22.8f, series.points[1], 0.1f)
+    }
+
+    // Without a height there is no way to compute BMI, so the series stays empty
+    @Test
+    fun `bmi sparkline series is empty when height is missing`() {
+        val today = LocalDate.now()
+        val aggregates = DashboardDataHelper.aggregateByDate(
+            listOf(record(id = 1, date = today.toString(), weight = 66.0))
+        )
+
+        val series = DashboardDataHelper.buildBmiSparklineSeries(aggregates, null, 0)
+
+        assertTrue(series.points.isEmpty())
+    }
 }

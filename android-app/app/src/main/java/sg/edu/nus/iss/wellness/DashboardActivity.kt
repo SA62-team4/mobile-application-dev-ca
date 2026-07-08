@@ -189,12 +189,13 @@ class DashboardActivity : AppCompatActivity() {
         val actSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.ACTIVITY, greenColor)
         val moodSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.MOOD, amberColor)
         val weightSeries = DashboardDataHelper.buildSparklineSeries(aggregates, MetricType.WEIGHT, primaryColor)
+        val bmiSeries = DashboardDataHelper.buildBmiSparklineSeries(aggregates, profile?.heightCm, greenColor)
 
         metricsContainer.addView(buildMetricCard("Sleep", "💤", summary, sleepSeries, summary.sleepBadge, MetricType.SLEEP))
         metricsContainer.addView(buildMetricCard("Activity", "🏃", summary, actSeries, summary.activityBadge, MetricType.ACTIVITY))
         metricsContainer.addView(buildMetricCard("Mood", "😊", summary, moodSeries, summary.moodBadge, MetricType.MOOD))
         metricsContainer.addView(buildWeightCard(bodyMetrics, weightSeries))
-        metricsContainer.addView(buildBodyMetricsCard(bodyMetrics))
+        metricsContainer.addView(buildBodyMetricsCard(bodyMetrics, bmiSeries))
 
         val teaser = DashboardDataHelper.buildInsightTeaser(recommendations)
         renderInsightCard(teaser) {
@@ -344,8 +345,8 @@ class DashboardActivity : AppCompatActivity() {
         return cardView
     }
 
-    private fun buildBodyMetricsCard(summary: BodyMetricsSummary): LinearLayout {
-        val cardView = card(fillColor = getColor(R.color.bg_subtle), stroke = getColor(R.color.bg_subtle))
+    private fun buildBodyMetricsCard(summary: BodyMetricsSummary, series: SparklineDataSeries): LinearLayout {
+        val cardView = card()
         cardView.addView(accent("📏 BMI"))
 
         if (summary.heightCm == null) {
@@ -361,6 +362,15 @@ class DashboardActivity : AppCompatActivity() {
             cardView.addView(body("Add a recent weight entry to calculate BMI."))
         } else {
             cardView.addView(title("BMI ${summary.bmi}", 18))
+        }
+
+        if (series.points.size >= 2) {
+            cardView.addView(SparklineView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ).withBottomMargin(dp(4))
+                setData(series)
+            })
         }
         return cardView
     }

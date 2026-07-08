@@ -23,7 +23,7 @@ The Figma file is the visual handoff for Android XML implementation. It contains
 - `02 Auth`: login and register phone frames.
 - `03 App Screens`: dashboard, add/edit record, chatbot, recommendations, and profile phone frames.
 - `04 States`: loading, empty, error, success, and local AI waiting phone frames.
-- `05 Dashboard`: today's snapshot tiles, the Sleep/Activity/Mood metric cards with sparklines and status badges, the weight trend card, BMI summary, the AI insight teaser, and the historical records list with the date-range filter chip.
+- `05 Dashboard`: today's snapshot tiles, the Sleep/Activity/Mood metric cards with interactive sparklines and status badges, the weight trend card, the BMI summary with its own trend sparkline, the AI insight teaser, and the historical records list with the date-range filter chip.
 
 The Dashboard is the authenticated landing view. It replaces the raw records list as the first tab while keeping the historical record cards rendered beneath the summary section. The data, aggregation, and threshold rules that drive these frames are defined in [Wellness Dashboard Logic](#wellness-dashboard-logic) below.
 
@@ -271,11 +271,11 @@ Content, top to bottom:
 
 - **Today's snapshot**: three horizontal tiles showing today's Sleep hours, Activity minutes, and Mood score. If there is no entry for today, fall back to the most recent day's values with a "No entry today" note and the fallback date.
 - **Metric cards** for Sleep, Activity, and Mood, each with:
-  - A sparkline trend chart (Sleep blue line, Activity green bars skipping zero-exercise days, Mood amber line with dots).
+  - A sparkline trend chart (Sleep blue line, Activity green bars skipping zero-exercise days, Mood amber line with dots). Tapping or dragging a chart reveals a per-point value tooltip.
   - A weekly stat line (for example, "Avg 7.2 h · 6 days logged") over the past 7 calendar days.
   - A status badge pill (Excellent, Good, Fair, Below Target, No Data) derived from the weekly average.
 - **Weight summary**: a trend card showing recent logged weight values and the latest weight.
-- **BMI summary**: a compact card showing the current height from the profile and the derived BMI from the latest logged weight.
+- **BMI summary**: a card showing the current height from the profile, the derived BMI from the latest logged weight, and a BMI trend sparkline over the 7-day window.
 - **AI insight teaser**: a card previewing the newest recommendation (title plus excerpt truncated to 120 characters). Tapping it opens the Recommendations tab; when none exist it shows a prompt to generate one.
 - **Historical records** section: the scrollable record cards, with a `📅 Filter` action that opens a start-date then end-date picker and filters the list in memory. An active filter shows a dismissible chip to clear it.
 
@@ -609,6 +609,7 @@ Weight is shown as its own trend card based on recent wellness records. Height i
   - Activity: green bar chart that skips zero-exercise days.
   - Mood: amber line chart with dots on all logged points.
 - Weekly stat line summarizes the past 7 calendar days, for example "Avg 7.2 h · 6 days logged".
+- Sparklines are interactive: tapping or dragging along a chart highlights the nearest point and shows a compact tooltip with that day and value (unit-aware, for example "Mon 66 kg" or "Wed 3.5 /5"). Each series carries a unit suffix — hours, minutes, "/5" for mood, and "kg" for weight; BMI is unitless. While scrubbing, the chart requests that the parent scroll view not intercept the gesture.
 
 ### Status Badge Thresholds
 
@@ -638,6 +639,8 @@ Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color
 - Weight is tracked in wellness records and summarized from the recent record history.
 - Height is a profile value and is loaded from the authenticated profile endpoint.
 - BMI is derived from the latest weight and current height using the standard formula: weight in kilograms divided by height in metres squared.
+- The BMI card also renders a trend sparkline: one BMI point per weighted day over the 7-day window, computed from that day's weight and the constant profile height. The line is shown once at least two weighted days exist.
+- The BMI card uses the same white surface styling as the Sleep, Activity, Mood, and Weight cards.
 - If either weight or height is missing, the BMI card shows a friendly empty state instead of failing.
 
 ### Multi-Log Aggregation And Safety
@@ -648,12 +651,12 @@ Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color
 ### Implementation Notes
 
 - `DashboardDataHelper`: pure-Kotlin helper for aggregation, date grouping, badge thresholds, and date filtering. Having no Android SDK dependency, it is unit-testable on the local JVM.
-- `SparklineView`: lightweight custom `View` that overrides `onDraw` to render lines, round-rect bars, and axis labels on the native `Canvas`.
+- `SparklineView`: lightweight custom `View` that overrides `onDraw` to render lines, round-rect bars, and axis labels on the native `Canvas`. It records point positions during draw and handles touch events (`onTouchEvent`) to hit-test the nearest point and draw a value tooltip.
 - `DashboardActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`: one `AppCompatActivity` per authenticated screen, each inflating its own XML layout via View Binding. `DashboardActivity` is the landing screen and loads wellness records and recommendations concurrently.
 
 ### Dashboard Tests
 
-- JVM unit tests (`DashboardDataHelperTest`) cover deduplication (averaging vs. summing), defensive date parsing, rounding margins, and date-filter boundary inclusivity.
+- JVM unit tests (`DashboardDataHelperTest`) cover deduplication (averaging vs. summing), defensive date parsing, rounding margins, date-filter boundary inclusivity, BMI summary calculation, and the derived BMI sparkline series (per-day points and the empty-when-no-height case).
 - Manual checks: load under 2 seconds, graceful empty states with zero data or an offline backend, and safe multi-tab navigation.
 
 ## User Experience Rules
