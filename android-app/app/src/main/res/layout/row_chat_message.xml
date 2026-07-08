@@ -44,7 +44,7 @@
             android:id="@+id/assistantLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Assistant"
+            android:text="Ruri"
             android:textSize="16sp"
             android:textStyle="bold|italic"
             android:textColor="@color/text_secondary"
