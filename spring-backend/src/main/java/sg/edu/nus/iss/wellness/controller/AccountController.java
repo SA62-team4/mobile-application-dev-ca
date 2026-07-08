@@ -36,15 +36,15 @@ import sg.edu.nus.iss.wellness.service.DtoMapper;
  *   <li>{@code POST /api/account/deactivate} — reversible: hides the account
  *       and blocks sign-in but keeps all data; {@code POST /api/auth/reactivate}
  *       restores it.</li>
- *   <li>{@code DELETE /api/account} — permanent: password-confirmed erasure of
- *       the account and all associated data.</li>
+ *   <li>{@code DELETE /api/account} — permanent erasure of the account and all
+ *       associated data, password-confirmed for local-password accounts.</li>
  * </ul>
  *
  * <p>A wrong password on delete returns {@code 400}, deliberately not
  * {@code 401/403}: the mobile client treats 401/403 as session-expiry and would
  * otherwise log the user out on a simple typo.
  *
- * @author Chua Wei Yi Justin
+ * @author Chua Wei Yi Justin, Tiong Zhong Cheng
  */
 @RestController
 @RequestMapping("/api/account")
@@ -111,17 +111,26 @@ public class AccountController {
     public void delete(@Valid @RequestBody AccountDtos.DeleteAccountRequest request) {
         AppUser user = currentUserService.requireCurrentUser();
 
-        String storedHash = user.getPassword();
+        String storedHash = user.getPasswordHash();
         if (storedHash == null || storedHash.isBlank()) {
-            // Google-linked accounts have no local password to confirm against.
-            throw new ApiException(HttpStatus.BAD_REQUEST,
-                    "Password confirmation is unavailable for Google-linked accounts");
+            // SSO-only users have no local app password; the valid JWT is the
+            // confirmation after the destructive Android dialog.
+            eraseAccount(user);
+            return;
         }
-        if (!passwordEncoder.matches(request.password(), storedHash)) {
+
+        String password = request.password();
+        if (password == null || password.isBlank()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Password confirmation is required");
+        }
+        if (!passwordEncoder.matches(password, storedHash)) {
             // 400 (not 401/403) so the client does not treat this as session expiry.
             throw new ApiException(HttpStatus.BAD_REQUEST, "Incorrect password");
         }
+        eraseAccount(user);
+    }
 
+    private void eraseAccount(AppUser user) {
         // Remove children before the user to satisfy the user_id foreign keys.
         chatMessages.deleteByUser(user);
         recommendations.deleteByUser(user);

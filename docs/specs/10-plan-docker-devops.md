@@ -350,7 +350,7 @@ Non-secret config goes in **Variables**.
 | `DOMAIN` | Variable | DNS + `.env` | Your registered domain (hosted in DO DNS when `MANAGE_DNS=true`) |
 | `SUBDOMAIN` | Variable | DNS | Chosen API host label, e.g. `api` |
 | `API_DOMAIN` | Variable | Caddy/`.env` | The full FQDN `SUBDOMAIN.DOMAIN`, e.g. `api.example.com` |
-| `GOOGLE_CLIENT_ID` | Variable | Rendered into Droplet `.env`; backend Google ID token verification (REQ-22) | Google Cloud Console → APIs & Services → Credentials → the **Web** OAuth 2.0 client ID. Non-secret (also embedded in the Android APK). Leave unset to disable SSO in production. |
+| `GOOGLE_CLIENT_ID` | Variable | Rendered into Droplet `.env`; Spring and optional `.NET Backup API` Google ID token verification (REQ-22) | Google Cloud Console → APIs & Services → Credentials → the **Web** OAuth 2.0 client ID. Non-secret (also embedded in the Android APK). Leave unset to disable SSO in production. |
 | `LANGSMITH_API_KEY` | Secret (production) | Rendered into Droplet `.env`; LangChain run tracing | smith.langchain.com → Settings → API Keys. Optional — leave unset to keep tracing off. |
 | `LANGSMITH_TRACING` | Variable | Rendered into Droplet `.env` | `true` to export traces (requires `LANGSMITH_API_KEY`), else leave unset/`false`. |
 | `LANGSMITH_PROJECT` | Variable | Rendered into Droplet `.env` | LangSmith project name; defaults to `wellness-agentic-ai`. |

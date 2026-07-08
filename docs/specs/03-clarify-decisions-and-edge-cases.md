@@ -48,8 +48,10 @@ Use it whenever the team asks, "What did we decide?" or "Is this in scope?"
 | Auth | Google sign-in returns no ID token (misconfigured Web Client ID) | Android shows a configuration error; no backend call is made. |
 | Auth | Google account email matches an existing email/password user | Reuse the existing account; do not create a duplicate. |
 | Auth | SSO user (null password) attempts email/password login path | BCrypt match against the null/empty hash always fails; login is rejected. |
+| Auth | Deactivated Google-only user signs in with Google again | Backend verifies the Google ID token and returns `403` until Android asks the user to confirm reactivation. Only the confirmed retry (`reactivate=true`) re-enables the same account and issues a fresh app JWT. |
 | Privacy | User exports account data | Backend returns only the authenticated user's profile, wellness records, chat messages, and recommendations. Password hashes, JWTs, internal service tokens, database ids for other users, and infrastructure details are excluded. |
 | Privacy | User deletes account | Backend deletes the authenticated user's dependent records and user row in one transaction, then Android clears the local JWT and returns to Login. A reused stateless JWT must no longer authorize because the user row is gone. |
+| Privacy | Google-only user deletes account | Android shows a destructive confirmation without asking for an app password; backend permits deletion for authenticated users whose `password_hash` is null because they have no local password to confirm. |
 | Privacy | Delete account is tapped accidentally | Android requires a destructive confirmation dialog before calling `DELETE /api/account`; cancellation performs no network request. |
 | Privacy | Export or delete is attempted while offline | Android shows a friendly retryable error and keeps the user signed in; no local destructive action occurs. |
 | Records | User guesses another record id | Backend returns not found or forbidden, never the other user's data. |

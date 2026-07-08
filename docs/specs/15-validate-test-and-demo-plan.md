@@ -53,6 +53,7 @@ Optional account privacy (`REQ-23`):
 - Export payload includes only the authenticated user's profile, wellness records, chat messages, and recommendations.
 - Export payload excludes password hash, raw JWTs, internal service tokens, and other users' rows.
 - Delete account requires JWT and deletes the authenticated user's dependent rows plus user row in one transaction.
+- Delete account requires password reconfirmation for local accounts and works for Google-only accounts without an app password.
 - A previous JWT for a deleted account no longer grants access to protected endpoints.
 - Delete account does not delete another user's data.
 
@@ -114,6 +115,7 @@ Manual QA should cover:
 - Full demo flow on emulator or physical device.
 - Physical device demo uses USB debugging, `adb reverse tcp:8080 tcp:8080`, and `WELLNESS_API_BASE_URL=http://127.0.0.1:8080/` rather than a committed LAN IP.
 - Optional `REQ-23`: Profile opens Privacy screen; export opens a JSON share/save flow; delete cancel makes no request; confirmed delete signs out; offline export/delete shows friendly error; expired token returns to Login.
+- Optional `REQ-22` + `REQ-23`: Google-only accounts can export data, delete the account from Privacy, and reactivate a deactivated account by signing in with Google again only after accepting the reactivation confirmation dialog.
 
 ## Docker Smoke Tests
 

@@ -55,7 +55,7 @@ interface ApiService {
     @POST("api/account/deactivate")
     suspend fun deactivateAccount()
 
-    /** Permanent: password-confirmed erasure of the account and all its data. */
+    /** Permanent erasure; local accounts include password, Google-only accounts do not. */
     @HTTP(method = "DELETE", path = "api/account", hasBody = true)
     suspend fun deleteAccount(@Body request: DeleteAccountRequest)
 
@@ -63,4 +63,3 @@ interface ApiService {
     @POST("api/auth/reactivate")
     suspend fun reactivate(@Body request: LoginRequest): LoginResponse
 }
-

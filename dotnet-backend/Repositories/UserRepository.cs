@@ -49,7 +49,7 @@ public sealed class UserRepository
         return await reader.ReadAsync(cancellationToken) ? ReadUser(reader) : null;
     }
 
-    public async Task<AppUser> CreateAsync(string displayName, string email, string passwordHash, CancellationToken cancellationToken)
+    public async Task<AppUser> CreateAsync(string displayName, string email, string? passwordHash, CancellationToken cancellationToken)
     {
         await using var connection = await _connections.OpenAsync(cancellationToken);
         await using var command = new MySqlCommand(
@@ -60,7 +60,7 @@ public sealed class UserRepository
             """,
             connection);
         command.Parameters.AddWithValue("@email", email);
-        command.Parameters.AddWithValue("@passwordHash", passwordHash);
+        command.Parameters.AddWithValue("@passwordHash", (object?)passwordHash ?? DBNull.Value);
         command.Parameters.AddWithValue("@displayName", displayName);
         // New registrations default to the USER role, driven by the enum rather than a literal.
         command.Parameters.AddWithValue("@role", Role.User.ToDbValue());
@@ -122,7 +122,7 @@ public sealed class UserRepository
         return new AppUser(
             reader.GetInt64Value("id"),
             reader.GetRequiredString("email"),
-            reader.GetRequiredString("password_hash"),
+            reader.GetOptionalString("password_hash"),
             reader.GetRequiredString("display_name"),
             RoleExtensions.FromDbValue(reader.GetRequiredString("role")),
             reader.GetBooleanValue("enabled"),
