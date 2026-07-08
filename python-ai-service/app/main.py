@@ -24,6 +24,17 @@ logger = logging.getLogger("wellness.ai")
 settings = get_settings()
 # Configure tracing before constructing services.
 configure_tracing(settings)
+# Log the resolved backend target so a misconfigured BACKEND_BASE_URL is visible
+# at startup. The agentic recommendation save must reach the Spring internal API;
+# pointing at the .NET backup host 503s recommendations with a DNS-style
+# "Name or service not known" failure only once a request is in flight.
+logger.info("Backend internal API base URL: %s", settings.backend_base_url)
+if "dotnet" in settings.backend_base_url.lower():
+    logger.warning(
+        "BACKEND_BASE_URL points at the .NET backup (%s); recommendation saves "
+        "target the Spring internal API and will fail against this host.",
+        settings.backend_base_url,
+    )
 ollama = OllamaClient(settings)
 rag = RagService(settings, ollama)
 backend = BackendClient(settings)
