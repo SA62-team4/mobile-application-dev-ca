@@ -107,6 +107,17 @@ Unit or instrumentation tests should cover:
   entered as free text.
 - API client attaches JWT after login.
 - Logout clears local JWT.
+- Dashboard aggregation, weekly summary badges, and BMI derivation
+  (`DashboardDataHelperTest`).
+- Chat SSE wire-format parsing for every event type and malformed input
+  (`ChatSseParserTest`).
+- API request/response DTO construction, equality, and copy semantics
+  (`ApiModelsTest`).
+- User-facing API error-message mapping for HTTP and IO failures
+  (`ApiErrorMessageTest`).
+
+JVM unit tests run via `./gradlew :app:testDebugUnitTest`; line coverage is
+emitted for SonarQube with `:app:createDebugUnitTestCoverageReport` (JaCoCo).
 
 Manual QA should cover:
 

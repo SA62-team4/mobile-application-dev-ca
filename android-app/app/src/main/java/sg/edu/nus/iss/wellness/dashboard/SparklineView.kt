@@ -10,6 +10,7 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.graphics.toColorInt
 import kotlin.math.abs
 
 /**
@@ -44,12 +45,12 @@ class SparklineView(context: Context, attrs: AttributeSet? = null) : View(contex
 
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
-        color = Color.parseColor("#64748B")
+        color = "#64748B".toColorInt()
     }
 
     private val tooltipBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = Color.parseColor("#111827")
+        color = "#111827".toColorInt()
     }
 
     private val tooltipTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

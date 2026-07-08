@@ -35,7 +35,7 @@
         android:id="@+id/recActionsLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Actions"
+        android:text="@string/recommendation_actions"
         android:textSize="12sp"
         android:textColor="@color/text_secondary"
         android:paddingTop="4dp"
