@@ -1,12 +1,18 @@
 package sg.edu.nus.iss.wellness
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
@@ -33,6 +39,7 @@ import sg.edu.nus.iss.wellness.ui.wireBottomNav
  *
  * @author Tiong Zhong Cheng, Tang Chee Seng, Abu Bakar Nasir
  */
+
 class ChatActivity : AppCompatActivity() {
     private val scope = MainScope()
     private lateinit var binding: ActivityChatBinding
@@ -40,6 +47,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var api: ApiService
     private lateinit var streamClient: ChatStreamClient
     private lateinit var adapter: ChatAdapter
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var progressJob: Job? = null
     private var streamJob: Job? = null
     private var activeQuestion: String? = null
@@ -51,6 +59,7 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         tokenStore = TokenStore(this)
         if (tokenStore.token().isNullOrBlank()) {
             goToLogin()
@@ -58,6 +67,7 @@ class ChatActivity : AppCompatActivity() {
         }
         api = ApiClient.create(tokenStore)
         streamClient = ChatStreamClient(tokenStore)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -100,6 +110,37 @@ class ChatActivity : AppCompatActivity() {
         loadChatHistory()
     }
 
+    /**
+     * Read the last known GPS fix, then invoke [onReady] with lat/lon (or null, null).
+     * Null is a valid outcome because the agent falls back to the national average. If permission
+     * is missing we request it for next time and proceed with null values first, so a Send is never
+     * blocked while waiting on a dialog.
+     */
+    private fun readLocation(onReady: (Double?, Double?) -> Unit) {
+        val granted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!granted) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+            onReady(null, null)
+            return
+        }
+        try {
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { loc -> onReady(loc?.latitude, loc?.longitude) }
+                .addOnFailureListener { onReady(null, null) }
+        } catch (_: SecurityException) {
+            onReady(null, null)
+        }
+    }
+
+    // Registered once for the Activity. The result is intentionally ignored: whether the
+    // user grants or denies, we proceed with the send. Denied → null lat/lon → the agent
+    // falls back to the national average. We only ask so a *future* send can read a fix.
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* no-op: sendChat already read (or defaulted) the location for this turn */ }
+
     /** Mutable state carried across the streaming callbacks for one question. */
     private class StreamState {
         val answer = StringBuilder()
@@ -122,12 +163,14 @@ class ChatActivity : AppCompatActivity() {
         showChatProgress(pendingIndex, question)
 
         val state = StreamState()
-        streamJob = scope.launch {
-            runCatching {
-                streamClient.stream(question) { event ->
-                    handleStreamEvent(state, event, pendingIndex, question)
-                }
-            }.onFailure { onStreamFailure(state, it) }
+        readLocation { lat, lon ->
+            streamJob = scope.launch {
+                runCatching {
+                    streamClient.stream(question, lat, lon) { event ->
+                        handleStreamEvent(state, event, pendingIndex, question)
+                    }
+                }.onFailure { onStreamFailure(state, it) }
+            }
         }
     }
 

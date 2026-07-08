@@ -24,6 +24,7 @@ Dockerise:
 - Spring Boot backend
 - Optional `.NET Backup API` cold-standby backend
 - Python FastAPI AI service
+- Optional premium FastAPI weather agent for backend-mediated premium chat routing
 - Ollama
 - Chroma/vector persistence, either embedded in Python process with a persistent volume or separate service if chosen later
 - Optional Adminer or phpMyAdmin
@@ -48,6 +49,7 @@ Quality tooling:
 | `spring-backend` | REST API and business logic | Depends on MySQL and Python AI service |
 | `dotnet-backend` | Optional cold-standby REST API mirror | Backup profile/service on host port `8082`; Spring remains canonical |
 | `python-ai-service` | RAG and agentic AI | Depends on Ollama and vector volume |
+| `premium-agent` | Optional premium outdoor-exercise/weather chat agent | Local FastAPI service; enabled only through explicit premium Compose file and `PREMIUM_AI_URL` |
 | `ollama` | Local model runtime | Named volume for models |
 | `adminer` | Optional DB inspection | Demo/debug convenience only |
 
@@ -107,6 +109,8 @@ JWT_EXPIRY_SECONDS=86400
 GOOGLE_CLIENT_ID=
 AI_SERVICE_URL=http://python-ai-service:8000
 AI_SERVICE_HOST_PORT=8000
+PREMIUM_AI_URL=
+PREMIUM_AI_SECRET=
 INTERNAL_SERVICE_TOKEN=replace_with_internal_token
 DOTNET_BACKEND_HOST_PORT=8082
 DOTNET_CONNECTION_STRING=Server=mysql;Port=3306;Database=wellness_app;User=wellness_user;Password=change_me;TreatTinyAsBoolean=true;
@@ -123,6 +127,11 @@ LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 ```
 
 LangSmith tracing is optional and disabled by default so the AI service runs fully local/offline. When `LANGSMITH_TRACING=true` and an API key is supplied, `python-ai-service` exports LangChain runs (the agentic recommendation chain) to LangSmith for observability.
+
+Premium weather-agent routing is optional and disabled by default. Developers may
+run `premium-server/docker-compose.premium.yml` and set `PREMIUM_AI_URL` plus
+`PREMIUM_AI_SECRET` for Spring Boot. The default demo remains the standard
+Spring Boot -> `python-ai-service` -> Ollama path.
 
 Host-facing ports must be configurable so local tools such as Homebrew MySQL do not block Docker Compose. The default MySQL host port is `3307`, while container-to-container traffic continues to use `mysql:3306`.
 

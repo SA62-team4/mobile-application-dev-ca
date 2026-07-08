@@ -415,6 +415,10 @@ Behavior:
   grows in place (via `ChatStreamClient` consuming the `POST /api/chat/messages/stream` SSE
   endpoint) so long answers are never truncated. When the stream completes, history is
   reloaded so the bubble is replaced by the persisted server copy.
+- For premium outdoor-exercise/weather routing, ChatActivity may request coarse
+  location permission and include the last-known latitude/longitude in the
+  Spring Boot chat request. Denial or missing location must not block sending:
+  Android sends null coordinates and Spring Boot/premium agent falls back.
 - Keep the request alive long enough for local Ollama generation, which may take tens of seconds on student laptops.
 - Store and display previous messages loaded from backend.
 - If AI service or Ollama is unavailable, drop the partial bubble, show a friendly error, and keep the typed question available.

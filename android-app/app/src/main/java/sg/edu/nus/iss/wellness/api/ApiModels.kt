@@ -46,8 +46,17 @@ data class AccountProfileUpdateRequest(val heightCm: Double?)
 
 data class DeleteAccountRequest(val password: String?)
 
-data class ChatRequest(val question: String)
-data class SourceSnippet(val title: String, val snippet: String)
+data class ChatRequest(
+    val question: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+)
+
+data class SourceSnippet(
+    val title: String,
+    val snippet: String
+)
+
 data class ChatResponse(
     val id: Long,
     val question: String,

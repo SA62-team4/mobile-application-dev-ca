@@ -498,9 +498,16 @@ Request:
 
 ```json
 {
-  "question": "How can I improve my sleep if I exercise in the evening?"
+  "question": "How can I improve my sleep if I exercise in the evening?",
+  "latitude": 1.3521,
+  "longitude": 103.8198
 }
 ```
+
+`latitude` and `longitude` are optional. Android sends them only when a coarse
+last-known location is available for premium outdoor-exercise/weather questions;
+Spring Boot must still accept null coordinates and fall back to the standard RAG
+path or the premium agent's national-average behavior.
 
 Response `200 OK`:
 
@@ -524,6 +531,11 @@ Behavior:
 
 - Backend forwards the question and recent wellness context to Python.
 - Python retrieves relevant KB chunks and calls Ollama.
+- If the authenticated user has `PREMIUM_USER`, the premium weather agent is
+  configured, and the question is exercise/weather related, Spring Boot may call
+  the optional local premium agent first. The call remains backend-mediated;
+  Android never calls the premium agent directly. If the premium agent is
+  unavailable, Spring Boot falls back to the standard RAG path.
 - Backend saves the final question, answer, source summary, and model name.
 
 ### Ask Chatbot (Streaming)
@@ -664,6 +676,32 @@ Spring Boot consumes this stream, forwards `sources`/`token` frames to Android, 
 the full answer, persists it, and emits the enriched `done` frame (with saved id and
 timestamp). If Ollama is unreachable mid-stream, Python emits a terminal
 `{"type":"error","message":"..."}` frame.
+
+### Optional Premium Weather Agent
+
+The optional premium weather agent is a local FastAPI service owned by the
+backend runtime path, not an Android-facing API.
+
+- `POST /premium/chat`
+- `POST /premium/chat/stream`
+
+Spring Boot calls these endpoints only when `PREMIUM_AI_URL` is configured and
+adds `X-Internal-Secret: <PREMIUM_AI_SECRET>`. Request fields are:
+
+```json
+{
+  "question": "Is it safe to run outside today?",
+  "context": "RAG source snippets selected by Spring Boot",
+  "records": "Recent wellness records formatted as text",
+  "latitude": 1.3521,
+  "longitude": 103.8198
+}
+```
+
+The blocking endpoint returns the same `AiChatResponse` shape as `/rag/chat`.
+The streaming endpoint returns the same SSE frame types as `/rag/chat/stream`.
+It must use local/free LLM tooling and must fail soft so Spring Boot can fall
+back to the standard RAG chatbot.
 
 ### Agent Recommendation
 

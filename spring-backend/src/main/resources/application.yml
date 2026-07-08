@@ -27,6 +27,8 @@ app:
     secret: ${JWT_SECRET:dev_secret_replace_with_very_long_random_value}
     expiry-seconds: ${JWT_EXPIRY_SECONDS:86400}
   ai-service-url: ${AI_SERVICE_URL:http://localhost:8000}
+  premium-ai-url: ${PREMIUM_AI_URL:}        # empty ⇒ premium disabled (safe default)
+  premium-ai-secret: ${PREMIUM_AI_SECRET:}
   internal-service-token: ${INTERNAL_SERVICE_TOKEN:dev_internal_token}
   google:
     # OAuth Web client ID for Android ID token validation.

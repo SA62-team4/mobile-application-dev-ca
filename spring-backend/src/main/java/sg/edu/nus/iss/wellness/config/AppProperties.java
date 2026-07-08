@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Application-level configuration values loaded from environment variables.
  *
- * @author Chua Wei Yi Justin, Kumaraguru Surya, Tiong Zhong Cheng
+ * @author Chua Wei Yi Justin, Kumaraguru Surya, Tiong Zhong Cheng, Tang Chee Seng
  */
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
@@ -17,6 +17,8 @@ public class AppProperties {
     private String internalServiceToken;
     private Google google = new Google();
     private Cors cors = new Cors();
+    private String premiumAiUrl;
+    private String premiumAiSecret;
 
     public Jwt getJwt() {
         return jwt;
@@ -56,6 +58,22 @@ public class AppProperties {
 
     public void setCors(Cors cors) {
         this.cors = cors;
+    }
+
+    public String getPremiumAiUrl() {
+        return premiumAiUrl;
+    }
+
+    public void setPremiumAiUrl(String premiumAiUrl) {
+        this.premiumAiUrl = premiumAiUrl;
+    }
+
+    public String getPremiumAiSecret() {
+        return premiumAiSecret;
+    }
+
+    public void setPremiumAiSecret(String premiumAiSecret) {
+        this.premiumAiSecret = premiumAiSecret;
     }
 
     public static class Jwt {
@@ -135,4 +153,3 @@ public class AppProperties {
         }
     }
 }
-

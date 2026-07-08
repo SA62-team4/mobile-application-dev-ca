@@ -84,6 +84,9 @@ android {
 
 dependencies {
     implementation "androidx.appcompat:appcompat:1.7.0"
+    // 21.3.0 (not 21.4.0): 21.4.0 ships Kotlin 2.3.0 metadata, incompatible with this
+    // project's Kotlin 2.0.21 compiler. 21.3.0 is the newest build against the older metadata.
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0"
     implementation "com.squareup.retrofit2:retrofit:2.11.0"
     implementation "com.squareup.retrofit2:converter-gson:2.11.0"
