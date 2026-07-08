@@ -27,8 +27,7 @@ services:
       OLLAMA_GENERATION_MODEL: ${OLLAMA_GENERATION_MODEL:-gemma4:e4b}
       AI_INTERNAL_SECRET: ${AI_INTERNAL_SECRET:?Set AI_INTERNAL_SECRET in .env.premium}
     ports:
-      # to replace with SSH reverse tunnel details
-      # - "${TAILSCALE_IP:?Set TAILSCALE_IP in .env.premium}:8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       - ollama
     deploy:

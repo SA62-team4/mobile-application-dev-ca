@@ -65,9 +65,14 @@ class ChatStreamClient(private val tokenStore: TokenStore) {
      * [ChatStreamEvent.Error]; the caller does not need a separate try/catch, though
      * cancelling the coroutine aborts the call.
      */
-    suspend fun stream(question: String, onEvent: suspend (ChatStreamEvent) -> Unit) {
+    suspend fun stream(
+        question: String, 
+        latitude: Double? = null,
+        longitude: Double? = null,
+        onEvent: suspend (ChatStreamEvent) -> Unit) 
+        {
         val token = tokenStore.token()
-        val body = gson.toJson(ChatRequest(question)).toRequestBody(JSON_MEDIA_TYPE)
+        val body = gson.toJson(ChatRequest(question, latitude, longitude)).toRequestBody(JSON_MEDIA_TYPE)
         val request = Request.Builder()
             .url(BuildConfig.API_BASE_URL + "api/chat/messages/stream")
             .apply { if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token") }
