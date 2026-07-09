@@ -128,6 +128,17 @@ LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 
 LangSmith tracing is optional and disabled by default so the AI service runs fully local/offline. When `LANGSMITH_TRACING=true` and an API key is supplied, `python-ai-service` exports LangChain runs (the agentic recommendation chain) to LangSmith for observability.
 
+## Login Throttling Configuration (S-04)
+
+Login throttling ([DEC-016](03-clarify-decisions-and-edge-cases.md)) ships with working defaults, so no `.env` entry is required and Compose does not forward these keys today. Both backends must stay on the same numbers when either is tuned.
+
+| Setting | Spring | .NET Backup API | Default |
+| --- | --- | --- | --- |
+| Allowed consecutive failures | `app.security.login.max-attempts` (`LOGIN_MAX_ATTEMPTS`) | `Security:Login:MaxAttempts` | `5` |
+| Lockout window in seconds | `app.security.login.lockout-seconds` (`LOGIN_LOCKOUT_SECONDS`) | `Security:Login:LockoutSeconds` | `180` |
+
+Counters are held in process memory, so they reset on container restart and are never shared between the Spring and .NET containers. Scaling either backend past one replica would silently weaken the throttle and needs a shared store first.
+
 Premium weather-agent routing is optional and disabled by default. Developers may
 run `premium-server/docker-compose.premium.yml` and set `PREMIUM_AI_URL` plus
 `PREMIUM_AI_SECRET` for Spring Boot. The default demo remains the standard

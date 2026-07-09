@@ -26,6 +26,16 @@ Auth:
 - Login rejects invalid credentials.
 - Protected endpoints reject missing or invalid JWT.
 
+Login throttling (`S-04`, both Spring and the optional `.NET Backup API`):
+
+- Failures beyond the configured threshold lock the account and return `429` with a positive `Retry-After` header.
+- A correct password during the lockout window still returns `429`, proving the check runs before credential comparison.
+- The lock lifts once the window elapses.
+- A successful login, reactivation, or verified Google sign-in clears the failure counter.
+- Failures against an unknown email create no counter; failures against a deactivated account are recorded only by `/api/auth/reactivate`, not by `/api/auth/login`.
+
+`.NET` coverage lives in `LoginAttemptServiceTests`. The equivalent Spring `LoginAttemptService` test is still outstanding (task `T-1004`).
+
 Wellness records:
 
 - Create record succeeds for authenticated user.
@@ -115,6 +125,8 @@ Unit or instrumentation tests should cover:
   (`ApiModelsTest`).
 - User-facing API error-message mapping for HTTP and IO failures
   (`ApiErrorMessageTest`).
+- Login lockout message formatting from the `Retry-After` window, including the
+  fallback when the header is absent or non-positive (`LoginLockoutTest`).
 
 JVM unit tests run via `./gradlew :app:testDebugUnitTest`; line coverage is
 emitted for SonarQube with `:app:createDebugUnitTestCoverageReport` (JaCoCo).
@@ -134,6 +146,7 @@ Manual QA should cover:
 - Full demo flow on emulator or physical device.
 - Physical device demo uses USB debugging, `adb reverse tcp:8080 tcp:8080`, and `WELLNESS_API_BASE_URL=http://127.0.0.1:8080/` rather than a committed LAN IP.
 - Optional `REQ-23`: Profile opens Privacy screen; export opens a JSON share/save flow; delete cancel makes no request; confirmed delete signs out; offline export/delete shows friendly error; expired token returns to Login.
+- Optional `S-04`: repeated wrong passwords eventually show the lockout banner with a countdown window; the correct password during that window still shows the banner; the banner clears after waiting out the window; an expired token returns to Login with the "Your session expired" banner and Back cannot reveal the previous screen.
 - Optional `REQ-22` + `REQ-23`: Google-only accounts can export data, delete the account from Privacy, and reactivate a deactivated account by signing in with Google again only after accepting the reactivation confirmation dialog.
 - Optional `S-01`: Android notification permission is requested where required;
   manually generated recommendations send a local generated-insight broadcast;

@@ -163,6 +163,17 @@ These tasks are optional stretch evidence (`REQ-23`) mapped to sprint card `S-03
 | T-902 | REQ-23, NFR-04 | Implement Android Privacy screen launched from Profile | Member 1 | T-302, T-303, T-901 | Screen explains local AI/data path, export opens a JSON share/save flow, delete requires confirmation, successful delete clears local auth and returns to Login |
 | T-903 | REQ-23, NFR-01, NFR-02 | Add privacy/export/delete validation evidence | Members 4 + 1 | T-901, T-902 | Backend tests cover export ownership and post-delete access; Android manual QA covers export, cancel delete, confirmed delete, offline failure, and expired-token handling |
 
+## Optional Phase 10: Security Hardening Stretch
+
+These tasks are optional stretch evidence mapped to sprint card `S-04` and governed by [DEC-016](03-clarify-decisions-and-edge-cases.md). They close the "no login rate-limit/lockout" gap recorded in the `16-kanban-sprint-board.md` self-assessment.
+
+| Task ID | Requirement IDs | Task | Owner | Depends On | Done When |
+| --- | --- | --- | --- | --- | --- |
+| T-1001 | S-04, REQ-02, NFR-02 | Add per-account login throttling to Spring (`LoginAttemptService`) and mirror it in the `.NET Backup API` | Member 4 | T-205 | More than `max-attempts` consecutive failures lock the account for `lockout-seconds`; `/api/auth/login` and `/api/auth/reactivate` answer `429` with `Retry-After` before any credential check; a successful password login, reactivation, or Google sign-in clears the counter |
+| T-1002 | S-04, REQ-02, NFR-04 | Surface throttling and token expiry in the Android login UX | Member 1 | T-1001, T-302 | A `429` shows a lockout banner built from the `Retry-After` window; an expired token returns to Login with a "session expired" banner and a cleared back stack |
+| T-1003 | S-04, REQ-16 | Keep clear-text HTTP out of non-demo builds | Member 1 | T-1002 | A `release` build type exists and applies `network_security_config.xml`, whose base config forbids clear text; the exception list stays limited to the documented local development hosts |
+| T-1004 | S-04, NFR-02 | Add throttling validation evidence | Members 4 + 1 | T-1001, T-1002 | Backend tests cover lock-after-threshold, `429`-before-credential-check, window expiry, and success-clears-counter; `LoginLockoutTest` covers the Android message formatting; manual QA covers the lockout and session-expired banners |
+
 ## Implementation Rule
 
 Every future implementation PR should list:

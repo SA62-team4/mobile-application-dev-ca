@@ -63,6 +63,7 @@ Checklist:
 - Valid high or critical Codex Security findings are fixed or explicitly deferred with rationale before merge.
 - Optional `.NET Backup API` changes state that Spring Boot remains canonical for `REQ-08`.
 - Optional privacy (`REQ-23`/`S-03`) PRs include account-export ownership tests, account-deletion transaction/post-delete-token tests, Android manual evidence for export/delete states, and a Codex Security diff scan because account deletion changes user-data handling.
+- Optional security-hardening (`S-04`) PRs keep Spring and the `.NET Backup API` on the same throttle thresholds and the same `429` + `Retry-After` contract, check the lockout before any credential comparison, never record failures for unknown or deleted emails, and include a Codex Security diff scan because they change authentication behavior.
 
 Pass condition:
 
