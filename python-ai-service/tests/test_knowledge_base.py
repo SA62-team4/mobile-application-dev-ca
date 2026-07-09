@@ -3,7 +3,7 @@
 @author Tiong Zhong Cheng
 """
 
-from app.knowledge_base import _extract_title, load_chunks
+from app.knowledge_base import _extract_body_text, _extract_title, load_chunks
 
 
 def test_load_chunks_returns_empty_for_missing_directory(tmp_path):
@@ -29,3 +29,16 @@ def test_extract_title_prefers_first_markdown_h1():
     raw = "intro\n# Sleep Hygiene\nBody"
 
     assert _extract_title(raw, "Fallback") == "Sleep Hygiene"
+
+
+def test_extract_body_text_removes_kb_boilerplate():
+    raw = """# BMI Basics
+
+Source note: team-curated educational summary.
+
+This app provides general wellness education and does not provide medical diagnosis or treatment.
+
+BMI is a screening number based on weight and height.
+"""
+
+    assert _extract_body_text(raw) == "BMI is a screening number based on weight and height."
