@@ -4,13 +4,13 @@
 
 ## Spec Metadata
 
-| Field | Value |
-| --- | --- |
-| Status | Draft baseline |
-| Controls | REQ-01, REQ-02, REQ-04 through REQ-07, REQ-10, REQ-13, REQ-23, NFR-02, NFR-04 |
-| Primary audience | Android owners, backend owners, demo owner |
-| Upstream specs | `02-specify-project-requirements.md`, `06-plan-api-contracts.md` |
-| Downstream specs | Android layouts, ViewModels, manual QA checklist |
+| Field            | Value                                                                         |
+| ---------------- | ----------------------------------------------------------------------------- |
+| Status           | Draft baseline                                                                |
+| Controls         | REQ-01, REQ-02, REQ-04 through REQ-07, REQ-10, REQ-13, REQ-23, NFR-02, NFR-04 |
+| Primary audience | Android owners, backend owners, demo owner                                    |
+| Upstream specs   | `02-specify-project-requirements.md`, `06-plan-api-contracts.md`              |
+| Downstream specs | Android layouts, ViewModels, manual QA checklist                              |
 
 ## Figma UI Specification
 
@@ -23,7 +23,7 @@ The Figma file is the visual handoff for Android XML implementation. It contains
 - `02 Auth`: login and register phone frames.
 - `03 App Screens`: dashboard, add/edit record, chatbot, recommendations, and profile phone frames.
 - `04 States`: loading, empty, error, success, and local AI waiting phone frames.
-- `05 Dashboard`: today's snapshot tiles, the Sleep/Activity/Mood metric cards with sparklines and status badges, the AI insight teaser, and the historical records list with the date-range filter chip.
+- `05 Dashboard`: today's snapshot tiles, the Sleep/Activity/Mood metric cards with interactive sparklines and status badges, the weight trend card, the BMI summary with its own trend sparkline, the AI insight teaser, and the historical records list with the date-range filter chip.
 
 The Dashboard is the authenticated landing view. It replaces the raw records list as the first tab while keeping the historical record cards rendered beneath the summary section. The data, aggregation, and threshold rules that drive these frames are defined in [Wellness Dashboard Logic](#wellness-dashboard-logic) below.
 
@@ -48,25 +48,25 @@ Use the Figma design tokens as the Android XML resource target. Resource names m
 
 ### Color Roles
 
-| Role | Figma token | Android target | Usage |
-| --- | --- | --- | --- |
-| Primary | `color/bg/primary` | `@color/primary` | Primary buttons, selected nav item, positive wellness accents |
-| Secondary | `color/bg/secondary` | `@color/secondary` | Secondary information accents |
-| App background | `color/bg/app` | `@color/bg_app` | Screen background |
-| Surface | `color/bg/surface` | `@color/bg_surface` | Cards, forms, top bar, bottom navigation |
-| Subtle surface | `color/bg/subtle` | `@color/bg_subtle` | Recommendation cards, selected states, soft wellness panels |
-| Warning | `color/bg/warning` | `@color/warning` | Caution or slow local AI notices |
-| Error | `color/bg/error` | `@color/error` | Validation and service failure states |
-| Text primary | `color/text/primary` | `@color/text_primary` | Main content text |
-| Text secondary | `color/text/secondary` | `@color/text_secondary` | Metadata, helper text, secondary copy |
-| Text on primary | `color/text/on-primary` | `@color/text_on_primary` | Text on primary/error filled buttons |
-| Border default | `color/border/default` | `@color/border_default` | Cards and text field outlines |
-| Border focus | `color/border/focus` | `@color/border_focus` | Focused text fields and selected controls |
+| Role            | Figma token             | Android target           | Usage                                                         |
+| --------------- | ----------------------- | ------------------------ | ------------------------------------------------------------- |
+| Primary         | `color/bg/primary`      | `@color/primary`         | Primary buttons, selected nav item, positive wellness accents |
+| Secondary       | `color/bg/secondary`    | `@color/secondary`       | Secondary information accents                                 |
+| App background  | `color/bg/app`          | `@color/bg_app`          | Screen background                                             |
+| Surface         | `color/bg/surface`      | `@color/bg_surface`      | Cards, forms, top bar, bottom navigation                      |
+| Subtle surface  | `color/bg/subtle`       | `@color/bg_subtle`       | Recommendation cards, selected states, soft wellness panels   |
+| Warning         | `color/bg/warning`      | `@color/warning`         | Caution or slow local AI notices                              |
+| Error           | `color/bg/error`        | `@color/error`           | Validation and service failure states                         |
+| Text primary    | `color/text/primary`    | `@color/text_primary`    | Main content text                                             |
+| Text secondary  | `color/text/secondary`  | `@color/text_secondary`  | Metadata, helper text, secondary copy                         |
+| Text on primary | `color/text/on-primary` | `@color/text_on_primary` | Text on primary/error filled buttons                          |
+| Border default  | `color/border/default`  | `@color/border_default`  | Cards and text field outlines                                 |
+| Border focus    | `color/border/focus`    | `@color/border_focus`    | Focused text fields and selected controls                     |
 | Badge excellent | `color/badge/excellent` | `@color/badge_excellent` | "Excellent" status pill on dashboard metric cards (`#2E7D32`) |
-| Badge good | `color/badge/good` | `@color/badge_good` | "Good" status pill on dashboard metric cards (`#00695C`) |
-| Badge fair | `color/badge/fair` | `@color/badge_fair` | "Fair" status pill on dashboard metric cards (`#E65100`) |
-| Metric line/bar | `color/metric/green` | `@color/metric_green` | Activity sparkline bars (`#43A047`) |
-| Metric accent | `color/metric/amber` | `@color/metric_amber` | Mood sparkline line and dots (`#FB8C00`) |
+| Badge good      | `color/badge/good`      | `@color/badge_good`      | "Good" status pill on dashboard metric cards (`#00695C`)      |
+| Badge fair      | `color/badge/fair`      | `@color/badge_fair`      | "Fair" status pill on dashboard metric cards (`#E65100`)      |
+| Metric line/bar | `color/metric/green`    | `@color/metric_green`    | Activity sparkline bars (`#43A047`)                           |
+| Metric accent   | `color/metric/amber`    | `@color/metric_amber`    | Mood sparkline line and dots (`#FB8C00`)                      |
 
 Status-badge colors map directly to the weekly-average thresholds in [Wellness Dashboard Logic](#status-badge-thresholds). "Below Target" reuses `@color/error` and "No Data" reuses `@color/text_secondary`; Sleep sparklines reuse `@color/secondary` (blue).
 
@@ -163,7 +163,6 @@ Profile --> Privacy
 
 Each authenticated screen (`DashboardActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`) is a separate `AppCompatActivity` including the same shared bottom-navigation XML bar. Tapping a bar item fires an explicit `Intent` to the corresponding Activity — there is no single "Home Shell" hosting fragments or swapped views. The Dashboard screen is the landing screen: it surfaces today's snapshot, weekly trends, and the historical records list. The AI insight teaser on the Dashboard deep-links into the Recommendations screen, and the add/edit record flow is opened from within the Dashboard's records section.
 
-
 ## Screens
 
 ### Login Screen
@@ -197,7 +196,46 @@ Google SSO notes:
 - The button uses the Google Sign-In SDK configured with the Web Client ID (`BuildConfig.GOOGLE_WEB_CLIENT_ID`, supplied via `local.properties`) and `requestIdToken()` + `requestEmail()`.
 - The returned Google ID token is exchanged at `POST /api/auth/google`; on success the same `onLoginSuccess` path stores the JWT and navigates onward.
 - The account picture URL (`GoogleSignInAccount.photoUrl`) is captured alongside the ID token and stored via `TokenStore.save(..., photoUrl)` for display on the Profile screen.
+- Google sign-in is also the reactivation path for Google-only deactivated accounts after the backend verifies the Google ID token. Android must show a confirmation dialog before retrying the exchange with `reactivate=true`.
 - Requires a Google APIs emulator image and an Android OAuth client registered with the debug SHA-1; setup is in `docs/local-sso-quickstart.md`.
+
+```plantuml
+@startuml
+title Login Flow (email/password and Google SSO)
+
+actor User
+participant "LoginActivity" as Login
+participant "Google Sign-In SDK" as Google
+participant "Spring Boot" as Backend
+participant "TokenStore" as Store
+
+alt email/password
+  User -> Login: enter email + password, tap Login
+  Login -> Login: validate fields
+  Login -> Backend: POST /api/auth/login
+else Sign in with Google
+  User -> Login: tap Sign in with Google
+  Login -> Google: request idToken + email
+  Google --> Login: idToken + photoUrl
+  Login -> Backend: POST /api/auth/google (idToken)
+  alt account deactivated (Google-only)
+    Backend --> Login: needs reactivation
+    Login -> User: confirmation dialog
+    User -> Login: confirm
+    Login -> Backend: POST /api/auth/google (reactivate=true)
+  end
+end
+
+alt success
+  Backend --> Login: JWT (+ profile)
+  Login -> Store: save(JWT, photoUrl)
+  Login -> Login: navigate to Dashboard
+else failure
+  Backend --> Login: error (invalid creds / network / Google code)
+  Login -> User: error banner, preserve inputs
+end
+@enduml
+```
 
 ### Register Screen
 
@@ -233,15 +271,17 @@ Content, top to bottom:
 
 - **Today's snapshot**: three horizontal tiles showing today's Sleep hours, Activity minutes, and Mood score. If there is no entry for today, fall back to the most recent day's values with a "No entry today" note and the fallback date.
 - **Metric cards** for Sleep, Activity, and Mood, each with:
-  - A sparkline trend chart (Sleep blue line, Activity green bars skipping zero-exercise days, Mood amber line with dots).
+  - A sparkline trend chart (Sleep blue line, Activity green bars skipping zero-exercise days, Mood amber line with dots). Tapping or dragging a chart reveals a per-point value tooltip.
   - A weekly stat line (for example, "Avg 7.2 h · 6 days logged") over the past 7 calendar days.
   - A status badge pill (Excellent, Good, Fair, Below Target, No Data) derived from the weekly average.
+- **Weight summary**: a trend card showing recent logged weight values and the latest weight.
+- **BMI summary**: a card showing the current height from the profile, the derived BMI from the latest logged weight, and a BMI trend sparkline over the 7-day window.
 - **AI insight teaser**: a card previewing the newest recommendation (title plus excerpt truncated to 120 characters). Tapping it opens the Recommendations tab; when none exist it shows a prompt to generate one.
 - **Historical records** section: the scrollable record cards, with a `📅 Filter` action that opens a start-date then end-date picker and filters the list in memory. An active filter shows a dismissible chip to clear it.
 
 Behavior:
 
-- Loads wellness records and AI recommendations concurrently.
+- Loads wellness records, profile data, and AI recommendations concurrently.
 - Multiple records logged on the same day are consolidated for calculations (sum activity minutes, average sleep and mood).
 - Records with malformed/unparseable dates are skipped silently so the screen does not crash.
 - The date-range filter is client-side only and triggers no extra API calls.
@@ -251,6 +291,36 @@ States:
 - Loading dashboard while records and recommendations are fetched.
 - Empty state when there is no logged data yet.
 - Error state when the backend is unreachable.
+
+```plantuml
+@startuml
+title Dashboard Concurrent Load
+
+participant "DashboardActivity" as Dash
+participant "Spring Boot" as Backend
+participant "DashboardDataHelper" as Helper
+
+Dash -> Dash: show loading state
+
+group concurrent load
+  Dash -> Backend: GET wellness records (JWT)
+  & Dash -> Backend: GET recommendations (JWT)
+  Backend --> Dash: records
+  Backend --> Dash: recommendations
+end
+
+alt both empty
+  Dash -> Dash: show empty state (prompt to add first record)
+else backend unreachable
+  Dash -> Dash: show error state (retry)
+else data available
+  Dash -> Helper: consolidate same-day records,\nskip malformed dates
+  Helper -> Helper: weekly averages + badge thresholds
+  Helper --> Dash: snapshot, sparklines, badges
+  Dash -> Dash: render snapshot, metric cards,\nAI teaser, historical records
+end
+@enduml
+```
 
 ### Records Screen
 
@@ -287,9 +357,14 @@ States:
 
 Fields:
 
+- Every field shows a visible label above its input so users do not have to rely
+  on placeholder text after values are entered.
 - Date picker for record date
 - Sleep hours numeric input
-- Exercise type text input or simple spinner
+- Weight numeric input
+- Exercise type predefined spinner/drop-down list, not free text. Options: No
+  exercise, Walking, Running, Cycling, Swimming, Strength training, Yoga,
+  Sports, and Other.
 - Exercise minutes numeric input
 - Mood score selector from 1 to 5
 - Notes multiline text
@@ -304,6 +379,9 @@ Validation:
 
 - Date required.
 - Sleep hours between 0 and 24.
+- Weight must be positive when provided.
+- Exercise type must come from the predefined list; selecting No exercise sends
+  a null/blank exercise type through the existing backend contract.
 - Exercise minutes 0 or greater.
 - Mood score between 1 and 5.
 - Notes optional.
@@ -318,27 +396,89 @@ Content:
 
 - Scrollable chat history.
 - Message input field.
-- Send button.
+- Send button. While a response is streaming, the same control becomes a square
+  Stop icon button.
 - Source snippets are still returned by the backend and stored, but are not shown in the
   chat UI; the answer reads standalone.
 
 Behavior:
 
-- Send button disabled for blank messages, and while a stream is in flight to prevent duplicate submissions.
-- Show typing/loading indicator until the first streamed token arrives.
+- Send button disabled for blank messages. While a stream is in flight, the
+  button changes to a square Stop icon; tapping Stop cancels the active stream, removes the
+  unpersisted partial assistant bubble, restores the question to the input, and
+  does not save a chat message.
+- Show local-AI progress inside the pending assistant chat bubble while a stream
+  is in flight. The bubble cycles short status text such as "Thinking...",
+  "Ruminating...", and "Actioning..." with an animated typing-dot cadence until
+  the first streamed token arrives, then the same bubble grows with the answer.
 - The answer streams in token-by-token: a live assistant bubble is appended immediately and
   grows in place (via `ChatStreamClient` consuming the `POST /api/chat/messages/stream` SSE
   endpoint) so long answers are never truncated. When the stream completes, history is
   reloaded so the bubble is replaced by the persisted server copy.
+- For premium outdoor-exercise/weather routing, ChatActivity may request coarse
+  location permission and include the last-known latitude/longitude in the
+  Spring Boot chat request. Denial or missing location must not block sending:
+  Android sends null coordinates and Spring Boot/premium agent falls back.
 - Keep the request alive long enough for local Ollama generation, which may take tens of seconds on student laptops.
 - Store and display previous messages loaded from backend.
 - If AI service or Ollama is unavailable, drop the partial bubble, show a friendly error, and keep the typed question available.
+- Minimising the app with an in-flight chat request must not cancel the backend
+  streaming call. If Android keeps the Activity instance alive, the visible
+  assistant bubble continues updating when the app is reopened. If Android
+  destroys the stopped Activity without an explicit user exit, the stream may
+  continue until the backend persists the message; the next Chat screen instance
+  reloads history from Spring Boot.
+- Explicit user cancellation through the Stop button, Back, or bottom-nav
+  navigation may cancel the visible chat request.
 
 Message display:
 
 - User message aligned distinctly from assistant message.
 - Assistant answer includes local model name only if it helps the demo.
 - Source titles/snippets are collapsed or visually secondary.
+
+```plantuml
+@startuml
+title Chatbot Send + Streaming
+
+start
+:user types message;
+if (message blank?) then (yes)
+  :keep Send disabled;
+  stop
+endif
+:append user bubble;
+:change Send to square Stop icon,
+ show assistant typing bubble;
+:open SSE POST /api/chat/messages/stream
+ (via ChatStreamClient);
+if (user taps Stop?) then (yes)
+  :cancel SSE call;
+  :remove pending assistant bubble;
+  :restore question in input;
+  :change Stop back to Send;
+  stop
+endif
+if (AI service / Ollama available?) then (no)
+  :drop partial bubble;
+  :show friendly error,
+   keep typed question;
+  stop
+endif
+:append live assistant bubble
+ on first token;
+repeat
+  :append streamed token
+   to bubble in place;
+repeat while (more tokens?) is (yes)
+->no;
+:stream completes;
+:reload history so bubble is
+ replaced by persisted server copy;
+:re-enable Send;
+stop
+@enduml
+```
 
 ### Recommendations Screen
 
@@ -355,10 +495,102 @@ States:
 - Generating state should explain that local AI may take up to a minute.
 - Empty state before first recommendation.
 - Error if agent service is unavailable.
+- Minimising the app while a recommendation is being generated must not cancel
+  the Spring/Python/Ollama request.
+- If Android destroys the stopped Activity without an explicit user exit, the
+  request may continue and, on success, sends the same local generated-insight
+  broadcast used by the foreground screen. The next Recommendations screen
+  instance reloads the saved recommendation from Spring Boot.
+- Explicit user exit through Back or bottom-nav navigation may cancel the
+  visible generation request.
 
 Success:
 
 - New recommendation appears at top of list.
+
+Scheduled notification stretch:
+
+- After authentication, Android registers a local `AlarmManager` broadcast that
+  periodically checks the Spring Boot recommendations endpoint for a newly saved
+  insight.
+- Demo timing is intentionally short: first poll about 30 seconds after the
+  scheduler is prepared, then about every 2 minutes. Because this uses
+  `setInexactRepeating`, Android may batch the exact firing time for battery
+  efficiency.
+- When a new insight is detected, or when the user manually generates an insight
+  successfully, Android sends an explicit local broadcast handled by an app
+  receiver. The receiver posts a local notification titled "New wellness
+  insight" and opens the Recommendations screen when tapped.
+- Notifications remain local to the device; no FCM, paid service, or direct
+  Python/MySQL access is introduced.
+
+Notification component view:
+
+```plantuml
+@startuml
+left to right direction
+
+actor "Authenticated User" as User
+rectangle "DashboardActivity /\nRecommendationsActivity" as Screens
+rectangle "InsightNotificationScheduler" as Scheduler
+rectangle "AlarmManager" as Alarm
+rectangle "Explicit Local Broadcast" as Broadcast
+rectangle "InsightNotificationReceiver" as Receiver
+rectangle "NotificationManager" as NotificationManager
+rectangle "RecommendationsActivity" as Recommendations
+rectangle "Retrofit ApiService" as Api
+rectangle "Spring Boot API\nGET /api/recommendations" as Spring
+
+User --> Screens : opens authenticated app screen
+Screens --> Scheduler : prepare()
+Scheduler --> Alarm : setInexactRepeating()
+Alarm --> Broadcast : ACTION_POLL_INSIGHTS
+Scheduler --> Broadcast : ACTION_INSIGHT_GENERATED\nmanual generation success
+Broadcast --> Receiver
+Receiver --> Api : recommendations()\nJWT
+Api --> Spring
+Spring --> Api : newest-first recommendations
+Receiver --> NotificationManager : post local notification
+NotificationManager --> Recommendations : tap opens screen
+@enduml
+```
+
+Notification sequence:
+
+```plantuml
+@startuml
+actor "Android User" as User
+participant "DashboardActivity /\nRecommendationsActivity" as Screen
+participant "InsightNotificationScheduler" as Scheduler
+participant "AlarmManager" as Alarm
+participant "InsightNotificationReceiver" as Receiver
+participant "Spring Boot API" as Spring
+participant "NotificationManager" as NotificationManager
+participant "RecommendationsActivity" as Recommendations
+
+User -> Screen: Open authenticated screen
+Screen -> Scheduler: prepare(activity)
+Scheduler -> Screen: request POST_NOTIFICATIONS\non Android 13+
+Scheduler -> Alarm: schedule ACTION_POLL_INSIGHTS\ninexact repeating alarm
+
+alt Manual generated insight
+  User -> Recommendations: Tap Generate recommendation
+  Recommendations -> Spring: POST /api/recommendations/generate\nJWT
+  Spring --> Recommendations: 201 RecommendationResponse
+  Recommendations -> Scheduler: broadcastGeneratedInsight(response)
+  Scheduler -> Receiver: explicit broadcast\nACTION_INSIGHT_GENERATED
+else Scheduled check
+  Alarm -> Receiver: ACTION_POLL_INSIGHTS
+  Receiver -> Spring: GET /api/recommendations\nJWT
+  Spring --> Receiver: newest-first recommendations
+  Receiver -> Receiver: compare latest id with\nlast_notified_recommendation_id
+end
+
+Receiver -> NotificationManager: show "New wellness insight"\nif permitted and unseen
+User -> NotificationManager: Tap notification
+NotificationManager -> Recommendations: open Recommendations screen
+@enduml
+```
 
 ### Profile Screen
 
@@ -367,11 +599,13 @@ Content:
 - Profile picture
 - Display name
 - Email
+- Height field and save action for BMI calculation
 - Privacy and data controls entry point (optional `REQ-23` / `S-03`)
 - App version or team name, optional
 
 Actions:
 
+- Save height
 - Privacy and data
 - Logout
 
@@ -382,6 +616,7 @@ Profile picture behavior:
 - Loaded with Coil (`io.coil-kt:coil`) using `CircleCropTransformation`.
 - Falls back to a placeholder avatar (`ic_profile_placeholder`) for email/password logins, when no picture URL is stored, or while the remote image loads/fails.
 - The picture, display name, email, and app-version line are center-aligned within the profile card.
+- Height is loaded from and saved to the backend profile endpoint. The Profile screen owns the current height used by dashboard BMI calculations.
 
 Logout behavior:
 
@@ -412,7 +647,7 @@ Behavior:
 
 - Export calls `GET /api/account/export` with the stored JWT.
 - On successful export, Android opens the system share sheet or document-create flow with a `.json` payload. The payload is not silently uploaded anywhere.
-- Delete account first shows a destructive confirmation dialog. Only confirmation calls `DELETE /api/account`.
+- Delete account first shows a destructive confirmation dialog. Email/password users must enter their current password; Google-only users confirm without a password because no app password exists. Only confirmation calls `DELETE /api/account`.
 - On successful account deletion, Android clears the local JWT, clears locally stored profile/photo data, and navigates to Login with the back stack cleared.
 - If export/delete fails because the token expired, Android clears the token and returns to Login.
 
@@ -423,6 +658,40 @@ States:
 - Delete in progress.
 - Friendly error for backend/network failure.
 - Signed-out success after delete.
+
+```plantuml
+@startuml
+title Privacy: Export and Delete Account
+
+start
+if (action?) then (Export data)
+  :GET /api/account/export (JWT);
+  if (success?) then (yes)
+    :open system share / document-create
+     with .json payload;
+  else (token expired)
+    :clear token, return to Login;
+    stop
+  endif
+  stop
+else (Delete account)
+  :show destructive confirmation dialog;
+  if (Google-only account?) then (yes)
+    :confirm without password;
+  else (email/password)
+    :require current password;
+  endif
+  :DELETE /api/account (JWT);
+  if (success?) then (yes)
+    :clear JWT + local profile/photo;
+    :navigate to Login, clear back stack;
+  else (token expired)
+    :clear token, return to Login;
+  endif
+  stop
+endif
+@enduml
+```
 
 ## Wellness Dashboard Logic
 
@@ -437,21 +706,24 @@ This section defines the data, aggregation, and threshold rules behind the Dashb
 
 Three cards represent Sleep, Activity, and Mood. Each shows a sparkline trend chart, a weekly stat line, and a status badge.
 
+Weight is shown as its own trend card based on recent wellness records. Height is shown in the Profile screen and used for BMI.
+
 - Sparklines are drawn with a custom Canvas view (`SparklineView`) so no external charting dependency is added:
   - Sleep: blue line chart with a dot at the latest point.
   - Activity: green bar chart that skips zero-exercise days.
   - Mood: amber line chart with dots on all logged points.
 - Weekly stat line summarizes the past 7 calendar days, for example "Avg 7.2 h · 6 days logged".
+- Sparklines are interactive: tapping or dragging along a chart highlights the nearest point and shows a compact tooltip with that day and value (unit-aware, for example "Mon 66 kg" or "Wed 3.5 /5"). Each series carries a unit suffix — hours, minutes, "/5" for mood, and "kg" for weight; BMI is unitless. While scrubbing, the chart requests that the parent scroll view not intercept the gesture.
 
 ### Status Badge Thresholds
 
 Status badges derive from the weekly averages. Comparisons are rounded to 1 decimal place to avoid floating-point edge cases (for example, an average sleep of `6.99` rounds to `7.0` and earns Good).
 
-| Metric | Excellent | Good | Fair | Below Target |
-| --- | --- | --- | --- | --- |
-| Sleep average | ≥ 8.0 h | 7.0 – 7.9 h | 6.0 – 6.9 h | < 6.0 h |
-| Active days | ≥ 5 days | 3 – 4 days | 1 – 2 days | 0 days |
-| Mood average | ≥ 4.0 | 3.0 – 3.9 | 2.0 – 2.9 | < 2.0 |
+| Metric        | Excellent | Good        | Fair        | Below Target |
+| ------------- | --------- | ----------- | ----------- | ------------ |
+| Sleep average | ≥ 8.0 h   | 7.0 – 7.9 h | 6.0 – 6.9 h | < 6.0 h      |
+| Active days   | ≥ 5 days  | 3 – 4 days  | 1 – 2 days  | 0 days       |
+| Mood average  | ≥ 4.0     | 3.0 – 3.9   | 2.0 – 2.9   | < 2.0        |
 
 Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color/badge_excellent`, Good `@color/badge_good`, Fair `@color/badge_fair`, Below Target `@color/error`, No Data `@color/text_secondary`.
 
@@ -466,6 +738,15 @@ Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color
 - A `📅 Filter` action opens a start-date then end-date `DatePickerDialog` sequence and filters the list in memory; no extra API calls are triggered.
 - When a filter is active, a dismissible chip appears to clear it. Range filtering is inclusive on both boundaries.
 
+### Body Metrics And BMI
+
+- Weight is tracked in wellness records and summarized from the recent record history.
+- Height is a profile value and is loaded from the authenticated profile endpoint.
+- BMI is derived from the latest weight and current height using the standard formula: weight in kilograms divided by height in metres squared.
+- The BMI card also renders a trend sparkline: one BMI point per weighted day over the 7-day window, computed from that day's weight and the constant profile height. The line is shown once at least two weighted days exist.
+- The BMI card uses the same white surface styling as the Sleep, Activity, Mood, and Weight cards.
+- If either weight or height is missing, the BMI card shows a friendly empty state instead of failing.
+
 ### Multi-Log Aggregation And Safety
 
 - Deduplication: when a user logs multiple records on the same day, they are consolidated for calculations — sum exercise minutes, average sleep hours, and average mood score.
@@ -474,13 +755,12 @@ Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color
 ### Implementation Notes
 
 - `DashboardDataHelper`: pure-Kotlin helper for aggregation, date grouping, badge thresholds, and date filtering. Having no Android SDK dependency, it is unit-testable on the local JVM.
-- `SparklineView`: lightweight custom `View` that overrides `onDraw` to render lines, round-rect bars, and axis labels on the native `Canvas`.
+- `SparklineView`: lightweight custom `View` that overrides `onDraw` to render lines, round-rect bars, and axis labels on the native `Canvas`. It records point positions during draw and handles touch events (`onTouchEvent`) to hit-test the nearest point and draw a value tooltip.
 - `DashboardActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`: one `AppCompatActivity` per authenticated screen, each inflating its own XML layout via View Binding. `DashboardActivity` is the landing screen and loads wellness records and recommendations concurrently.
-
 
 ### Dashboard Tests
 
-- JVM unit tests (`DashboardDataHelperTest`) cover deduplication (averaging vs. summing), defensive date parsing, rounding margins, and date-filter boundary inclusivity.
+- JVM unit tests (`DashboardDataHelperTest`) cover deduplication (averaging vs. summing), defensive date parsing, rounding margins, date-filter boundary inclusivity, BMI summary calculation, and the derived BMI sparkline series (per-day points and the empty-when-no-height case).
 - Manual checks: load under 2 seconds, graceful empty states with zero data or an offline backend, and safe multi-tab navigation.
 
 ## User Experience Rules
@@ -498,17 +778,17 @@ Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color
 
 Major workflows must have explicit visual states:
 
-| Workflow | Loading | Empty | Error | Success |
-| --- | --- | --- | --- | --- |
-| Dashboard | Loading dashboard while records and recommendations load | Empty state with prompt to add first record | Backend unreachable retry message | Snapshot, metric cards, teaser, and records render |
-| Login | Disable login button and show progress | Not applicable | Inline banner for invalid credentials or network failure | Navigate to Dashboard |
-| Register | Disable register button and show progress | Not applicable | Inline validation and friendly backend error | Success message, then Login |
-| Records | Loading records state | Empty records state with Add record action | Retry state for backend/network failure | Refreshed list after save/delete |
-| Add/Edit Record | Save in progress | Not applicable | Inline field errors and save failure message | Return to Records and refresh |
-| Chatbot | Typing/thinking indicator | Empty history with prompt suggestions | Preserve typed question and show retry message | New saved chat appears in history |
-| Recommendations | Loading existing recommendations | Empty recommendations state with Generate action | Agent/Ollama unavailable retry message | New recommendation appears at top |
-| Profile | Optional logout progress | Not applicable | Backend logout failure still allows confirmed local logout | Token cleared and Login shown |
-| Privacy | Export/delete progress | Not applicable | Export/delete failure message; expired token returns to Login | Export share sheet opens, or account deleted and Login shown |
+| Workflow        | Loading                                                  | Empty                                            | Error                                                         | Success                                                      |
+| --------------- | -------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------ |
+| Dashboard       | Loading dashboard while records and recommendations load | Empty state with prompt to add first record      | Backend unreachable retry message                             | Snapshot, metric cards, teaser, and records render           |
+| Login           | Disable login button and show progress                   | Not applicable                                   | Inline banner for invalid credentials or network failure      | Navigate to Dashboard                                        |
+| Register        | Disable register button and show progress                | Not applicable                                   | Inline validation and friendly backend error                  | Success message, then Login                                  |
+| Records         | Loading records state                                    | Empty records state with Add record action       | Retry state for backend/network failure                       | Refreshed list after save/delete                             |
+| Add/Edit Record | Save in progress                                         | Not applicable                                   | Inline field errors and save failure message                  | Return to Records and refresh                                |
+| Chatbot         | Typing/thinking indicator                                | Empty history with prompt suggestions            | Preserve typed question and show retry message                | New saved chat appears in history                            |
+| Recommendations | Loading existing recommendations                         | Empty recommendations state with Generate action | Agent/Ollama unavailable retry message                        | New recommendation appears at top                            |
+| Profile         | Optional logout progress                                 | Not applicable                                   | Backend logout failure still allows confirmed local logout    | Token cleared and Login shown                                |
+| Privacy         | Export/delete progress                                   | Not applicable                                   | Export/delete failure message; expired token returns to Login | Export share sheet opens, or account deleted and Login shown |
 
 The local AI waiting state must explain that generation can take up to a minute and must prevent duplicate chat or recommendation submissions.
 

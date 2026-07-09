@@ -3,15 +3,13 @@ package sg.edu.nus.iss.wellness.dto;
 import java.time.Instant;
 import java.util.List;
 
-import jakarta.validation.constraints.NotBlank;
-
 /**
  * DTOs for the privacy / account-management endpoints (S-03).
  *
  * <p>{@link AccountExport} is the full, portable copy of everything the app
  * stores about a user, returned by {@code GET /api/account/export}.
  *
- * @author Chua Wei Yi Justin
+ * @author Chua Wei Yi Justin, Tiong Zhong Cheng
  */
 public final class AccountDtos {
     private AccountDtos() {
@@ -22,8 +20,15 @@ public final class AccountDtos {
             Long id,
             String email,
             String displayName,
+            java.math.BigDecimal heightCm,
             String role,
             Instant createdAt
+    ) {
+    }
+
+    /** Profile update payload for the authenticated owner. */
+    public record ProfileUpdateRequest(
+            java.math.BigDecimal heightCm
     ) {
     }
 
@@ -49,12 +54,11 @@ public final class AccountDtos {
     }
 
     /**
-     * Password re-confirmation body for the permanent delete. Requiring the
-     * current password guards against a stolen/forgotten unlocked session
-     * triggering an irreversible wipe.
+     * Optional password re-confirmation body for the permanent delete. Local
+     * password accounts must provide the current password; SSO-only accounts
+     * have no app password to re-enter, so the authenticated JWT is enough.
      */
     public record DeleteAccountRequest(
-            @NotBlank(message = "Password confirmation is required")
             String password
     ) {
     }

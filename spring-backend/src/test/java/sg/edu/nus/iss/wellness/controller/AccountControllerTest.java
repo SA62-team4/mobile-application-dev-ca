@@ -2,6 +2,7 @@ package sg.edu.nus.iss.wellness.controller;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +40,7 @@ import sg.edu.nus.iss.wellness.security.JwtService;
  * export, reversible deactivate + reactivate, and permanent password-confirmed
  * delete.
  *
- * @author Chua Wei Yi Justin
+ * @author Chua Wei Yi Justin, Tiong Zhong Cheng
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -65,20 +67,21 @@ class AccountControllerTest {
         user.setEmail("dana@example.com");
         user.setPasswordHash(passwordEncoder.encode(PASSWORD));
         user.setDisplayName("Dana");
+        user.setHeightCm(new BigDecimal("170.0"));
         user = users.save(user);
         token = jwtService.generateToken(user);
     }
 
     private WellnessRecord seedRecord(AppUser owner) {
-        WellnessRecord record = new WellnessRecord();
-        record.setUser(owner);
-        record.setRecordDate(LocalDate.of(2026, 7, 1));
-        record.setSleepHours(new BigDecimal("7.0"));
-        record.setExerciseType("Walking");
-        record.setExerciseMinutes(30);
-        record.setMoodScore(4);
-        record.setNotes("ok");
-        return wellnessRecords.save(record);
+        WellnessRecord entry = new WellnessRecord();
+        entry.setUser(owner);
+        entry.setRecordDate(LocalDate.of(2026, Month.JULY, 1));
+        entry.setSleepHours(new BigDecimal("7.0"));
+        entry.setExerciseType("Walking");
+        entry.setExerciseMinutes(30);
+        entry.setMoodScore(4);
+        entry.setNotes("ok");
+        return wellnessRecords.save(entry);
     }
 
     private Recommendation seedRecommendation(AppUser owner) {
@@ -109,6 +112,14 @@ class AccountControllerTest {
         return users.save(other);
     }
 
+    private AppUser seedGoogleOnlyUser() {
+        AppUser googleUser = new AppUser();
+        googleUser.setEmail("google-user@example.com");
+        googleUser.setDisplayName("Google User");
+        googleUser.setPasswordHash(null);
+        return users.save(googleUser);
+    }
+
     // --- EXPORT ---
 
     @Test
@@ -121,6 +132,7 @@ class AccountControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.profile.email").value("dana@example.com"))
                 .andExpect(jsonPath("$.profile.displayName").value("Dana"))
+            .andExpect(jsonPath("$.profile.heightCm").value(170.0))
                 .andExpect(jsonPath("$.wellnessRecords.length()").value(1))
                 .andExpect(jsonPath("$.recommendations.length()").value(1))
                 .andExpect(jsonPath("$.chatMessages.length()").value(1))
@@ -144,6 +156,40 @@ class AccountControllerTest {
     void export_withoutToken_returnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/account/export"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void export_googleOnlyAccount_returnsOwnedData() throws Exception {
+        AppUser googleUser = seedGoogleOnlyUser();
+        seedRecord(googleUser);
+        String googleToken = jwtService.generateToken(googleUser);
+
+        mockMvc.perform(get("/api/account/export").header("Authorization", "Bearer " + googleToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.profile.email").value("google-user@example.com"))
+                .andExpect(jsonPath("$.wellnessRecords.length()").value(1));
+    }
+
+    @Test
+    void profile_returnsCurrentHeight() throws Exception {
+        mockMvc.perform(get("/api/account/profile").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("dana@example.com"))
+                .andExpect(jsonPath("$.heightCm").value(170.0));
+    }
+
+    @Test
+    void profile_updatePersistsHeight() throws Exception {
+        var body = new AccountDtos.ProfileUpdateRequest(new BigDecimal("172.5"));
+
+        mockMvc.perform(put("/api/account/profile")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.heightCm").value(172.5));
+
+        assertThat(users.findById(user.getId()).orElseThrow().getHeightCm()).isEqualByComparingTo(new BigDecimal("172.5"));
     }
 
     // --- DEACTIVATE + REACTIVATE ---
@@ -244,6 +290,42 @@ class AccountControllerTest {
 
         assertThat(users.findById(user.getId())).isPresent();
         assertThat(wellnessRecords.findByUserOrderByRecordDateDesc(user)).hasSize(1);
+    }
+
+    @Test
+    void delete_withoutPasswordForLocalAccount_returnsBadRequestAndKeepsData() throws Exception {
+        seedRecord(user);
+
+        var body = new AccountDtos.DeleteAccountRequest(null);
+        mockMvc.perform(delete("/api/account")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isBadRequest());
+
+        assertThat(users.findById(user.getId())).isPresent();
+        assertThat(wellnessRecords.findByUserOrderByRecordDateDesc(user)).hasSize(1);
+    }
+
+    @Test
+    void delete_googleOnlyAccount_erasesUserAndAllOwnedDataWithoutPassword() throws Exception {
+        AppUser googleUser = seedGoogleOnlyUser();
+        seedRecord(googleUser);
+        seedRecommendation(googleUser);
+        seedChat(googleUser);
+        String googleToken = jwtService.generateToken(googleUser);
+
+        var body = new AccountDtos.DeleteAccountRequest(null);
+        mockMvc.perform(delete("/api/account")
+                        .header("Authorization", "Bearer " + googleToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isNoContent());
+
+        assertThat(users.findById(googleUser.getId())).isEmpty();
+        assertThat(wellnessRecords.findByUserOrderByRecordDateDesc(googleUser)).isEmpty();
+        assertThat(recommendations.findByUserOrderByCreatedAtDesc(googleUser)).isEmpty();
+        assertThat(chatMessages.findByUserOrderByCreatedAtDesc(googleUser)).isEmpty();
     }
 
     @Test

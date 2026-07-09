@@ -32,7 +32,6 @@ public final class AuthDtos {
     public record LoginResponse(String token, String tokenType, long expiresInSeconds, UserResponse user) {
     }
 
-    public record GoogleAuthRequest(@NotBlank String idToken) {
+    public record GoogleAuthRequest(@NotBlank String idToken, boolean reactivate) {
     }
 }
-

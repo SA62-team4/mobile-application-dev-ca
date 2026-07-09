@@ -13,7 +13,7 @@
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:text="Ruri welcomes you back"
+        android:text="@string/chat_welcome"
         android:textColor="@color/text_primary"
         android:textSize="22sp"
         android:textStyle="bold" />
@@ -61,7 +61,8 @@
             android:layout_height="56dp"
             android:layout_weight="1"
             android:background="@drawable/bg_text_field"
-            android:hint="Ask a wellness question"
+            android:hint="@string/hint_chat_question"
+            android:importantForAutofill="no"
             android:inputType="text"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_secondary"
@@ -73,10 +74,22 @@
             android:layout_height="56dp"
             android:layout_marginStart="8dp"
             android:background="@drawable/bg_button_primary"
-            android:text="Send"
+            android:text="@string/action_send"
             android:textAllCaps="false"
             android:textColor="@color/text_on_primary"
             android:textStyle="bold" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/stopButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_button_primary"
+            android:contentDescription="@string/action_stop"
+            android:padding="16dp"
+            android:scaleType="center"
+            android:src="@drawable/ic_stop_square"
+            android:visibility="gone" />
     </LinearLayout>
 
     <include

@@ -4,13 +4,13 @@
 
 ## Spec Metadata
 
-| Field | Value |
-| --- | --- |
-| Status | Draft baseline |
-| Controls | REQ-09, REQ-15, REQ-23, NFR-01 |
-| Primary audience | Backend, AI integration, test owners |
-| Upstream specs | `02-specify-project-requirements.md`, `04-plan-system-architecture.md` |
-| Downstream specs | `06-plan-api-contracts.md`, `15-validate-test-and-demo-plan.md` |
+| Field            | Value                                                                  |
+| ---------------- | ---------------------------------------------------------------------- |
+| Status           | Draft baseline                                                         |
+| Controls         | REQ-09, REQ-15, REQ-23, NFR-01                                         |
+| Primary audience | Backend, AI integration, test owners                                   |
+| Upstream specs   | `02-specify-project-requirements.md`, `04-plan-system-architecture.md` |
+| Downstream specs | `06-plan-api-contracts.md`, `15-validate-test-and-demo-plan.md`        |
 
 ## MySQL Data Model
 
@@ -25,6 +25,7 @@ entity "USERS" as USERS {
   email : varchar <<UK>>
   password_hash : varchar
   display_name : varchar
+  height_cm : decimal
   role : varchar <<enum: USER, PREMIUM_USER>>
   enabled : boolean
   created_at : datetime
@@ -37,6 +38,7 @@ entity "WELLNESS_RECORDS" as WELLNESS_RECORDS {
   user_id : bigint <<FK>>
   record_date : date
   sleep_hours : decimal
+  weight_kg : decimal
   exercise_type : varchar
   exercise_minutes : int
   mood_score : int
@@ -81,6 +83,7 @@ USERS ||--o{ RECOMMENDATIONS : owns
 - Stores account identity and authentication metadata.
 - `email` must be unique and lowercased before persistence.
 - `password_hash` stores a BCrypt hash, never a plain password. It is **nullable**: Google SSO users (see [DEC-013/DEC-014](03-clarify-decisions-and-edge-cases.md)) have no local password and are persisted with `password_hash = NULL`.
+- `height_cm` stores the user's current height in centimetres for BMI calculation. It is optional because the profile may be incomplete on first login.
 - Because `password_hash` is nullable, the email/password login path must treat a null hash as a non-matching credential (BCrypt match fails), so SSO accounts cannot be logged into with a password.
 - `role` is stored as a SCREAMING_SNAKE_CASE string mapped from a backend `Role` enum. Defined values are `USER` and `PREMIUM_USER`; new registrations default to `USER`. Unknown or blank stored values are read back as `USER` so legacy rows never break login. `PREMIUM_USER` is declared for forward compatibility only — it is not yet granted or enforced anywhere in the authentication/authorization flow. Both the Spring Boot and .NET Backup backends must use identical enum names so the shared `users.role` column and the JWT `role` claim stay interoperable.
 - `enabled` allows future account disabling.
@@ -92,6 +95,7 @@ USERS ||--o{ RECOMMENDATIONS : owns
 - Stores user-entered wellness observations.
 - `record_date` is the date the record describes, not necessarily the creation date.
 - `sleep_hours` should allow decimal values such as `7.5`.
+- `weight_kg` should allow decimal values such as `65.4`.
 - `mood_score` should use a 1 to 5 scale.
 - Records are always scoped to exactly one user.
 

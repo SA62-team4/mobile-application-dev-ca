@@ -52,6 +52,7 @@ public sealed class BackendOptionsTests
         Assert.Equal(86400, options.JwtExpirySeconds);
         Assert.Equal("http://localhost:8000", options.AiServiceUrl);
         Assert.Equal("dev_internal_token", options.InternalServiceToken);
+        Assert.Equal("", options.GoogleClientId);
         Assert.Contains("Server=localhost;", options.MySqlConnectionString);
     }
 
@@ -62,12 +63,14 @@ public sealed class BackendOptionsTests
             ("JWT_SECRET", "custom-secret"),
             ("JWT_EXPIRY_SECONDS", "3600"),
             ("AI_SERVICE_URL", "http://ai:9000/"),
-            ("INTERNAL_SERVICE_TOKEN", "tok")));
+            ("INTERNAL_SERVICE_TOKEN", "tok"),
+            ("GOOGLE_CLIENT_ID", "google-client")));
 
         Assert.Equal("custom-secret", options.JwtSecret);
         Assert.Equal(3600, options.JwtExpirySeconds);
         Assert.Equal("http://ai:9000", options.AiServiceUrl);
         Assert.Equal("tok", options.InternalServiceToken);
+        Assert.Equal("google-client", options.GoogleClientId);
     }
 
     [Fact]

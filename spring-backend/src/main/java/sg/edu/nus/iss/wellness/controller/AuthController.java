@@ -27,6 +27,8 @@ import sg.edu.nus.iss.wellness.service.GoogleTokenVerifier;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+    private static final String TOKEN_TYPE = "Bearer";
+
     private final AppUserRepository users;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -66,7 +68,7 @@ public class AuthController {
         }
         return new AuthDtos.LoginResponse(
                 jwtService.generateToken(user),
-                "Bearer",
+                TOKEN_TYPE,
                 jwtService.expirySeconds(),
                 DtoMapper.user(user)
         );
@@ -91,7 +93,7 @@ public class AuthController {
         }
         return new AuthDtos.LoginResponse(
                 jwtService.generateToken(user),
-                "Bearer",
+                TOKEN_TYPE,
                 jwtService.expirySeconds(),
                 DtoMapper.user(user)
         );
@@ -114,11 +116,20 @@ public class AuthController {
             return users.save(newUser);
         });
         if (!user.isEnabled()) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Account is disabled");
+            // A verified Google token is the reactivation proof for SSO-only
+            // users, who do not have a local app password to submit.
+            if (user.getPasswordHash() != null && !user.getPasswordHash().isBlank()) {
+                throw new ApiException(HttpStatus.FORBIDDEN, "Account is disabled");
+            }
+            if (!request.reactivate()) {
+                throw new ApiException(HttpStatus.FORBIDDEN, "Account is deactivated. Confirm reactivation to continue.");
+            }
+            user.setEnabled(true);
+            user = users.save(user);
         }
         return new AuthDtos.LoginResponse(
                 jwtService.generateToken(user),
-                "Bearer",
+                TOKEN_TYPE,
                 jwtService.expirySeconds(),
                 DtoMapper.user(user)
         );
@@ -130,4 +141,3 @@ public class AuthController {
         // Stateless JWT logout is completed by the Android client clearing its stored token.
     }
 }
-

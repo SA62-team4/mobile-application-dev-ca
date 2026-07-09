@@ -28,6 +28,9 @@ public class WellnessRecord {
     @Column(nullable = false, precision = 4, scale = 1, name = "sleep_hours")
     private BigDecimal sleepHours;
 
+    @Column(precision = 5, scale = 1, name = "weight_kg")
+    private BigDecimal weightKg;
+
     @Column(name = "exercise_type")
     private String exerciseType;
 
@@ -53,6 +56,8 @@ public class WellnessRecord {
     public void setRecordDate(LocalDate recordDate) { this.recordDate = recordDate; }
     public BigDecimal getSleepHours() { return sleepHours; }
     public void setSleepHours(BigDecimal sleepHours) { this.sleepHours = sleepHours; }
+    public BigDecimal getWeightKg() { return weightKg; }
+    public void setWeightKg(BigDecimal weightKg) { this.weightKg = weightKg; }
     public String getExerciseType() { return exerciseType; }
     public void setExerciseType(String exerciseType) { this.exerciseType = exerciseType; }
     public Integer getExerciseMinutes() { return exerciseMinutes; }

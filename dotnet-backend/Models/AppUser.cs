@@ -7,7 +7,7 @@ namespace Wellness.Backup.Api.Models;
 public sealed record AppUser(
     long Id,
     string Email,
-    string PasswordHash,
+    string? PasswordHash,
     string DisplayName,
     Role Role,
     bool Enabled,

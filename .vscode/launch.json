@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "java",
+            "name": "WellnessApplication",
+            "request": "launch",
+            "mainClass": "sg.edu.nus.iss.wellness.WellnessApplication",
+            "projectName": "wellness-backend"
+        },
+        {
             "type": "jdk",
             "request": "launch",
             "name": "Launch Java App"

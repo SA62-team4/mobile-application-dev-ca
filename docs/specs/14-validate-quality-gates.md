@@ -17,6 +17,7 @@ Checklist:
 - Constitution exists and has no unresolved project-level contradiction.
 - Requirement IDs are defined.
 - Clarification log has defaults for open questions.
+- Architecture includes the canonical technology stack baseline.
 - Architecture, ERD, API, Android UI, RAG, agent, Docker, and test specs exist.
 - Android UI spec links to the Figma design handoff when visual screens are available.
 - Traceability matrix maps every requirement to evidence and verification.
@@ -37,12 +38,24 @@ Checklist:
 - Android UI PRs compare XML screens against the Figma UI spec where applicable.
 - Android UI PRs verify there are no overlapping labels, fields, cards, buttons, or navigation controls on compact `360dp` portrait layouts.
 - Tests match the changed subsystem.
+- Framework/runtime family, default local AI model, storage engine, API-client
+  approach, or Docker topology changes update the technology stack baseline in
+  `04-plan-system-architecture.md` and the controlling component spec.
 - SonarQube scan steps are present and either publish to the configured dashboard
   or skip cleanly when `SONAR_HOST_URL`/`SONAR_TOKEN` are unavailable. The
   configured project set includes Spring, Android, Python, and the optional
   `.NET Backup API`.
 - Spring backend SonarQube evidence includes the JaCoCo XML report generated at
   `spring-backend/target/site/jacoco/jacoco.xml` from a Maven `verify` run.
+- Android SonarQube evidence includes the JaCoCo XML coverage report generated at
+  `android-app/app/build/reports/coverage/test/debug/report.xml` from the
+  `createDebugUnitTestCoverageReport` Gradle task (enabled via `enableUnitTestCoverage`),
+  referenced by `sonar.coverage.jacoco.xmlReportPaths` in
+  `android-app/sonar-project.properties`.
+- Android release traffic is TLS-only: the manifest applies
+  `res/xml/network_security_config.xml` with `cleartextTrafficPermitted="false"`
+  by default, permitting clear-text HTTP only for local development hosts
+  (`10.0.2.2`, `localhost`, `127.0.0.1`).
 - Security-sensitive PRs include Codex Security diff scan evidence according to `SECURITY.md`.
 - No paid/cloud LLM dependency is introduced.
 - No direct Android-to-MySQL or Android-to-Python path is introduced.

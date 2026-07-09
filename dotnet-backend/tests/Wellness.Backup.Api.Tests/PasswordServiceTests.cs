@@ -31,6 +31,15 @@ public sealed class PasswordServiceTests
     }
 
     [Fact]
+    public void Verify_RejectsMissingHashForSsoOnlyAccounts()
+    {
+        var service = new PasswordService();
+
+        Assert.False(service.Verify("Password123!", null));
+        Assert.False(service.Verify("Password123!", ""));
+    }
+
+    [Fact]
     public void Hash_DoesNotReturnPlaintext_AndUsesBcryptFormat()
     {
         var service = new PasswordService();

@@ -1,10 +1,12 @@
 package sg.edu.nus.iss.wellness.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,6 +23,7 @@ import sg.edu.nus.iss.wellness.dto.AuthDtos;
 import sg.edu.nus.iss.wellness.model.AppUser;
 import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 import sg.edu.nus.iss.wellness.security.JwtService;
+import sg.edu.nus.iss.wellness.service.GoogleTokenVerifier;
 
 /**
  * End-to-end auth-contract tests (E1 Auth &amp; Security): registration hashes the password and
@@ -28,7 +31,7 @@ import sg.edu.nus.iss.wellness.security.JwtService;
  * protected endpoints reject a missing or malformed token. Runs against the in-memory H2 database,
  * so it needs no external services in CI.
  *
- * @author Chua Wei Yi Justin
+ * @author Chua Wei Yi Justin, Tiong Zhong Cheng
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -45,6 +48,8 @@ class AuthControllerTest {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtService jwtService;
+    @MockBean
+    private GoogleTokenVerifier googleTokenVerifier;
 
     private static final String EMAIL = "alice@example.com";
     private static final String PASSWORD = "Password123";
@@ -134,6 +139,68 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void googleLogin_disabledGoogleOnlyAccountRequiresConfirmation() throws Exception {
+        AppUser user = new AppUser();
+        user.setDisplayName("Alice Google");
+        user.setEmail(EMAIL);
+        user.setPasswordHash(null);
+        user.setEnabled(false);
+        user = users.save(user);
+
+        when(googleTokenVerifier.verify("valid-google-token"))
+                .thenReturn(new GoogleTokenVerifier.GoogleUserInfo("google-sub-1", EMAIL, "Alice Google"));
+
+        var request = new AuthDtos.GoogleAuthRequest("valid-google-token", false);
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        assertThat(users.findById(user.getId()).orElseThrow().isEnabled()).isFalse();
+    }
+
+    @Test
+    void googleLogin_reactivatesDisabledGoogleOnlyAccountAfterConfirmation() throws Exception {
+        AppUser user = new AppUser();
+        user.setDisplayName("Alice Google");
+        user.setEmail(EMAIL);
+        user.setPasswordHash(null);
+        user.setEnabled(false);
+        user = users.save(user);
+
+        when(googleTokenVerifier.verify("valid-google-token"))
+                .thenReturn(new GoogleTokenVerifier.GoogleUserInfo("google-sub-1", EMAIL, "Alice Google"));
+
+        var request = new AuthDtos.GoogleAuthRequest("valid-google-token", true);
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.user.email").value(EMAIL));
+
+        assertThat(users.findById(user.getId()).orElseThrow().isEnabled()).isTrue();
+    }
+
+    @Test
+    void googleLogin_disabledLocalPasswordAccount_returnsForbidden() throws Exception {
+        AppUser user = seedUser();
+        user.setEnabled(false);
+        users.save(user);
+
+        when(googleTokenVerifier.verify("valid-google-token"))
+                .thenReturn(new GoogleTokenVerifier.GoogleUserInfo("google-sub-1", EMAIL, "Alice Google"));
+
+        var request = new AuthDtos.GoogleAuthRequest("valid-google-token", true);
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        assertThat(users.findById(user.getId()).orElseThrow().isEnabled()).isFalse();
     }
 
     // ---- Protected endpoint ----

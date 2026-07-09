@@ -5,7 +5,10 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -36,6 +39,9 @@ class RecommendationsActivity : AppCompatActivity() {
     private lateinit var api: ApiService
     private lateinit var generateButton: Button
     private lateinit var statusContainer: LinearLayout
+    private var generationStatusJob: Job? = null
+    private var generationProgressJob: Job? = null
+    private var allowUiUpdates = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +66,7 @@ class RecommendationsActivity : AppCompatActivity() {
             binding.bottomNav.recommendationsButton
         )
         wireBottomNav(binding.bottomNav, RecommendationsActivity::class.java)
+        InsightNotificationScheduler.prepare(this)
 
         val headerView = layoutInflater.inflate(R.layout.header_generate_button, binding.recommendationsListView, false)
         generateButton = headerView.findViewById(R.id.generateButton)
@@ -111,68 +118,88 @@ class RecommendationsActivity : AppCompatActivity() {
     }
 
     private fun generateRecommendation() {
+        allowUiUpdates = true
+        cancelGenerationVisuals()
         statusContainer.removeAllViews()
         val (detailsView, progressViews) = addLoadingBlock(statusContainer, "Generating recommendation", "Accessing your 14-day logs...", "AI")
         val (progressBar, percentView) = progressViews
         generateButton.isEnabled = false
 
-        val statusJob = scope.launch {
-            val stages = listOf(
-                "Analyzing sleep, activity, and mood patterns...",
-                "Querying vector database for expert wellness guidelines...",
-                "Local LLM is writing your custom wellness guide (usually takes 15-40s)...",
-                "Almost ready! Structuring personalized action items...",
-                "Completing final formatting and saving to backend...",
-                "Still thinking... Local Ollama is heavily processing, thanks for your patience!"
-            )
-            for (message in stages) {
-                delay(4000)
-                detailsView.text = message
-            }
-        }
+        generationStatusJob = startStatusMessages(detailsView)
+        generationProgressJob = startProgressAnimation(progressBar, percentView)
+        scope.launch { runGeneration(progressBar, percentView) }
+    }
 
-        val progressJob = scope.launch {
-            var currentProgress = 0
-            while (currentProgress < 95) {
-                delay(300)
-                currentProgress++
-                progressBar.progress = currentProgress
-                percentView.text = "$currentProgress%"
-
-                if (currentProgress > 75) {
-                    delay(200)
-                }
-                if (currentProgress > 88) {
-                    delay(400)
-                }
-            }
+    /** Cycles through reassuring status messages while the local LLM works. */
+    private fun startStatusMessages(detailsView: TextView): Job = scope.launch {
+        val stages = listOf(
+            "Analyzing sleep, activity, and mood patterns...",
+            "Querying vector database for expert wellness guidelines...",
+            "Local LLM is writing your custom wellness guide (usually takes 15-40s)...",
+            "Almost ready! Structuring personalized action items...",
+            "Completing final formatting and saving to backend...",
+            "Still thinking... Local Ollama is heavily processing, thanks for your patience!"
+        )
+        for (message in stages) {
+            delay(4000)
+            detailsView.text = message
         }
+    }
 
-        scope.launch {
-            runCatching { api.generateRecommendation() }
-                .onSuccess { generated ->
-                    statusJob.cancel()
-                    progressJob.cancel()
-                    progressBar.progress = 100
-                    percentView.text = "100%"
-                    delay(300)
-                    generateButton.isEnabled = true
-                    runCatching { api.recommendations() }
-                        .onSuccess { renderRecommendations(it) }
-                        .onFailure { renderRecommendations(listOf(generated)) }
-                }
-                .onFailure {
-                    statusJob.cancel()
-                    progressJob.cancel()
-                    generateButton.isEnabled = true
-                    statusContainer.removeAllViews()
-                    showError(
-                        statusContainer,
-                        apiErrorMessage("Could not generate recommendation", it),
-                        "Do not pretend a recommendation was saved. Retry after services recover."
-                    )
-                }
+    /** Creeps the progress bar toward 95% so generation feels responsive. */
+    private fun startProgressAnimation(progressBar: ProgressBar, percentView: TextView): Job = scope.launch {
+        var currentProgress = 0
+        while (currentProgress < 95) {
+            delay(300)
+            currentProgress++
+            progressBar.progress = currentProgress
+            percentView.text = "$currentProgress%"
+            if (currentProgress > 75) delay(200)
+            if (currentProgress > 88) delay(400)
         }
+    }
+
+    private suspend fun runGeneration(progressBar: ProgressBar, percentView: TextView) {
+        runCatching { api.generateRecommendation() }
+            .onSuccess { generated -> onGenerationSuccess(generated, progressBar, percentView) }
+            .onFailure { onGenerationFailure(it) }
+    }
+
+    private suspend fun onGenerationSuccess(
+        generated: RecommendationResponse,
+        progressBar: ProgressBar,
+        percentView: TextView
+    ) {
+        cancelGenerationVisuals()
+        InsightNotificationScheduler.broadcastGeneratedInsight(applicationContext, generated)
+        if (!allowUiUpdates) return
+        progressBar.progress = 100
+        percentView.text = "100%"
+        delay(300)
+        if (!allowUiUpdates) return
+        generateButton.isEnabled = true
+        runCatching { api.recommendations() }
+            .onSuccess { if (allowUiUpdates) renderRecommendations(it) }
+            .onFailure { if (allowUiUpdates) renderRecommendations(listOf(generated)) }
+    }
+
+    private fun onGenerationFailure(error: Throwable) {
+        cancelGenerationVisuals()
+        if (!allowUiUpdates) return
+        generateButton.isEnabled = true
+        statusContainer.removeAllViews()
+        showError(
+            statusContainer,
+            apiErrorMessage("Could not generate recommendation", error),
+            "Do not pretend a recommendation was saved. Retry after services recover."
+        )
+    }
+
+    private fun cancelGenerationVisuals() {
+        generationStatusJob?.cancel()
+        generationProgressJob?.cancel()
+        generationStatusJob = null
+        generationProgressJob = null
     }
 
     private fun List<RecommendationResponse>.sortedNewestFirst(): List<RecommendationResponse> =
@@ -189,6 +216,10 @@ class RecommendationsActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        scope.cancel()
+        allowUiUpdates = false
+        cancelGenerationVisuals()
+        if (isFinishing) {
+            scope.cancel()
+        }
     }
 }

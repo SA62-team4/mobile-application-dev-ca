@@ -13,7 +13,7 @@
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:text="Add record"
+        android:text="@string/title_add_record"
         android:textColor="@color/text_primary"
         android:textSize="22sp"
         android:textStyle="bold" />
@@ -29,6 +29,15 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:text="@string/label_record_date"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
             <EditText
                 android:id="@+id/dateInput"
                 android:layout_width="match_parent"
@@ -37,11 +46,21 @@
                 android:background="@drawable/bg_text_field"
                 android:clickable="true"
                 android:focusable="false"
-                android:hint="Date YYYY-MM-DD"
+                android:hint="@string/hint_pick_date"
+                android:importantForAutofill="no"
                 android:inputType="datetime"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_secondary"
                 android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:text="@string/label_sleep_hours"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/sleepInput"
@@ -49,23 +68,64 @@
                 android:layout_height="60dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_text_field"
-                android:hint="Sleep hours"
+                android:hint="@string/hint_sleep_hours"
+                android:importantForAutofill="no"
                 android:inputType="numberDecimal"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_secondary"
                 android:textSize="16sp" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:text="@string/label_weight_kg"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
             <EditText
+                android:id="@+id/weightInput"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_text_field"
+                android:hint="@string/hint_weight_kg"
+                android:importantForAutofill="no"
+                android:inputType="numberDecimal"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:labelFor="@id/exerciseTypeInput"
+                android:text="@string/label_exercise_type"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
                 android:id="@+id/exerciseTypeInput"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_text_field"
-                android:hint="Exercise type"
-                android:inputType="text"
+                android:contentDescription="@string/label_exercise_type"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:prompt="@string/label_exercise_type"
+                android:spinnerMode="dropdown" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:text="@string/label_exercise_minutes"
                 android:textColor="@color/text_primary"
-                android:textColorHint="@color/text_secondary"
-                android:textSize="16sp" />
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/exerciseMinutesInput"
@@ -73,11 +133,21 @@
                 android:layout_height="60dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_text_field"
-                android:hint="Exercise minutes"
+                android:hint="@string/hint_exercise_minutes"
+                android:importantForAutofill="no"
                 android:inputType="number"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_secondary"
                 android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:text="@string/label_mood_score"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/moodInput"
@@ -85,11 +155,21 @@
                 android:layout_height="60dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_text_field"
-                android:hint="Mood score 1-5"
+                android:hint="@string/hint_mood_score"
+                android:importantForAutofill="no"
                 android:inputType="number"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_secondary"
                 android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:text="@string/label_notes"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/notesInput"
@@ -99,7 +179,8 @@
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_text_field"
                 android:gravity="top"
-                android:hint="Notes"
+                android:hint="@string/hint_notes"
+                android:importantForAutofill="no"
                 android:inputType="textMultiLine"
                 android:padding="14dp"
                 android:textColor="@color/text_primary"
@@ -118,7 +199,7 @@
                 android:layout_height="56dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_button_primary"
-                android:text="Save"
+                android:text="@string/action_save"
                 android:textAllCaps="false"
                 android:textColor="@color/text_on_primary"
                 android:textStyle="bold" />
@@ -129,7 +210,7 @@
                 android:layout_height="56dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_button_destructive"
-                android:text="Delete"
+                android:text="@string/action_delete"
                 android:textAllCaps="false"
                 android:textColor="@color/text_on_primary"
                 android:textStyle="bold"
@@ -140,7 +221,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:background="@drawable/bg_button_secondary"
-                android:text="Cancel"
+                android:text="@string/action_cancel"
                 android:textAllCaps="false"
                 android:textColor="@color/primary"
                 android:textStyle="bold" />

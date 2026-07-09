@@ -24,6 +24,7 @@ class ProfileActivity : AppCompatActivity() {
     private val scope = MainScope()
     private lateinit var binding: ActivityProfileBinding
     private lateinit var tokenStore: TokenStore
+    private lateinit var api: sg.edu.nus.iss.wellness.api.ApiService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +37,8 @@ class ProfileActivity : AppCompatActivity() {
         binding = ActivityProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
         EdgeToEdge.apply(this, binding.rootContainer)
+
+        api = ApiClient.create(tokenStore)
 
         binding.displayNameText.text = tokenStore.displayName().ifBlank { "Wellness user" }
         binding.emailText.text = tokenStore.email().ifBlank { "No email stored" }
@@ -62,6 +65,8 @@ class ProfileActivity : AppCompatActivity() {
         )
         wireBottomNav(binding.bottomNav, ProfileActivity::class.java)
 
+        binding.saveHeightButton.setOnClickListener { saveHeight() }
+
         binding.privacyButton.setOnClickListener {
             startActivity(Intent(this, PrivacyActivity::class.java))
         }
@@ -69,11 +74,62 @@ class ProfileActivity : AppCompatActivity() {
         binding.logoutButton.setOnClickListener {
             scope.launch {
                 runCatching { ApiClient.create(tokenStore).logout() }
+                InsightNotificationScheduler.cancel(this@ProfileActivity)
                 tokenStore.clear()
                 goToLogin()
             }
         }
+
+        loadProfile()
     }
+
+    private fun loadProfile() {
+        scope.launch {
+            runCatching { api.profile() }
+                .onSuccess { profile ->
+                    binding.heightInput.setText(profile.heightCm?.let { formatHeight(it) }.orEmpty())
+                }
+                .onFailure { error ->
+                    if (error.isAuthFailure()) {
+                        tokenStore.clear()
+                        goToLogin()
+                    }
+                }
+        }
+    }
+
+    private fun saveHeight() {
+        val raw = binding.heightInput.text.toString().trim()
+        val height = raw.takeIf { it.isNotBlank() }?.toDoubleOrNull()
+        if (height != null && height <= 0.0) {
+            binding.heightInput.error = "Height must be greater than 0."
+            return
+        }
+
+        scope.launch {
+            runCatching { api.updateProfile(sg.edu.nus.iss.wellness.api.AccountProfileUpdateRequest(height)) }
+                .onSuccess { profile ->
+                    binding.heightInput.setText(profile.heightCm?.let { formatHeight(it) }.orEmpty())
+                    android.widget.Toast.makeText(this@ProfileActivity, "Height saved", android.widget.Toast.LENGTH_SHORT).show()
+                }
+                .onFailure { error ->
+                    if (error.isAuthFailure()) {
+                        tokenStore.clear()
+                        goToLogin()
+                    } else {
+                        android.widget.Toast.makeText(this@ProfileActivity, "Could not save height", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+        }
+    }
+
+    private fun formatHeight(heightCm: Double): String = if (heightCm == heightCm.toInt().toDouble()) {
+        heightCm.toInt().toString()
+    } else {
+        heightCm.toString()
+    }
+
+    private fun Throwable.isAuthFailure(): Boolean = this is retrofit2.HttpException && this.code() in listOf(401, 403)
 
     private fun goToLogin() {
         // Clear the whole task so Back cannot reveal the stale Dashboard after logout.

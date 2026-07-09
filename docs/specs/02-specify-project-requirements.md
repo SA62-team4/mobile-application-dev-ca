@@ -16,6 +16,24 @@
 
 Build a simple AI-enabled wellness mobile application for the SA62 Mobile Application Development Continuous Assessment. The application must demonstrate mobile app development, backend integration, database persistence, prompt engineering or RAG, and end-to-end system integration.
 
+## Technology Stack Summary
+
+The detailed cross-component technology stack baseline is maintained in
+`04-plan-system-architecture.md`. At the requirement level, the mandatory stack
+is:
+
+| Area | Required Technology Direction |
+| --- | --- |
+| Mobile app | Kotlin Android app using XML layouts, AppCompat, View Binding, and backend REST calls |
+| Backend | Java Spring Boot API as the canonical server-side implementation |
+| Persistence | MySQL for transactional app data, accessed only through backend services |
+| Authentication | JWT for app sessions, with optional Google SSO exchanged through Spring Boot |
+| AI service | Python service for RAG retrieval, Ollama calls, and agentic recommendation workflow |
+| Local AI | Ollama with `qwen2.5:1.5b` generation and `nomic-embed-text` embeddings by default |
+| Vector persistence | Chroma or equivalent local vector persistence outside MySQL |
+| Runtime/devops | Docker Compose for backend/runtime services where practical; Android remains outside Docker |
+| Optional bonus | `.NET` backup API and Avalonia desktop client only as parity/bonus evidence, never replacements for Android or Spring Boot |
+
 ## Requirement IDs
 
 Mandatory functional requirements:

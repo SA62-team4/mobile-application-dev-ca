@@ -11,6 +11,7 @@ public sealed class BackendOptions
     public required long JwtExpirySeconds { get; init; }
     public required string AiServiceUrl { get; init; }
     public required string InternalServiceToken { get; init; }
+    public string GoogleClientId { get; init; } = "";
 
     public static BackendOptions FromConfiguration(IConfiguration configuration)
     {
@@ -34,7 +35,10 @@ public sealed class BackendOptions
                            ?? "http://localhost:8000").TrimEnd('/'),
             InternalServiceToken = FirstNonBlank(
                 configuration["INTERNAL_SERVICE_TOKEN"],
-                configuration["BackupBackend:InternalServiceToken"]) ?? "dev_internal_token"
+                configuration["BackupBackend:InternalServiceToken"]) ?? "dev_internal_token",
+            GoogleClientId = FirstNonBlank(
+                configuration["GOOGLE_CLIENT_ID"],
+                configuration["BackupBackend:GoogleClientId"]) ?? ""
         };
     }
 

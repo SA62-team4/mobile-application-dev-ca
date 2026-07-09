@@ -32,6 +32,12 @@ interface ApiService {
     @DELETE("api/wellness-records/{id}")
     suspend fun deleteRecord(@Path("id") id: Long)
 
+    @GET("api/account/profile")
+    suspend fun profile(): AccountProfileResponse
+
+    @PUT("api/account/profile")
+    suspend fun updateProfile(@Body request: AccountProfileUpdateRequest): AccountProfileResponse
+
     @GET("api/chat/messages")
     suspend fun chatHistory(): List<ChatResponse>
 
@@ -55,7 +61,7 @@ interface ApiService {
     @POST("api/account/deactivate")
     suspend fun deactivateAccount()
 
-    /** Permanent: password-confirmed erasure of the account and all its data. */
+    /** Permanent erasure; local accounts include password, Google-only accounts do not. */
     @HTTP(method = "DELETE", path = "api/account", hasBody = true)
     suspend fun deleteAccount(@Body request: DeleteAccountRequest)
 
@@ -63,4 +69,3 @@ interface ApiService {
     @POST("api/auth/reactivate")
     suspend fun reactivate(@Body request: LoginRequest): LoginResponse
 }
-

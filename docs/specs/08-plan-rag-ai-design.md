@@ -101,6 +101,38 @@ Generate --> Answer
 - Persist the Chroma index in a Docker volume.
 - Provide a development-only reindex endpoint.
 
+```plantuml
+@startuml
+title Reindex Flow
+
+participant "Reindex Endpoint" as API
+participant "RagService" as RAG
+participant "KB Loader" as KB
+participant "Ollama\n(nomic-embed-text)" as Ollama
+database "Chroma\nwellness_kb" as Chroma
+
+API -> RAG: reindex()
+RAG -> KB: load_chunks(knowledge_base_dir)
+KB --> RAG: chunks
+
+alt no chunks found
+  RAG --> API: 400 No knowledge base files found
+end
+
+RAG -> Chroma: get() existing ids
+Chroma --> RAG: ids
+RAG -> Chroma: delete(ids)
+
+loop for each chunk
+  RAG -> Ollama: embed(chunk.text)
+  Ollama --> RAG: embedding
+  RAG -> Chroma: add(id, embedding, document, metadata)
+end
+
+RAG --> API: {"chunks": N}
+@enduml
+```
+
 ## Retrieval Behavior
 
 - Embed the user question.
@@ -138,6 +170,39 @@ Spring Boot saves:
 - Model name
 - Timestamp
 
+```plantuml
+@startuml
+title Blocking Chat Flow (POST /rag/chat)
+
+actor Android
+participant "Spring Boot" as Backend
+participant "RagService" as RAG
+database "Chroma" as Chroma
+participant "Ollama" as Ollama
+
+Android -> Backend: chat request (+ recent records)
+Backend -> RAG: chat(request)
+
+RAG -> RAG: retrieve(question)
+RAG -> Chroma: count()
+alt index empty
+  RAG -> RAG: reindex()
+end
+RAG -> Ollama: embed(question)
+Ollama --> RAG: query embedding
+RAG -> Chroma: query(embedding, top_k=3)
+Chroma --> RAG: top chunks
+
+RAG -> RAG: build grounded prompt
+RAG -> Ollama: generate(prompt, num_predict=220)
+Ollama --> RAG: answer
+
+RAG --> Backend: answer + sources + modelName
+Backend -> Backend: persist question, answer,\nsources, model, timestamp
+Backend --> Android: answer + sources
+@enduml
+```
+
 ### Streaming Variant
 
 A streaming chat path (`POST /rag/chat/stream` → `POST /api/chat/messages/stream`) exists
@@ -147,6 +212,45 @@ they are generated. Retrieval runs first (sources are known up front), then Olla
 accumulates the fragments, persists the same fields listed above once the stream completes,
 and only then emits the terminal `done` frame — so streamed and non-streamed exchanges are
 stored identically. See `06-plan-api-contracts.md` for the SSE frame protocol.
+
+Spring Boot may route eligible premium outdoor-exercise/weather chat requests to
+an optional local premium weather agent before using this standard RAG stream.
+That route is still backend-mediated, uses the same persisted chat response
+shape, and must fall back to the standard RAG flow when the premium agent is not
+configured or fails.
+
+```plantuml
+@startuml
+title Streaming Chat Flow (POST /rag/chat/stream)
+
+actor Android
+participant "Spring Boot" as Backend
+participant "RagService" as RAG
+database "Chroma" as Chroma
+participant "Ollama" as Ollama
+
+Android -> Backend: stream chat request
+Backend -> RAG: chat_stream(request)
+
+RAG -> Chroma: retrieve top chunks
+Chroma --> RAG: chunks
+RAG --> Backend: SSE {type: sources}
+Backend --> Android: sources frame
+
+RAG -> Ollama: generate_stream(prompt, num_predict=220)
+loop each fragment
+  Ollama --> RAG: token fragment
+  RAG --> Backend: SSE {type: token}
+  Backend -> Backend: accumulate fragment
+  Backend --> Android: token frame
+end
+
+note over RAG: if no tokens produced,\nemit fallback token
+RAG --> Backend: SSE {type: done, modelName}
+Backend -> Backend: persist accumulated answer\n(same fields as blocking)
+Backend --> Android: done frame
+@enduml
+```
 
 ### CPU Performance Tuning
 

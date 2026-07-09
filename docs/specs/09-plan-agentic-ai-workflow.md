@@ -25,6 +25,11 @@ Mandatory trigger:
 Optional trigger:
 
 - Spring Boot scheduled task runs recommendation generation for active users.
+- Android may run a local scheduled notification check as stretch evidence: an
+  `AlarmManager` broadcast polls the Spring recommendations endpoint for the
+  newest saved insight, then sends a local explicit broadcast that posts a
+  notification if the insight has not already been announced on that device.
+  This is a local/demo notification path only, not Firebase Cloud Messaging.
 
 ## Agent Workflow
 

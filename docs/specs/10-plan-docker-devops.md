@@ -24,6 +24,7 @@ Dockerise:
 - Spring Boot backend
 - Optional `.NET Backup API` cold-standby backend
 - Python FastAPI AI service
+- Optional premium FastAPI weather agent for backend-mediated premium chat routing
 - Ollama
 - Chroma/vector persistence, either embedded in Python process with a persistent volume or separate service if chosen later
 - Optional Adminer or phpMyAdmin
@@ -48,6 +49,7 @@ Quality tooling:
 | `spring-backend` | REST API and business logic | Depends on MySQL and Python AI service |
 | `dotnet-backend` | Optional cold-standby REST API mirror | Backup profile/service on host port `8082`; Spring remains canonical |
 | `python-ai-service` | RAG and agentic AI | Depends on Ollama and vector volume |
+| `premium-agent` | Optional premium outdoor-exercise/weather chat agent | Local FastAPI service; enabled only through explicit premium Compose file and `PREMIUM_AI_URL` |
 | `ollama` | Local model runtime | Named volume for models |
 | `adminer` | Optional DB inspection | Demo/debug convenience only |
 
@@ -56,6 +58,37 @@ Quality tooling:
 - `mysql-data`
 - `ollama-data`
 - `chroma-data`
+
+```plantuml
+@startuml
+title Local Compose Topology
+
+node "Android Studio\n(host, not Dockerised)" as Android
+
+package "Docker Compose" {
+  node "spring-backend\n:8080" as Spring
+  node "dotnet-backend\n:8082 (optional)" as Dotnet
+  node "python-ai-service\n:8000" as Python
+  node "ollama\n:11434" as Ollama
+  database "mysql\n:3306" as MySQL
+  node "adminer (optional)" as Adminer
+
+  database "mysql-data" as VolMysql
+  database "ollama-data" as VolOllama
+  database "chroma-data" as VolChroma
+}
+
+Android --> Spring : REST + JWT\n(10.0.2.2 / adb reverse)
+Spring --> MySQL
+Spring --> Python : AI_SERVICE_URL
+Dotnet ..> MySQL : backup profile
+Python --> Ollama : OLLAMA_BASE_URL
+Python --> VolChroma : persist index
+Adminer ..> MySQL
+MySQL --> VolMysql
+Ollama --> VolOllama
+@enduml
+```
 
 ## Environment Variables
 
@@ -76,6 +109,8 @@ JWT_EXPIRY_SECONDS=86400
 GOOGLE_CLIENT_ID=
 AI_SERVICE_URL=http://python-ai-service:8000
 AI_SERVICE_HOST_PORT=8000
+PREMIUM_AI_URL=
+PREMIUM_AI_SECRET=
 INTERNAL_SERVICE_TOKEN=replace_with_internal_token
 DOTNET_BACKEND_HOST_PORT=8082
 DOTNET_CONNECTION_STRING=Server=mysql;Port=3306;Database=wellness_app;User=wellness_user;Password=change_me;TreatTinyAsBoolean=true;
@@ -92,6 +127,11 @@ LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 ```
 
 LangSmith tracing is optional and disabled by default so the AI service runs fully local/offline. When `LANGSMITH_TRACING=true` and an API key is supplied, `python-ai-service` exports LangChain runs (the agentic recommendation chain) to LangSmith for observability.
+
+Premium weather-agent routing is optional and disabled by default. Developers may
+run `premium-server/docker-compose.premium.yml` and set `PREMIUM_AI_URL` plus
+`PREMIUM_AI_SECRET` for Spring Boot. The default demo remains the standard
+Spring Boot -> `python-ai-service` -> Ollama path.
 
 Host-facing ports must be configurable so local tools such as Homebrew MySQL do not block Docker Compose. The default MySQL host port is `3307`, while container-to-container traffic continues to use `mysql:3306`.
 
@@ -290,6 +330,37 @@ Topology and sizing:
 - The Python AI image runs as a non-root user and pre-creates `/data/chroma`
   with app-user ownership so the ChromaDB named volume can be written at startup.
 
+```plantuml
+@startuml
+title Production Deployment Topology (DigitalOcean Droplet)
+
+cloud "Internet" as Net
+node "Android / Desktop\nclients" as Client
+
+node "Ubuntu 24.04 Droplet\n(s-4vcpu-8gb)" as Droplet {
+  node "Caddy\n:80 / :443 (TLS)" as Caddy
+
+  package "wellness-net (internal)" {
+    node "spring-backend\n:8080" as Spring
+    node "python-ai-service\n:8000" as Python
+    node "ollama\n:11434\nKEEP_ALIVE=-1" as Ollama
+    database "mysql\n:3306" as MySQL
+  }
+}
+
+Client --> Net
+Net --> Caddy : HTTPS api.<domain>
+Caddy --> Spring : reverse proxy
+Spring --> MySQL
+Spring --> Python
+Python --> Ollama
+note bottom of Droplet
+  Only 22/80/443 public (cloud firewall).
+  Adminer disabled; MySQL host port removed.
+end note
+@enduml
+```
+
 Infrastructure (`infra/terraform/`):
 
 - Resources: Droplet (cloud-init only creates the `deploy` user and installs
@@ -326,6 +397,34 @@ Deployment (`.github/workflows/`):
 - `deploy.yml`/`infra.yml` use a `production` GitHub Environment for an approval
   gate.
 
+```plantuml
+@startuml
+title Deploy Pipeline (deploy.yml)
+
+actor Developer
+participant "GitHub Actions\ndeploy.yml" as CI
+participant "production\nEnvironment gate" as Gate
+participant "GHCR" as GHCR
+participant "Ansible\nsite.yml" as Ansible
+participant "Droplet" as Droplet
+
+Developer -> CI: push to main\n(deploy-relevant paths) or dispatch
+CI -> Gate: request approval
+Gate --> CI: approved
+CI -> CI: build spring-backend +\npython-ai-service images
+CI -> GHCR: push images
+CI -> Ansible: run site.yml (SSH)
+Ansible -> Droplet: bootstrap (Docker, compose)
+Ansible -> Droplet: ship compose/Caddy/KB,\ntemplate .env (0600)
+Droplet -> GHCR: pull images (GHCR_PAT)
+Ansible -> Droplet: prod overlay up -d
+Ansible -> Droplet: ensure models,\nwarm generation model,\nprebuild RAG index
+Ansible -> Droplet: verify HTTPS health endpoint
+Droplet --> Ansible: healthy
+Ansible --> CI: deploy complete
+@enduml
+```
+
 Secrets and variables (GitHub → Settings → Secrets and variables → Actions).
 Store all secrets as **Environment secrets** on the `production` Environment (not
 repo-wide), so PR workflows cannot read them and the approval gate applies.
@@ -350,7 +449,7 @@ Non-secret config goes in **Variables**.
 | `DOMAIN` | Variable | DNS + `.env` | Your registered domain (hosted in DO DNS when `MANAGE_DNS=true`) |
 | `SUBDOMAIN` | Variable | DNS | Chosen API host label, e.g. `api` |
 | `API_DOMAIN` | Variable | Caddy/`.env` | The full FQDN `SUBDOMAIN.DOMAIN`, e.g. `api.example.com` |
-| `GOOGLE_CLIENT_ID` | Variable | Rendered into Droplet `.env`; backend Google ID token verification (REQ-22) | Google Cloud Console → APIs & Services → Credentials → the **Web** OAuth 2.0 client ID. Non-secret (also embedded in the Android APK). Leave unset to disable SSO in production. |
+| `GOOGLE_CLIENT_ID` | Variable | Rendered into Droplet `.env`; Spring and optional `.NET Backup API` Google ID token verification (REQ-22) | Google Cloud Console → APIs & Services → Credentials → the **Web** OAuth 2.0 client ID. Non-secret (also embedded in the Android APK). Leave unset to disable SSO in production. |
 | `LANGSMITH_API_KEY` | Secret (production) | Rendered into Droplet `.env`; LangChain run tracing | smith.langchain.com → Settings → API Keys. Optional — leave unset to keep tracing off. |
 | `LANGSMITH_TRACING` | Variable | Rendered into Droplet `.env` | `true` to export traces (requires `LANGSMITH_API_KEY`), else leave unset/`false`. |
 | `LANGSMITH_PROJECT` | Variable | Rendered into Droplet `.env` | LangSmith project name; defaults to `wellness-agentic-ai`. |

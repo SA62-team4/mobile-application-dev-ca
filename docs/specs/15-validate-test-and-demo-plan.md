@@ -53,6 +53,7 @@ Optional account privacy (`REQ-23`):
 - Export payload includes only the authenticated user's profile, wellness records, chat messages, and recommendations.
 - Export payload excludes password hash, raw JWTs, internal service tokens, and other users' rows.
 - Delete account requires JWT and deletes the authenticated user's dependent rows plus user row in one transaction.
+- Delete account requires password reconfirmation for local accounts and works for Google-only accounts without an app password.
 - A previous JWT for a deleted account no longer grants access to protected endpoints.
 - Delete account does not delete another user's data.
 
@@ -102,8 +103,21 @@ Unit or instrumentation tests should cover:
 - Login form validation.
 - Register form validation.
 - Wellness record form validation.
+- Wellness record exercise type is selected from the predefined list rather than
+  entered as free text.
 - API client attaches JWT after login.
 - Logout clears local JWT.
+- Dashboard aggregation, weekly summary badges, and BMI derivation
+  (`DashboardDataHelperTest`).
+- Chat SSE wire-format parsing for every event type and malformed input
+  (`ChatSseParserTest`).
+- API request/response DTO construction, equality, and copy semantics
+  (`ApiModelsTest`).
+- User-facing API error-message mapping for HTTP and IO failures
+  (`ApiErrorMessageTest`).
+
+JVM unit tests run via `./gradlew :app:testDebugUnitTest`; line coverage is
+emitted for SonarQube with `:app:createDebugUnitTestCoverageReport` (JaCoCo).
 
 Manual QA should cover:
 
@@ -111,9 +125,25 @@ Manual QA should cover:
 - Empty states.
 - Network error states.
 - Expired token flow.
+- Chatbot shows visible local-AI progress inside the pending assistant bubble
+  while waiting for the first streamed token, then reuses that bubble for the
+  streamed answer.
+- Chatbot square Stop icon cancels an in-flight streamed answer, removes the
+  unpersisted pending bubble, restores the question text, and returns the
+  control to the normal Send button.
 - Full demo flow on emulator or physical device.
 - Physical device demo uses USB debugging, `adb reverse tcp:8080 tcp:8080`, and `WELLNESS_API_BASE_URL=http://127.0.0.1:8080/` rather than a committed LAN IP.
 - Optional `REQ-23`: Profile opens Privacy screen; export opens a JSON share/save flow; delete cancel makes no request; confirmed delete signs out; offline export/delete shows friendly error; expired token returns to Login.
+- Optional `REQ-22` + `REQ-23`: Google-only accounts can export data, delete the account from Privacy, and reactivate a deactivated account by signing in with Google again only after accepting the reactivation confirmation dialog.
+- Optional `S-01`: Android notification permission is requested where required;
+  manually generated recommendations send a local generated-insight broadcast;
+  the scheduled local broadcast can detect a newer recommendation after the
+  demo-friendly first poll of about 30 seconds, then repeat about every 2
+  minutes, and post a notification that opens the Recommendations screen.
+- Android background AI UX: start a chat stream and a recommendation generation,
+  press Home while each is in flight, then reopen the app and confirm the request
+  was not cancelled merely because the app was minimised. If Android recreated
+  the screen, confirm the saved chat/recommendation reloads from Spring Boot.
 
 ## Docker Smoke Tests
 

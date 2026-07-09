@@ -26,8 +26,8 @@ code, tests, or operations files in place.
 
 | Area | Status | Repository Evidence | Remaining Spec-Driven Checks |
 | --- | --- | --- | --- |
-| Spring backend core | Implemented, verification active | `spring-backend/src/main/java/sg/edu/nus/iss/wellness/` controllers, services, models, repositories, JWT security, Google SSO verifier, streaming chat service | Keep ownership/auth tests green; verify API docs after route changes |
-| Android app | Implemented, UI QA active | `DashboardActivity`, `RecordFormActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`, XML layouts, `ListView` adapters, streaming chat client, dashboard helper tests | Manual compact-screen QA against Figma; keep Dashboard as landing screen |
+| Spring backend core | Implemented, verification active | `spring-backend/src/main/java/sg/edu/nus/iss/wellness/` controllers, services, models, repositories, JWT security, Google SSO verifier, streaming chat service, optional premium weather-agent routing | Keep ownership/auth tests green; verify API docs after route changes |
+| Android app | Implemented, UI QA active | `DashboardActivity`, `RecordFormActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`, XML layouts, `ListView` adapters, streaming chat client with optional coarse-location fields, dashboard helper tests | Manual compact-screen QA against Figma; keep Dashboard as landing screen |
 | Python AI service | Implemented, live-model smoke optional | FastAPI routes for health, RAG chat, streaming chat, reindex, recommendation agent; Chroma/Ollama clients; five-file curated KB | Run non-integration pytest in CI; live Ollama smoke before demo |
 | Docker/local runtime | Implemented | `docker-compose.yml`, `docker-compose.prod.yml`, `.env.example`, `docker-compose.dotnet-backup.yml`, `docker-compose.sonar.yml` | Clean-machine compose smoke and model pull/reindex check |
 | CI/quality/deployment | Implemented, evidence-gated | `.github/workflows/ci.yml`, `deploy.yml`, `infra.yml`, pinned actions, lockfile verification, SonarQube and Ansible jobs, Terraform/Ansible roots | Capture final Actions/SonarQube evidence; deployment remains optional for local demo |
@@ -104,8 +104,8 @@ Spring ..> Desktop : REST client parity
 | T-401 | REQ-11, REQ-12 | Scaffold Python RAG service | Member 6 | T-101 | AI health endpoint runs |
 | T-402 | REQ-11 | Create curated wellness KB | Member 6 | T-401 | KB files load and chunk |
 | T-403 | REQ-11, REQ-12 | Implement Chroma indexing and Ollama embedding | Member 6 | T-402 | RAG indexing test passes |
-| T-404 | REQ-10, REQ-11 | Implement backend chat orchestration | Member 5 | T-301, T-403 | Chat API stores answer and sources |
-| T-405 | REQ-10 | Implement Android chatbot screen (realigned to AppCompatActivity + View Binding + ListView/ArrayAdapter, T-701)| Member 3 | T-404 | Chat works from app |
+| T-404 | REQ-10, REQ-11, REQ-12 | Implement backend chat orchestration, including optional local premium weather-agent fallback routing | Member 5 | T-301, T-403 | Chat API stores answer and sources; premium route fails soft to standard RAG |
+| T-405 | REQ-10 | Implement Android chatbot screen (realigned to AppCompatActivity + View Binding + ListView/ArrayAdapter, T-701) with optional coarse-location fields for backend-mediated premium routing | Member 3 | T-404 | Chat works from app |
 
 ## Phase 5: Agentic AI
 

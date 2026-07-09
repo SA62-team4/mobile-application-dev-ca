@@ -13,7 +13,7 @@
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:text="Privacy &amp; data"
+        android:text="@string/title_privacy"
         android:textColor="@color/text_primary"
         android:textSize="22sp"
         android:textStyle="bold" />
@@ -39,7 +39,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="How your data is handled"
+                    android:text="@string/privacy_data_heading"
                     android:textColor="@color/text_primary"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -51,7 +51,7 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
                     android:lineSpacingExtra="4dp"
-                    android:text="• AI runs locally. Recommendations and the wellness chatbot are generated on a self-hosted Ollama model. Your entries are never sent to any third-party AI cloud.\n\n• You control your data. Export a full copy of everything stored about you at any time, or remove it.\n\n• Deactivate is reversible. Your account is hidden and sign-in is blocked, but your records, recommendations and chat history are kept. Reactivate anytime by signing in again.\n\n• Delete is permanent. This erases your account and all associated data from the server and cannot be undone — export first if you want a copy.\n\nNote: your data is stored securely on the app's server database, not only on this device." />
+                    android:text="@string/privacy_data_body" />
             </LinearLayout>
 
             <TextView
@@ -70,7 +70,7 @@
                 android:layout_height="56dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_button_primary"
-                android:text="Export my data"
+                android:text="@string/action_export_data"
                 android:textAllCaps="false"
                 android:textColor="@color/text_on_primary"
                 android:textStyle="bold" />
@@ -81,7 +81,7 @@
                 android:layout_height="56dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_button_secondary"
-                android:text="Deactivate account (reversible)"
+                android:text="@string/action_deactivate"
                 android:textAllCaps="false"
                 android:textColor="@color/primary"
                 android:textStyle="bold" />
@@ -91,7 +91,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:background="@drawable/bg_button_destructive"
-                android:text="Delete account permanently"
+                android:text="@string/action_delete_account"
                 android:textAllCaps="false"
                 android:textColor="@color/text_on_primary"
                 android:textStyle="bold" />

@@ -11,3 +11,5 @@ public sealed record LoginRequest(string? Email, string? Password);
 public sealed record UserResponse(long Id, string DisplayName, string Email);
 
 public sealed record LoginResponse(string Token, string TokenType, long ExpiresInSeconds, UserResponse User);
+
+public sealed record GoogleAuthRequest(string? IdToken, bool Reactivate = false);

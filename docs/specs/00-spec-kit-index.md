@@ -31,7 +31,7 @@ The workflow image also includes Analyze. In this project, Analyze is treated as
 | Constitution | `01-constitution-principles.md` | Project principles, standards, guardrails |
 | Specify | `02-specify-project-requirements.md` | Requirement IDs, acceptance criteria, team ownership |
 | Clarify | `03-clarify-decisions-and-edge-cases.md` | Resolved decisions, open questions, edge cases |
-| Plan | `04-plan-system-architecture.md` through `11-plan-implementation-roadmap.md` | Architecture, data, API, UI, AI, Docker, roadmap |
+| Plan | `04-plan-system-architecture.md` through `11-plan-implementation-roadmap.md` | Technology stack, architecture, data, API, UI, AI, Docker, roadmap |
 | Tasks | `12-tasks-implementation-backlog.md`, `16-kanban-sprint-board.md` | Implementation-ready task units and the sprint/Kanban board view |
 | Analyze | `13-analyze-traceability-matrix.md`, `14-validate-quality-gates.md` | Gap analysis before implementation |
 | Implement | Code and tests in `android-app/`, `spring-backend/`, `python-ai-service/`, optional `.NET` components, and operations files | AI-assisted implementation against specs |
@@ -44,7 +44,7 @@ The workflow image also includes Analyze. In this project, Analyze is treated as
 | 1 | `01-constitution-principles.md` | Principles, standards, and guardrails |
 | 2 | `02-specify-project-requirements.md` | Assignment scope, requirement IDs, team ownership, marking fit |
 | 3 | `03-clarify-decisions-and-edge-cases.md` | Resolved decisions, open questions, edge cases |
-| 4 | `04-plan-system-architecture.md` | Component boundaries, data flow, deployment shape |
+| 4 | `04-plan-system-architecture.md` | Technology stack, component boundaries, data flow, deployment shape |
 | 5 | `05-plan-backend-data-model-erd.md` | Backend MySQL data model and ownership rules |
 | 6 | `06-plan-api-contracts.md` | REST contracts, request/response shapes, auth rules |
 | 7 | `07-plan-android-ui-flows.md` | XML Android screens, navigation, validation, states |

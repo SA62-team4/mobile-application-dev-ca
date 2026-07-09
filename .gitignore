@@ -1,6 +1,8 @@
 .DS_Store
 .env
 .env.sonar
+.env.premium
+.env.*
 *.log
 build/
 target/
@@ -22,6 +24,8 @@ venv/
 *.pyc
 .coverage
 coverage.xml
+htmlcov/
+.pytest_cache/
 chroma-data/
 mysql-data/
 ollama-data/
