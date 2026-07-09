@@ -12,6 +12,7 @@ SA62 Mobile Application Development CA project implementing a Kotlin Android wel
 | `rag-knowledge-base/` | Curated wellness knowledge base for the local RAG chatbot |
 | `dotnet-backend/` | Optional cold-standby .NET backup backend (contract-compatible, `:8082`) |
 | `desktop-app/` | Optional .NET (Avalonia) cross-platform desktop client (bonus, `REQ-21`) |
+| `premium-server/` | Optional premium agent with opt-in LangSmith tracing (off by default) |
 | `docs/specs/` | Spec Kit lifecycle documents — the source of truth |
 | `openwiki/` | Repository overview, architecture, workflows, and testing notes |
 | `infra/`, `docker-compose*.yml` | Docker services and deployment configuration |
@@ -116,6 +117,28 @@ dotnet test desktop-app/tests/WellnessDesktop.Tests/WellnessDesktop.Tests.csproj
 BASE_URL=http://localhost:8080 tools/scripts/backend-contract-smoke.sh
 ```
 
+## Evidence
+
+Screenshots captured from the live tooling that supports this project.
+
+### Code quality — SonarQube
+
+![SonarQube dashboard showing quality gate status and coverage for the four project codebases](docs/images/sonarqube-projects.png)
+
+### Agentic AI tracing — LangSmith
+
+Traces from the `wellness-agentic-ai` project showing the RAG pipeline end to end: `rag.retrieve` fetching from the knowledge base, `ollama.embed` producing local embeddings, and `rag.chat.stream` streaming grounded answers.
+
+LangSmith is **optional observability, disabled by default** (`LANGSMITH_TRACING=false`). It traces the pipeline; it performs no inference. All inference stays local on Ollama. Enabling it sends prompt and response content to LangChain's cloud, so it is left off unless a developer opts in.
+
+![LangSmith tracing view listing rag.chat.stream, ollama.embed, and rag.retrieve runs with latencies](docs/images/langsmith-tracing.png)
+
+### Deployment — DigitalOcean
+
+Two Singapore-region droplets: `wellness-prod` hosting the application stack, and `wellness-sonar` hosting the SonarQube instance above.
+
+![DigitalOcean project dashboard showing the wellness-prod and wellness-sonar droplets](docs/images/digitalocean-droplets.png)
+
 ## AI Usage Declaration
 
 AI is used in this project in two distinct ways. Both are declared here for academic transparency.
@@ -136,4 +159,12 @@ AI coding assistants (Codex, Claude Code) were used to help produce specs, code,
 - AI-generated changes were kept small, reviewable, and validated (tests and quality gates) before being accepted.
 - The team understands and can explain all submitted work; AI was an assistant, not an author of record.
 
-The tools and services above are used for their stated purposes only and do not send project data to paid or cloud-only AI providers at runtime.
+### 3. Third-party services
+
+For completeness, the project uses these hosted services for infrastructure and tooling — none of them perform AI inference:
+
+- **DigitalOcean** — hosts the production stack and the SonarQube instance.
+- **SonarQube** (self-hosted) — static analysis and quality gates.
+- **LangSmith** — optional tracing of the RAG pipeline, disabled by default. When enabled it receives prompt and response content for debugging; it does not generate responses.
+
+All AI inference is performed locally by Ollama. No paid or cloud-only AI model provider is used at runtime.
