@@ -32,6 +32,12 @@ interface ApiService {
     @DELETE("api/wellness-records/{id}")
     suspend fun deleteRecord(@Path("id") id: Long)
 
+    @GET("api/account/profile")
+    suspend fun profile(): AccountProfileResponse
+
+    @PUT("api/account/profile")
+    suspend fun updateProfile(@Body request: AccountProfileUpdateRequest): AccountProfileResponse
+
     @GET("api/chat/messages")
     suspend fun chatHistory(): List<ChatResponse>
 

@@ -30,6 +30,7 @@ public final class DtoMapper {
                 wellnessRecord.getId(),
                 wellnessRecord.getRecordDate(),
                 wellnessRecord.getSleepHours(),
+            wellnessRecord.getWeightKg(),
                 wellnessRecord.getExerciseType(),
                 wellnessRecord.getExerciseMinutes(),
                 wellnessRecord.getMoodScore(),

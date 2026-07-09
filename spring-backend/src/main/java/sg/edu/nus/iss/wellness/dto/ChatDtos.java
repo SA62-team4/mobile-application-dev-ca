@@ -18,8 +18,17 @@ public final class ChatDtos {
     public record ChatRequest(
             @NotBlank(message = "Question cannot be empty")
             @Size(max = 1000, message = "Question must be less than 1000 characters")
-            String question
+            String question,
+            // Optional GPS coordinates from the Android client. Null when the user
+            // denies the location permission; the premium weather agent then falls
+            // back to the national average. Double (not double) so null is allowed.
+            Double latitude,
+            Double longitude
     ) {
+        /** Convenience constructor for the location-less case (also keeps existing callers valid). */
+        public ChatRequest(String question) {
+            this(question, null, null);
+        }
     }
 
     public record SourceSnippet(String title, String snippet) {

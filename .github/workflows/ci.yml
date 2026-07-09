@@ -67,7 +67,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
       - name: Build and test Android app
         working-directory: android-app
-        run: ./gradlew --gradle-user-home ../.gradle-cache :app:assembleDebug :app:testDebugUnitTest
+        run: ./gradlew --gradle-user-home ../.gradle-cache :app:assembleDebug :app:testDebugUnitTest :app:createDebugUnitTestCoverageReport
       - name: Generate Android lint report for SonarQube
         continue-on-error: true
         working-directory: android-app

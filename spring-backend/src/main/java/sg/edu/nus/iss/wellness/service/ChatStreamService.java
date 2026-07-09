@@ -8,8 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import sg.edu.nus.iss.wellness.client.AiServiceClient;
+import sg.edu.nus.iss.wellness.client.PremiumAiClient;
+import sg.edu.nus.iss.wellness.model.Role;
 import sg.edu.nus.iss.wellness.dto.ChatDtos;
 import sg.edu.nus.iss.wellness.model.AppUser;
+
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -29,7 +32,7 @@ import java.util.concurrent.Executors;
  * context are available) and the actual streaming runs on a background worker so the servlet
  * thread is released promptly.
  *
- * @author Tiong Zhong Cheng
+ * @author Tiong Zhong Cheng, Tang Chee Seng
  */
 @Service
 public class ChatStreamService {
@@ -42,13 +45,19 @@ public class ChatStreamService {
     private final ChatService chatService;
     private final ObjectMapper objectMapper;
     private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final PremiumAiClient premiumAiClient;
+    private final ExerciseIntentClassifier intentClassifier;
 
     public ChatStreamService(AiServiceClient aiServiceClient,
                              ChatService chatService,
-                             ObjectMapper objectMapper) {
+                             ObjectMapper objectMapper,
+                             PremiumAiClient premiumAiClient,
+                             ExerciseIntentClassifier intentClassifier) {
         this.aiServiceClient = aiServiceClient;
         this.chatService = chatService;
         this.objectMapper = objectMapper;
+        this.premiumAiClient = premiumAiClient;
+        this.intentClassifier = intentClassifier;
     }
 
     /**
@@ -59,25 +68,38 @@ public class ChatStreamService {
      * @return an emitter that streams {@code sources}, {@code token}, and a terminal
      *         {@code done} (or {@code error}) SSE data frame
      */
-    public SseEmitter stream(AppUser user, String question) {
+    public SseEmitter stream(AppUser user, String question, Double latitude, Double longitude) {
         SseEmitter emitter = new SseEmitter(STREAM_TIMEOUT_MS);
         Long userId = user.getId();
+        Role userRole = user.getRole();
         List<ChatDtos.RecentRecord> records = chatService.fetchRecentWellnessRecords(user);
-        executor.execute(() -> runStream(emitter, userId, question, records));
+        executor.execute(() -> runStream(emitter, userId, userRole, question, records, latitude, longitude));
         return emitter;
     }
 
     // Package-private so the streaming/persistence logic can be unit-tested synchronously
     // with a mock emitter, without going through the executor.
-    void runStream(SseEmitter emitter, Long userId, String question, List<ChatDtos.RecentRecord> records) {
+    void runStream(SseEmitter emitter, Long userId, Role userRole, String question,
+                   List<ChatDtos.RecentRecord> records, Double latitude, Double longitude) {
         StringBuilder answer = new StringBuilder();
         List<ChatDtos.SourceSnippet> sources = new ArrayList<>();
         StringBuilder modelName = new StringBuilder();
         try {
-            aiServiceClient.streamChat(
-                    new ChatDtos.AiChatRequest(userId, question, records),
-                    data -> handleFrame(emitter, data, answer, sources, modelName)
-            );
+            boolean usedPremium = false;
+            if (userRole == Role.PREMIUM_USER
+                    && premiumAiClient.isEnabled()
+                    && intentClassifier.isExerciseRelated(question)) {
+                String context = chatService.buildContextString(records, question);
+                String chatFormat = chatService.formatRecords(records);
+                usedPremium = premiumAiClient.premiumStreamChat(
+                        question, context, chatFormat, latitude, longitude,
+                        data -> handleFrame(emitter, data, answer, sources, modelName));
+            }
+            if (!usedPremium) {   // standard path (unchanged), also the fallback
+                aiServiceClient.streamChat(
+                        new ChatDtos.AiChatRequest(userId, question, records),
+                        data -> handleFrame(emitter, data, answer, sources, modelName));
+            }
             ChatDtos.ChatResponse saved = chatService.saveStreamedAnswer(
                     userId, question, answer.toString().trim(), modelName.toString(), sources);
             sendDone(emitter, saved);

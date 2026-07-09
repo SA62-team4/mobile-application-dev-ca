@@ -38,14 +38,16 @@ public class ChatController {
     @ResponseStatus(HttpStatus.OK)
     public ChatDtos.ChatResponse ask(@Valid @RequestBody ChatDtos.ChatRequest request) {
         AppUser user = currentUserService.requireCurrentUser();
-        return chatService.askQuestion(user, request.question());
+        return chatService.askQuestion(user, request.question(),
+                request.latitude(), request.longitude());
     }
 
     /** Stream a RAG answer as Server-Sent Events. */
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream(@Valid @RequestBody ChatDtos.ChatRequest request) {
         AppUser user = currentUserService.requireCurrentUser();
-        return chatStreamService.stream(user, request.question());
+        return chatStreamService.stream(user, request.question(),
+                request.latitude(), request.longitude());
     }
 
     /** List chat history for the current user. */

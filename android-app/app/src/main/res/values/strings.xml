@@ -20,37 +20,112 @@
     <string name="action_edit">Edit</string>
     <string name="action_delete">Delete</string>
 
+    <!-- Profile -->
+    <string name="label_height_cm">Height (cm)</string>
+    <string name="hint_height_cm">Example: 170</string>
+    <string name="action_save_height">Save height</string>
+
     <!-- Record form labels -->
     <string name="label_record_date">Record date</string>
-    <string name="hint_pick_date">Tap to pick date</string>
+    <string name="hint_pick_date">Select date</string>
 
     <string name="label_sleep_hours">Sleep hours (0–24)</string>
-    <string name="hint_sleep_hours">Example: 7.5</string>
+    <string name="hint_sleep_hours">Your answer</string>
+
+    <string name="label_weight_kg">Weight (kg)</string>
+    <string name="hint_weight_kg">Optional: 65.4</string>
 
     <string name="label_exercise_type">Exercise type</string>
     <string name="hint_exercise_type">Choose exercise type</string>
 
     <string name="label_exercise_minutes">Exercise minutes</string>
-    <string name="hint_exercise_minutes">Example: 30</string>
+    <string name="hint_exercise_minutes">Your answer</string>
 
     <string name="label_mood_score">Mood (1–5)</string>
-    <string name="hint_mood_score">Example: 4</string>
+    <string name="hint_mood_score">Your answer</string>
 
     <string name="label_notes">Notes</string>
-    <string name="hint_notes">Optional notes</string>
+    <string name="hint_notes">Your answer</string>
 
     <!-- Record form messages -->
     <string name="record_date_required">Record date is required</string>
     <string name="error_sleep_range">Sleep hours must be 0–24</string>
+    <string name="error_weight_positive">Weight must be greater than 0</string>
     <string name="error_exercise_minutes">Exercise minutes must be 0 or more</string>
     <string name="error_mood_range">Mood score must be 1–5</string>
     <string name="toast_record_saved">Record saved</string>
     <string name="toast_save_failed">Save failed. Check backend connection.</string>
+    <string name="action_send">Send</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_stop">Stop</string>
     <string name="cd_record_date">Record date</string>
 
     <!-- Records list -->
     <string name="records_empty_message">No records yet — try adding one</string>
     <string name="cd_records_loading">Loading wellness records</string>
+
+    <!-- Chat progress -->
+    <string name="chat_progress_initial">Thinking...</string>
+    <string name="chat_progress_rag">Ruminating...</string>
+    <string name="chat_progress_stream">Actioning...</string>
+
+    <!-- Screen titles -->
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_recommendations">Recommendations</string>
+    <string name="title_privacy">Privacy &amp; data</string>
+    <string name="title_profile">Profile</string>
+    <string name="title_add_record">Add record</string>
+
+    <!-- Login -->
+    <string name="login_title">Welcome back</string>
+    <string name="login_subtitle">Log in to continue your wellness tracking.</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="action_login">Login</string>
+    <string name="action_create_account">Create account</string>
+    <string name="login_divider">— or —</string>
+    <string name="action_sign_in_google">Sign in with Google</string>
+    <string name="action_reactivate">Reactivate account</string>
+
+    <!-- Register -->
+    <string name="brand_mark_letter">W</string>
+    <string name="register_subtitle">Start with a simple profile and secure backend login.</string>
+    <string name="hint_display_name">Display name</string>
+    <string name="hint_confirm_password">Confirm password</string>
+    <string name="action_register">Register</string>
+    <string name="action_back_to_login">Back to login</string>
+
+    <!-- Privacy -->
+    <string name="privacy_data_heading">How your data is handled</string>
+    <string name="privacy_data_body">• AI runs locally. Recommendations and the wellness chatbot are generated on a self-hosted Ollama model. Your entries are never sent to any third-party AI cloud.\n\n• You control your data. Export a full copy of everything stored about you at any time, or remove it.\n\n• Deactivate is reversible. Your account is hidden and sign-in is blocked, but your records, recommendations and chat history are kept. Reactivate anytime by signing in again.\n\n• Delete is permanent. This erases your account and all associated data from the server and cannot be undone — export first if you want a copy.\n\nNote: your data is stored securely on the app\'s server database, not only on this device.</string>
+    <string name="action_export_data">Export my data</string>
+    <string name="action_deactivate">Deactivate account (reversible)</string>
+    <string name="action_delete_account">Delete account permanently</string>
+
+    <!-- Profile -->
+    <string name="cd_profile_picture">Profile picture</string>
+    <string name="app_version_label">SA62 Wellness App | Version 1.0</string>
+    <string name="action_logout">Logout</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_chat">Chat</string>
+    <string name="nav_tips">Tips</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Chat -->
+    <string name="chat_welcome">Ruri welcomes you back</string>
+    <string name="hint_chat_question">Ask a wellness question</string>
+    <string name="chat_role_you">You</string>
+    <string name="chat_role_assistant">Assistant</string>
+
+    <!-- Dashboard records header -->
+    <string name="dashboard_recent_records">Recent Records</string>
+    <string name="action_filter">Filter</string>
+    <string name="action_add">+ Add</string>
+
+    <!-- Recommendations -->
+    <string name="action_generate_recommendation">Generate recommendation</string>
+    <string name="recommendation_actions">Actions</string>
 </resources>

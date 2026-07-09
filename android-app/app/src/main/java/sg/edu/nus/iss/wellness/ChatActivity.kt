@@ -1,13 +1,24 @@
 package sg.edu.nus.iss.wellness
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import sg.edu.nus.iss.wellness.adapter.ChatAdapter
 import sg.edu.nus.iss.wellness.api.ApiClient
@@ -28,6 +39,7 @@ import sg.edu.nus.iss.wellness.ui.wireBottomNav
  *
  * @author Tiong Zhong Cheng, Tang Chee Seng, Abu Bakar Nasir
  */
+
 class ChatActivity : AppCompatActivity() {
     private val scope = MainScope()
     private lateinit var binding: ActivityChatBinding
@@ -35,6 +47,11 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var api: ApiService
     private lateinit var streamClient: ChatStreamClient
     private lateinit var adapter: ChatAdapter
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var progressJob: Job? = null
+    private var streamJob: Job? = null
+    private var activeQuestion: String? = null
+    private var allowUiUpdates = true
 
     // Source of truth for the visible conversation (oldest first). A live streaming answer
     // is appended here as a pending row (id == 0) and grows in place until persisted.
@@ -42,6 +59,7 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         tokenStore = TokenStore(this)
         if (tokenStore.token().isNullOrBlank()) {
             goToLogin()
@@ -49,6 +67,7 @@ class ChatActivity : AppCompatActivity() {
         }
         api = ApiClient.create(tokenStore)
         streamClient = ChatStreamClient(tokenStore)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -82,6 +101,7 @@ class ChatActivity : AppCompatActivity() {
                 sendChat(text)
             }
         }
+        binding.stopButton.setOnClickListener { stopChat() }
         binding.swipeRefresh.setOnRefreshListener { loadChatHistory() }
 
         adapter = ChatAdapter(this, emptyList())
@@ -90,66 +110,171 @@ class ChatActivity : AppCompatActivity() {
         loadChatHistory()
     }
 
-    private fun sendChat(question: String) {
-        binding.statusContainer.removeAllViews()
-        addStateBlock(binding.statusContainer, "Thinking", "Local RAG and Ollama may take a little while.", "AI")
-        binding.sendButton.isEnabled = false
-        binding.questionInput.setText("")
+    /**
+     * Read the last known GPS fix, then invoke [onReady] with lat/lon (or null, null).
+     * Null is a valid outcome because the agent falls back to the national average. If permission
+     * is missing we request it for next time and proceed with null values first, so a Send is never
+     * blocked while waiting on a dialog.
+     */
+    private fun readLocation(onReady: (Double?, Double?) -> Unit) {
+        val granted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!granted) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+            onReady(null, null)
+            return
+        }
+        try {
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { loc -> onReady(loc?.latitude, loc?.longitude) }
+                .addOnFailureListener { onReady(null, null) }
+        } catch (_: SecurityException) {
+            onReady(null, null)
+        }
+    }
 
-        // Append the live answer row.
-        val pendingIndex = messages.size
-        messages.add(pendingMessage(question, "", emptyList()))
-        renderMessages()
+    // Registered once for the Activity. The result is intentionally ignored: whether the
+    // user grants or denies, we proceed with the send. Denied → null lat/lon → the agent
+    // falls back to the national average. We only ask so a *future* send can read a fix.
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* no-op: sendChat already read (or defaulted) the location for this turn */ }
 
+    /** Mutable state carried across the streaming callbacks for one question. */
+    private class StreamState {
         val answer = StringBuilder()
         var sources: List<SourceSnippet> = emptyList()
         // Ignore late stream failures after terminal frames.
         var terminal = false
+    }
 
-        scope.launch {
-            runCatching {
-                streamClient.stream(question) { event ->
-                    when (event) {
-                        is ChatStreamEvent.Sources -> {
-                            binding.statusContainer.removeAllViews()
-                            sources = event.sources
-                            updatePending(pendingIndex, question, answer.toString(), sources)
-                        }
-                        is ChatStreamEvent.Token -> {
-                            binding.statusContainer.removeAllViews()
-                            answer.append(event.text)
-                            updatePending(pendingIndex, question, answer.toString(), sources)
-                        }
-                        is ChatStreamEvent.Done -> {
-                            terminal = true
-                            binding.sendButton.isEnabled = true
-                            // Replace the pending row with the persisted server copy (correct
-                            // id, timestamp, and stored sources) by reloading history.
-                            loadChatHistory()
-                        }
-                        is ChatStreamEvent.Error -> {
-                            terminal = true
-                            binding.sendButton.isEnabled = true
-                            dropPendingMessages()
-                            showError(
-                                binding.statusContainer,
-                                event.message,
-                                "Keep your question and retry when services are running."
-                            )
-                        }
+    private fun sendChat(question: String) {
+        allowUiUpdates = true
+        binding.statusContainer.removeAllViews()
+        activeQuestion = question
+        showStopButton()
+        binding.questionInput.setText("")
+
+        // Append the live answer row.
+        val pendingIndex = messages.size
+        messages.add(pendingMessage(question, getString(R.string.chat_progress_initial), emptyList()))
+        renderMessages()
+        showChatProgress(pendingIndex, question)
+
+        val state = StreamState()
+        readLocation { lat, lon ->
+            streamJob = scope.launch {
+                runCatching {
+                    streamClient.stream(question, lat, lon) { event ->
+                        handleStreamEvent(state, event, pendingIndex, question)
                     }
-                }
-            }.onFailure {
-                if (terminal) return@onFailure
-                binding.sendButton.isEnabled = true
+                }.onFailure { onStreamFailure(state, it) }
+            }
+        }
+    }
+
+    private fun handleStreamEvent(state: StreamState, event: ChatStreamEvent, pendingIndex: Int, question: String) {
+        if (!allowUiUpdates) {
+            if (event is ChatStreamEvent.Done || event is ChatStreamEvent.Error) state.terminal = true
+            return
+        }
+        when (event) {
+            is ChatStreamEvent.Sources -> {
+                state.sources = event.sources
+                updatePending(pendingIndex, question, getString(R.string.chat_progress_rag), state.sources)
+            }
+            is ChatStreamEvent.Token -> {
+                hideChatProgress()
+                state.answer.append(event.text)
+                updatePending(pendingIndex, question, state.answer.toString(), state.sources)
+            }
+            is ChatStreamEvent.Done -> {
+                state.terminal = true
+                finishStreaming()
+                // Replace the pending row with the persisted server copy (correct
+                // id, timestamp, and stored sources) by reloading history.
+                loadChatHistory()
+            }
+            is ChatStreamEvent.Error -> {
+                state.terminal = true
+                finishStreaming()
                 dropPendingMessages()
                 showError(
                     binding.statusContainer,
-                    apiErrorMessage("Chatbot unavailable", it),
+                    event.message,
                     "Keep your question and retry when services are running."
                 )
             }
         }
+    }
+
+    private fun onStreamFailure(state: StreamState, throwable: Throwable) {
+        if (throwable is CancellationException) return
+        if (state.terminal) return
+        if (!allowUiUpdates) return
+        finishStreaming()
+        dropPendingMessages()
+        showError(
+            binding.statusContainer,
+            apiErrorMessage("Chatbot unavailable", throwable),
+            "Keep your question and retry when services are running."
+        )
+    }
+
+    private fun stopChat() {
+        val questionToRestore = activeQuestion.orEmpty()
+        streamJob?.cancel()
+        finishStreaming()
+        dropPendingMessages()
+        binding.questionInput.setText(questionToRestore)
+        binding.questionInput.setSelection(binding.questionInput.text.length)
+    }
+
+    private fun finishStreaming() {
+        hideChatProgress()
+        streamJob = null
+        activeQuestion = null
+        showSendButton()
+    }
+
+    private fun showStopButton() {
+        binding.sendButton.visibility = View.GONE
+        binding.stopButton.visibility = View.VISIBLE
+        binding.stopButton.isEnabled = true
+    }
+
+    private fun showSendButton() {
+        binding.stopButton.visibility = View.GONE
+        binding.sendButton.visibility = View.VISIBLE
+        binding.sendButton.isEnabled = true
+    }
+
+    private fun showChatProgress(pendingIndex: Int, question: String) {
+        val phases = listOf(
+            getString(R.string.chat_progress_initial),
+            getString(R.string.chat_progress_rag),
+            getString(R.string.chat_progress_stream)
+        )
+        progressJob?.cancel()
+        progressJob = scope.launch {
+            var index = 0
+            var dotCount = 0
+            while (isActive) {
+                delay(450)
+                dotCount = (dotCount + 1) % 4
+                if (dotCount == 0) {
+                    index = (index + 1) % phases.size
+                }
+                val text = phases[index].trimEnd('.') + ".".repeat(dotCount.coerceAtLeast(1))
+                updatePending(pendingIndex, question, text, emptyList())
+            }
+        }
+    }
+
+    private fun hideChatProgress() {
+        progressJob?.cancel()
+        progressJob = null
     }
 
     private fun pendingMessage(question: String, answer: String, sources: List<SourceSnippet>) =
@@ -213,6 +338,11 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        scope.cancel()
+        allowUiUpdates = false
+        progressJob?.cancel()
+        if (isFinishing) {
+            streamJob?.cancel()
+            scope.cancel()
+        }
     }
 }

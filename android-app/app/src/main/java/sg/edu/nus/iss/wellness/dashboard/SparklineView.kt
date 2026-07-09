@@ -8,16 +8,25 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.util.TypedValue
+import android.view.MotionEvent
 import android.view.View
+import androidx.core.graphics.toColorInt
+import kotlin.math.abs
 
 /**
- * Canvas sparkline view.
+ * Canvas sparkline view. Tap or drag along the chart to reveal the value of the
+ * nearest point in a small tooltip.
  *
  * @author Jemilin Beulah Suria Christopher Raj
  */
 class SparklineView(context: Context, attrs: AttributeSet? = null) : View(context, attrs) {
 
     private var series: SparklineDataSeries? = null
+
+    // Point positions from the last draw, reused for hit-testing taps.
+    private var pointXs = FloatArray(0)
+    private var pointYs = FloatArray(0)
+    private var activeIndex: Int? = null
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -36,7 +45,17 @@ class SparklineView(context: Context, attrs: AttributeSet? = null) : View(contex
 
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
-        color = Color.parseColor("#64748B")
+        color = "#64748B".toColorInt()
+    }
+
+    private val tooltipBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = "#111827".toColorInt()
+    }
+
+    private val tooltipTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+        color = Color.WHITE
     }
 
     private val topPadding = 12f
@@ -53,10 +72,12 @@ class SparklineView(context: Context, attrs: AttributeSet? = null) : View(contex
 
     fun setData(newSeries: SparklineDataSeries) {
         series = newSeries
+        activeIndex = null
         linePaint.color = newSeries.color
         dotPaint.color = newSeries.color
         barPaint.color = newSeries.color
         labelPaint.textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 10f, resources.displayMetrics)
+        tooltipTextPaint.textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 11f, resources.displayMetrics)
         invalidate()
     }
 
@@ -65,6 +86,7 @@ class SparklineView(context: Context, attrs: AttributeSet? = null) : View(contex
         if (s.points.isEmpty()) return
         if (s.mode == SparklineMode.BAR) drawBars(canvas, s) else drawLine(canvas, s)
         drawAxisLabels(canvas, s)
+        activeIndex?.let { drawTooltip(canvas, s, it) }
     }
 
     private fun drawLine(canvas: Canvas, s: SparklineDataSeries) {
@@ -79,6 +101,8 @@ class SparklineView(context: Context, attrs: AttributeSet? = null) : View(contex
         // Center flat lines vertically.
         fun yAt(v: Float) = if (flat) topPadding + chartH / 2f
                             else topPadding + chartH * (1f - (v - minVal) / range)
+
+        recordPoints(count) { i -> xAt(i) to yAt(s.points[i]) }
 
         if (count >= 2) {
             val path = Path()
@@ -107,6 +131,11 @@ class SparklineView(context: Context, attrs: AttributeSet? = null) : View(contex
         val minBarH = 4f
         barPaint.alpha = 204
 
+        recordPoints(count) { i ->
+            val barH = ((s.points[i] / maxVal) * chartH).coerceAtLeast(minBarH)
+            (i * slotW + slotW / 2f) to (topPadding + chartH - barH)
+        }
+
         s.points.forEachIndexed { i, value ->
             if (value <= 0f) return@forEachIndexed
             val barH = ((value / maxVal) * chartH).coerceAtLeast(minBarH)
@@ -123,5 +152,84 @@ class SparklineView(context: Context, attrs: AttributeSet? = null) : View(contex
             val x = if (count == 1) width / 2f else i * (width - 1f) / (count - 1)
             canvas.drawText(label, x, y, labelPaint)
         }
+    }
+
+    private fun drawTooltip(canvas: Canvas, s: SparklineDataSeries, idx: Int) {
+        if (idx !in pointXs.indices) return
+        val px = pointXs[idx]
+        val py = pointYs[idx]
+
+        // Emphasise the selected point.
+        canvas.drawCircle(px, py, dotRadius + 2f, dotPaint)
+
+        val label = s.dates.getOrNull(idx)
+        val value = formatValue(s.points[idx]) + s.valueSuffix
+        val text = if (label != null) "$label  $value" else value
+
+        val padH = 12f
+        val padV = 7f
+        val boxW = tooltipTextPaint.measureText(text) + padH * 2
+        val boxH = tooltipTextPaint.textSize + padV * 2
+        val left = (px - boxW / 2f).coerceIn(2f, (width - boxW - 2f).coerceAtLeast(2f))
+        val top = if (py - boxH - 10f >= 0f) py - boxH - 10f else py + 10f
+
+        canvas.drawRoundRect(RectF(left, top, left + boxW, top + boxH), 8f, 8f, tooltipBgPaint)
+        val baseline = top + boxH / 2f - (tooltipTextPaint.descent() + tooltipTextPaint.ascent()) / 2f
+        canvas.drawText(text, left + boxW / 2f, baseline, tooltipTextPaint)
+    }
+
+    private inline fun recordPoints(count: Int, xy: (Int) -> Pair<Float, Float>) {
+        if (pointXs.size != count) {
+            pointXs = FloatArray(count)
+            pointYs = FloatArray(count)
+        }
+        for (i in 0 until count) {
+            val (x, y) = xy(i)
+            pointXs[i] = x
+            pointYs[i] = y
+        }
+    }
+
+    private fun formatValue(v: Float): String {
+        val rounded = Math.round(v * 10) / 10.0
+        return if (rounded == rounded.toLong().toDouble()) rounded.toLong().toString() else rounded.toString()
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        val s = series ?: return false
+        if (s.points.isEmpty() || pointXs.isEmpty()) return false
+        when (event.action) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                // Let the user scrub without the scroll view stealing the gesture.
+                parent?.requestDisallowInterceptTouchEvent(true)
+                activeIndex = nearestIndex(event.x)
+                invalidate()
+                return true
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                parent?.requestDisallowInterceptTouchEvent(false)
+                if (event.action == MotionEvent.ACTION_UP) performClick()
+                return true
+            }
+        }
+        return super.onTouchEvent(event)
+    }
+
+    override fun performClick(): Boolean {
+        super.performClick()
+        return true
+    }
+
+    private fun nearestIndex(x: Float): Int {
+        var best = 0
+        var bestDist = Float.MAX_VALUE
+        for (i in pointXs.indices) {
+            val d = abs(pointXs[i] - x)
+            if (d < bestDist) {
+                bestDist = d
+                best = i
+            }
+        }
+        return best
     }
 }

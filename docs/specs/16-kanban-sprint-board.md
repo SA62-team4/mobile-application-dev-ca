@@ -127,7 +127,7 @@ All stretch cards stay **local-only and demo-safe** per the constitution (no pai
 
 | Card | Gap → Feature | What To Build | Owner | Pts |
 | --- | --- | --- | --- | --- |
-| S-01 | Timely | Spring `@EnableScheduling` + `@Scheduled` agent run; Android local notification via WorkManager polling the backend for a "new recommendation". Makes the agent *proactive* — fixes the weakest feature and elevates Standout | M7 + M1 | 5 |
+| S-01 | Timely | Spring `@EnableScheduling` + `@Scheduled` agent run when backend-side scheduling is added; Android local notification via simple `AlarmManager`/broadcast polling for a "new recommendation". Makes the agent *proactive* — fixes the weakest feature and elevates Standout | M7 + M1 | 5 |
 | S-02 | Comprehensive | Android trends dashboard: sleep/exercise/mood summary tiles or simple charts over recent records (reuses data the agent already analyses) | M2 | 5 |
 | S-03 | Private + Standout | In-app "your data stays on this device — AI runs locally" Privacy screen plus Spring-owned account export/delete endpoints (`REQ-23`, `T-901`..`T-903`). Converts the privacy architecture into visible marks | M4 + M1 | 3 |
 | S-04 | Secure | Login attempt throttling/lockout, token-expiry UX, disable cleartext for non-demo builds | M4 | 3 |

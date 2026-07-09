@@ -362,6 +362,14 @@ contract. Python owns retrieval and Ollama streaming. The blocking
 `POST /api/chat/messages` -> `POST /rag/chat` path remains as a fallback for
 clients that cannot consume Server-Sent Events.
 
+Optional premium weather routing extends this chat path without changing the
+Android trust boundary. Android may include coarse last-known latitude/longitude
+in the Spring Boot chat request. Spring Boot decides whether the authenticated
+user is `PREMIUM_USER`, whether the question is exercise/weather related, and
+whether `PREMIUM_AI_URL` is configured. Only then may Spring Boot call the local
+`premium-agent` FastAPI service; failures fall back to the standard Python RAG
+service. Android must never call the premium agent directly.
+
 ### Agentic Recommendation
 
 ```plantuml

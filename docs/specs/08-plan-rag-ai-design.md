@@ -213,6 +213,12 @@ accumulates the fragments, persists the same fields listed above once the stream
 and only then emits the terminal `done` frame — so streamed and non-streamed exchanges are
 stored identically. See `06-plan-api-contracts.md` for the SSE frame protocol.
 
+Spring Boot may route eligible premium outdoor-exercise/weather chat requests to
+an optional local premium weather agent before using this standard RAG stream.
+That route is still backend-mediated, uses the same persisted chat response
+shape, and must fall back to the standard RAG flow when the premium agent is not
+configured or fails.
+
 ```plantuml
 @startuml
 title Streaming Chat Flow (POST /rag/chat/stream)
