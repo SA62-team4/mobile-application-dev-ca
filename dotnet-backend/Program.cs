@@ -29,6 +29,15 @@ builder.Services.AddSingleton<ChatMessageRepository>();
 builder.Services.AddSingleton<RecommendationRepository>();
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddSingleton<PasswordService>();
+// In-memory login throttling (S-04). Tunable via config; defaults mirror Spring
+// (5 attempts allowed, lockout for 180s once exceeded).
+builder.Services.AddSingleton(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var maxAttempts = config.GetValue("Security:Login:MaxAttempts", 5);
+    var lockoutSeconds = config.GetValue("Security:Login:LockoutSeconds", 180);
+    return new LoginAttemptService(maxAttempts, TimeSpan.FromSeconds(lockoutSeconds));
+});
 builder.Services.AddHttpClient<AiServiceClient>();
 builder.Services.AddHttpClient<GoogleTokenVerifier>();
 

@@ -65,6 +65,14 @@ android {
             // line coverage (createDebugUnitTestCoverageReport -> report.xml).
             enableUnitTestCoverage true
         }
+        release {
+            // Non-demo build. It uses the strict src/main network security config,
+            // which forbids clear-text HTTP entirely (S-04). The local-HTTP exception
+            // exists only in the debug variant. minify stays off to avoid changing
+            // runtime behaviour of the Retrofit/Gson reflection paths in this CA.
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
     }
 
     buildFeatures {

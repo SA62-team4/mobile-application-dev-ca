@@ -30,6 +30,12 @@ app:
   premium-ai-url: ${PREMIUM_AI_URL:}        # empty ⇒ premium disabled (safe default)
   premium-ai-secret: ${PREMIUM_AI_SECRET:}
   internal-service-token: ${INTERNAL_SERVICE_TOKEN:dev_internal_token}
+  security:
+    login:
+      # S-04 login throttling: lock an account after more than `max-attempts`
+      # consecutive failures, for `lockout-seconds`. In-memory and per-instance.
+      max-attempts: ${LOGIN_MAX_ATTEMPTS:5}
+      lockout-seconds: ${LOGIN_LOCKOUT_SECONDS:180}
   google:
     # OAuth Web client ID for Android ID token validation.
     client-id: ${GOOGLE_CLIENT_ID:554077955234-cvbtaidiru0t7ppu4lht6tt9gmgddu09.apps.googleusercontent.com}
