@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import sg.edu.nus.iss.wellness.dto.AuthDtos;
 import sg.edu.nus.iss.wellness.model.AppUser;
+import sg.edu.nus.iss.wellness.model.Role;
 import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 import sg.edu.nus.iss.wellness.security.JwtService;
 import sg.edu.nus.iss.wellness.service.GoogleTokenVerifier;
@@ -60,6 +61,12 @@ class AuthControllerTest {
         user.setDisplayName("Alice");
         user.setEmail(EMAIL);
         user.setPasswordHash(passwordEncoder.encode(PASSWORD));
+        return users.save(user);
+    }
+
+    private AppUser seedUser(Role role) {
+        AppUser user = seedUser();
+        user.setRole(role);
         return users.save(user);
     }
 
@@ -118,6 +125,25 @@ class AuthControllerTest {
         assertThat(token).isNotBlank();
         // The returned token is a real, verifiable JWT for this user.
         assertThat(jwtService.extractSubject(token)).isEqualTo(EMAIL);
+    }
+
+    @Test
+    void premiumUserToken_canAccessProtectedUserEndpoint() throws Exception {
+        seedUser(Role.PREMIUM_USER);
+        var request = new AuthDtos.LoginRequest(EMAIL, PASSWORD);
+
+        String body = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        String token = objectMapper.readTree(body).get("token").asText();
+        assertThat(jwtService.extractRole(token)).isEqualTo(Role.PREMIUM_USER);
+
+        mockMvc.perform(get("/api/wellness-records")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
     }
 
     @Test

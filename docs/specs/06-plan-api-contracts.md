@@ -19,7 +19,12 @@
 - All non-auth endpoints require `Authorization: Bearer <jwt>`.
 - Public status endpoints may be exposed for local browser and health checks.
 - Backend derives the current user from JWT claims, not from client-provided user ids.
-- Every protected endpoint requires the `USER` role (Spring `hasRole(USER)`; the .NET Backup API applies the same gate, defaulting to the `USER` role). Role is authoritative from the database-loaded user, not the token, so a stale token can never elevate privileges; the JWT `role` claim is informational only. A request from an authenticated user lacking the required role returns `403 Forbidden`. The `PREMIUM_USER` role exists but is not required by any endpoint yet.
+- Every protected endpoint requires authenticated base-user access. `PREMIUM_USER`
+  inherits the normal `USER` authority, so upgrading an account for premium chat
+  routing must not lock it out of standard protected endpoints. Role is
+  authoritative from the database-loaded user, not the token, so a stale token can
+  never elevate privileges; the JWT `role` claim is informational only. A request
+  from an authenticated user lacking the required role returns `403 Forbidden`.
 - JSON is the request and response format.
 - Error responses use one consistent shape.
 - The password endpoints (`POST /api/auth/login`, `POST /api/auth/reactivate`) are throttled per account. See [Login Throttling](#login-throttling) and [DEC-016](03-clarify-decisions-and-edge-cases.md).

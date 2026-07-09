@@ -450,6 +450,7 @@ Non-secret config goes in **Variables**.
 | `DROPLET_HOST` | Secret (production) | Deploy target | `terraform output reserved_ip` after the infra apply (or the FQDN) |
 | `JWT_SECRET` | Secret (production) | Rendered into Droplet `.env` | Generate: `openssl rand -hex 32` |
 | `INTERNAL_SERVICE_TOKEN` | Secret (production) | Rendered into Droplet `.env` | Generate: `openssl rand -hex 24` |
+| `PREMIUM_AI_SECRET` | Secret (production) | Rendered into Droplet `.env`; Spring uses it when calling the optional premium weather agent | Optional; required only when `PREMIUM_AI_URL` is set. Must match the local premium-agent `AI_INTERNAL_SECRET`. Generate separately from `INTERNAL_SERVICE_TOKEN`, e.g. `openssl rand -hex 24` |
 | `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `SPRING_DATASOURCE_PASSWORD` | Secret (production) | Rendered into Droplet `.env` | Pick strong values, e.g. `openssl rand -base64 24`; `MYSQL_PASSWORD` must equal `SPRING_DATASOURCE_PASSWORD` |
 | `TF_STATE_BUCKET` | Variable | Terraform backend config | Name of the DO Space you created for state (e.g. `sa62-wellness-tfstate`) |
 | `TF_STATE_ENDPOINT` | Variable | Terraform backend config | `https://<region>.digitaloceanspaces.com` for your Space's region |
@@ -461,6 +462,7 @@ Non-secret config goes in **Variables**.
 | `SUBDOMAIN` | Variable | DNS | Chosen API host label, e.g. `api` |
 | `API_DOMAIN` | Variable | Caddy/`.env` | The full FQDN `SUBDOMAIN.DOMAIN`, e.g. `api.example.com` |
 | `GOOGLE_CLIENT_ID` | Variable | Rendered into Droplet `.env`; Spring and optional `.NET Backup API` Google ID token verification (REQ-22) | Google Cloud Console → APIs & Services → Credentials → the **Web** OAuth 2.0 client ID. Non-secret (also embedded in the Android APK). Leave unset to disable SSO in production. |
+| `PREMIUM_AI_URL` | Variable | Rendered into Droplet `.env`; Spring routes premium weather chat requests here | Optional; usually `http://127.0.0.1:8000` when an SSH reverse tunnel from the local premium machine is active. Leave unset/blank to disable premium routing. |
 | `LANGSMITH_API_KEY` | Secret (production) | Rendered into Droplet `.env`; LangChain run tracing | smith.langchain.com → Settings → API Keys. Optional — leave unset to keep tracing off. |
 | `LANGSMITH_TRACING` | Variable | Rendered into Droplet `.env` | `true` to export traces (requires `LANGSMITH_API_KEY`), else leave unset/`false`. |
 | `LANGSMITH_PROJECT` | Variable | Rendered into Droplet `.env` | LangSmith project name; defaults to `wellness-agentic-ai`. |
@@ -483,7 +485,8 @@ DROPLET_SIZE
 ```
 
 `DROPLET_HOST`, `GHCR_PAT`, database passwords, `JWT_SECRET`,
-`INTERNAL_SERVICE_TOKEN`, `API_DOMAIN`, and `GOOGLE_CLIENT_ID` remain app-only.
+`INTERNAL_SERVICE_TOKEN`, `PREMIUM_AI_SECRET`, `API_DOMAIN`, `GOOGLE_CLIENT_ID`,
+and `PREMIUM_AI_URL` remain app-only.
 With the current DuckDNS setup (`MANAGE_DNS=false`), `DOMAIN`, `SUBDOMAIN`, and
 `SONAR_SUBDOMAIN` are not used to create DNS records; create/update the DuckDNS
 hostnames manually and store the final hostnames in `API_DOMAIN` and
