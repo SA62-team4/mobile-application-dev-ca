@@ -142,6 +142,12 @@ DEMO_RECORDS = [
     (4, "8.0", "Swimming", 45, 4, "Great swim session"),
 ]
 
+# Premium: a couple of records to demo premium-routed chat.
+PREMIUM_RECORDS = [
+    (0, "7.5", "Running",  30, 4, "Morning run before the weather turned"),
+    (1, "7.0", "Cycling",  40, 4, "Outdoor cycle — checked forecast first"),
+]
+
 print(f"\n  Wellness seed data loader")
 print(f"  Target: {BASE_URL}\n")
 
@@ -157,6 +163,7 @@ users = [
     ("Bob Tan",     "bob@wellness.test",     BOB_RECORDS),
     ("Carol Lim",   "carol@wellness.test",   CAROL_RECORDS),
     ("Demo User",   "demo@wellness.test",    DEMO_RECORDS),
+    ("Premium Pat", "premium@wellness.test", PREMIUM_RECORDS),
 ]
 
 tokens = {}
@@ -175,10 +182,11 @@ print("=" * 65)
 print(f"  {'User':<14}  {'Email':<28}  Dashboard highlights")
 print("-" * 65)
 rows = [
-    ("Alice Chen",  "alice@wellness.test",  "All EXCELLENT badges, full 7-day sparklines"),
-    ("Bob Tan",     "bob@wellness.test",    "BELOW_TARGET sleep, FAIR mood, GOOD activity"),
-    ("Carol Lim",   "carol@wellness.test",  "Sparse sparklines (4/7 days), date-filter demo"),
-    ("Demo User",   "demo@wellness.test",   "Two records today → dedup avg in snapshot tile"),
+    ("Alice Chen",  "alice@wellness.test",   "All EXCELLENT badges, full 7-day sparklines"),
+    ("Bob Tan",     "bob@wellness.test",     "BELOW_TARGET sleep, FAIR mood, GOOD activity"),
+    ("Carol Lim",   "carol@wellness.test",   "Sparse sparklines (4/7 days), date-filter demo"),
+    ("Demo User",   "demo@wellness.test",    "Two records today → dedup avg in snapshot tile"),
+    ("Premium Pat", "premium@wellness.test", "PREMIUM_USER — see promotion step below"),
 ]
 for name, email, note in rows:
     print(f"  {name:<14}  {email:<28}  {note}")
@@ -188,3 +196,24 @@ print("  Android emulator API base URL: http://10.0.2.2:8080/")
 print()
 
 PYTHON
+
+# Promote the demo premium account directly in MySQL (best-effort; no admin
+# API exists to change roles yet, so this seed script talks to the database
+# directly, same as a developer would via Adminer).
+COMPOSE="${COMPOSE:-podman compose}"
+if [[ -f ".env" ]]; then
+  set -a; source ".env"; set +a
+fi
+MYSQL_DATABASE="${MYSQL_DATABASE:-wellness_app}"
+MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-change_me_root}"
+
+echo "  Promoting premium@wellness.test to PREMIUM_USER..."
+if $COMPOSE exec -T mysql mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" \
+     -e "UPDATE users SET role='PREMIUM_USER' WHERE email='premium@wellness.test';" 2>/dev/null; then
+  echo "  ✓ Promoted premium@wellness.test → PREMIUM_USER"
+else
+  echo "  ! Could not reach the mysql container to promote premium@wellness.test."
+  echo "    The account still works as a regular USER; promote manually via Adminer, or re-run:"
+  echo "      \$COMPOSE exec -T mysql mysql -u root -p\"\$MYSQL_ROOT_PASSWORD\" \"\$MYSQL_DATABASE\" -e \"UPDATE users SET role='PREMIUM_USER' WHERE email='premium@wellness.test';\""
+fi
+echo

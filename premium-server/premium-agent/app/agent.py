@@ -28,7 +28,7 @@ llm = ChatOllama(
         model = MODEL,
         base_url = BASE_URL,
         temperature=0.2,
-        num_predict=300,       # Cap output length.
+        num_predict=600,       # Cap output length.
     )
 
 prompt = ChatPromptTemplate.from_messages([
@@ -75,7 +75,7 @@ async def run_agent(question: str,
                 tools=tools,
                 verbose=True,
                 max_iterations=2,          # Stop runaway tool-calling loops.
-                max_execution_time=45,     # Hard kill after 45 seconds.
+                max_execution_time=180,    # Hard kill after 180 seconds (allows a cold Ollama model load).
                 return_intermediate_steps=True,  # Log what the agent did.
     )
 

@@ -5,9 +5,12 @@ for users considering outdoor activities. To be accessed via chat.
 @Author: Tang Chee Seng (with Claude, and Gemini)
 """
 
+import logging
 import math
 import httpx
 from langchain_core.tools import tool
+
+logger = logging.getLogger("WeatherAgent")
 
 # Timeout for API requests in case of a slow response from Data.gov.sg.
 WEATHER_TIMEOUT = 10.0  # seconds
@@ -56,73 +59,75 @@ def get_wet_bulb_temperature(user_lat: float | None = None, user_lon: float | No
         """Fetch the current Wet Bulb Globe Temperature (WBGT) in Singapore.
         To apply the user's location if available.
         """
-        async with httpx.AsyncClient(timeout=WEATHER_TIMEOUT) as client:
-            response = await client.get("https://api-open.data.gov.sg/v2/real-time/api/wet-bulb-temperature")
-            response.raise_for_status()
-            data = response.json().get("data", {})
-            records = data.get("records", [])
+        try:
+            async with httpx.AsyncClient(timeout=WEATHER_TIMEOUT) as client:
+                response = await client.get(
+                    "https://api-open.data.gov.sg/v2/real-time/api/weather",
+                    params={"api": "wbgt"},
+                    headers={"x-api-key": ""},
+                )
+                response.raise_for_status()
+                data = response.json().get("data", {})
+                records = data.get("records", [])
 
-            if not records:
-                return "Unable to retrieve current WBGT and heat stress levels. Please try again later."
+                if not records:
+                    return "Unable to retrieve current WBGT and heat stress levels. Please try again later."
 
-            # Extract all the station locations into a list, and find the closest one to the user if lat/lon is provided
-            all_stations = []
+                # Extract all the station locations into a list, and find the closest one to the user if lat/lon is provided.
+                # `location` is a sibling of `station` on each reading, not nested inside it, so merge them together.
+                all_stations = []
 
-            for record in records:
-                for reading in record.get("item", {}).get("readings", []):
-                    station_info = reading.get("station", {})
-                    if station_info:
-                        all_stations.append(station_info)
+                for record in records:
+                    for reading in record.get("item", {}).get("readings", []):
+                        station_info = reading.get("station", {})
+                        if station_info:
+                            all_stations.append({**station_info, "location": reading.get("location", {})})
 
-            # for record in records:
-            #     readings = record.get("item", {}).get("readings", [])
-            #     for reading in readings:
-            #         station_info = reading.get("station", {})
-            #         if station_info:
-            #             all_stations.append(station_info)
-
-            # Find closest station with valid latitude
-            if user_lat is not None and user_lon is not None:
-                valid_stations = [s for s in all_stations if s.get("location", {}).get("latitude")]
-                if valid_stations:
-                    closest = min(
-                        valid_stations,
-                        key=lambda s: haversine(user_lat, user_lon, float(s["location"]["latitude"]), float(s["location"]["longitude"]))
-                    )
-                    stn_id = closest["id"]
-                    stn_name = closest["name"]
-
-                    # Find reading for this station
-
-                    for record in records:
-                        for reading in record.get("item", {}).get("readings", []):
-                            if reading.get("station", {}).get("id") == stn_id:
-                                wbgt_val = float(reading.get("wbgt", 0))
-                                # Sanity check now runs before returning.
-                                if not (WBGT_MIN <= wbgt_val <= WBGT_MAX):
-                                    return (f"WBGT reading ({wbgt_val:.1f} °C) is outside the expected range. Sensor data may be unreliable."
-                                            "Advise caution for outdoor exercise."
-                                            )
-                                heat_stress = reading.get("heatStress")
-                                return (f"The current WBGT at {stn_name} (closest to you) is {wbgt_val:.1f}°C. Heat stress level: {heat_stress}.\n"
-                                        f"{classify_wbgt(wbgt_val)}"
-                                        )
-
-            # Fallback to national average if location is missing
-            avg_wbgt_values = []
-
-            for record in records:
-                for reading in record.get("item", {}).get("readings", []):
-                    if reading.get("wbgt"):
-                        avg_wbgt_values.append(float(reading["wbgt"]))
-            if not avg_wbgt_values:
-                return "Unable to retrieve current WBGT. Advise caution for outdoor exercise."
-            avg = sum(avg_wbgt_values) / len(avg_wbgt_values)
-            if not (WBGT_MIN <= avg <= WBGT_MAX):
-                return (f"Average WBGT reading ({avg:.1f} °C) is outside the expected range. Sensor data may be unreliable."
-                        "Advise caution for outdoor exercise."
+                # Find closest station with valid latitude
+                if user_lat is not None and user_lon is not None:
+                    valid_stations = [s for s in all_stations if s.get("location", {}).get("latitude")]
+                    if valid_stations:
+                        closest = min(
+                            valid_stations,
+                            key=lambda s: haversine(user_lat, user_lon, float(s["location"]["latitude"]), float(s["location"]["longitude"]))
                         )
-            return f"Average WBGT in Singapore is {avg:.1f}°C.\n{classify_wbgt(avg)}"
+                        stn_id = closest["id"]
+                        stn_name = closest["name"]
+
+                        # Find reading for this station
+
+                        for record in records:
+                            for reading in record.get("item", {}).get("readings", []):
+                                if reading.get("station", {}).get("id") == stn_id:
+                                    wbgt_val = float(reading.get("wbgt", 0))
+                                    # Sanity check now runs before returning.
+                                    if not (WBGT_MIN <= wbgt_val <= WBGT_MAX):
+                                        return (f"WBGT reading ({wbgt_val:.1f} °C) is outside the expected range. Sensor data may be unreliable."
+                                                "Advise caution for outdoor exercise."
+                                                )
+                                    heat_stress = reading.get("heatStress")
+                                    return (f"The current WBGT at {stn_name} (closest to you) is {wbgt_val:.1f}°C. Heat stress level: {heat_stress}.\n"
+                                            f"{classify_wbgt(wbgt_val)}"
+                                            )
+
+                # Fallback to national average if location is missing
+                avg_wbgt_values = []
+
+                for record in records:
+                    for reading in record.get("item", {}).get("readings", []):
+                        if reading.get("wbgt"):
+                            avg_wbgt_values.append(float(reading["wbgt"]))
+                if not avg_wbgt_values:
+                    return "Unable to retrieve current WBGT. Advise caution for outdoor exercise."
+                avg = sum(avg_wbgt_values) / len(avg_wbgt_values)
+                if not (WBGT_MIN <= avg <= WBGT_MAX):
+                    return (f"Average WBGT reading ({avg:.1f} °C) is outside the expected range. Sensor data may be unreliable."
+                            "Advise caution for outdoor exercise."
+                            )
+                return f"Average WBGT in Singapore is {avg:.1f}°C.\n{classify_wbgt(avg)}"
+        except (httpx.HTTPError, ValueError, KeyError) as exc:
+            logger.warning("WBGT fetch failed: %s", exc)
+            return "Unable to retrieve current WBGT and heat stress levels right now. Advise general caution for outdoor exercise."
 
     return get_wet_bulb_temperature
 
@@ -132,35 +137,39 @@ def get_weather_forecast(user_lat: float | None = None, user_lon: float | None =
         """Fetch the two-hour weather forecast for the user's location.
         To apply the user's location if available.
         """
-        async with httpx.AsyncClient(timeout=WEATHER_TIMEOUT) as client:
-            response = await client.get("https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast")
-            response.raise_for_status()
-            data = response.json().get("data", {})
-            areas = data.get("area_metadata", [])
-            items = data.get("items", [])
+        try:
+            async with httpx.AsyncClient(timeout=WEATHER_TIMEOUT) as client:
+                response = await client.get("https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast")
+                response.raise_for_status()
+                data = response.json().get("data", {})
+                areas = data.get("area_metadata", [])
+                items = data.get("items", [])
 
-            if not areas or not items:
-                return "Unable to retrieve current two-hour forecast."
+                if not areas or not items:
+                    return "Unable to retrieve current two-hour forecast."
 
-            forecasts = items[0].get("forecasts", []) if items else []
+                forecasts = items[0].get("forecasts", []) if items else []
 
-            # Closest-area path.
-            if user_lat is not None and user_lon is not None:
-                valid_area = [a for a in areas if a.get("label_location", {}).get("latitude")]
-                if valid_area:
-                    closest = min(valid_area,
-                                  key=lambda a: haversine(user_lat, user_lon,a["label_location"]["latitude"], a["label_location"]["longitude"]))
-                    area_name = closest["area"]                # [FIX C] no bad "name" key.
-                    for fc in forecasts:
-                        if fc.get("area") == area_name and fc.get("forecast"):
-                            return f"The 2-hour forecast for {area_name} (closest to user) is: {fc['forecast']}."
+                # Closest-area path.
+                if user_lat is not None and user_lon is not None:
+                    valid_area = [a for a in areas if a.get("label_location", {}).get("latitude")]
+                    if valid_area:
+                        closest = min(valid_area,
+                                      key=lambda a: haversine(user_lat, user_lon,a["label_location"]["latitude"], a["label_location"]["longitude"]))
+                        area_name = closest["name"]                # area_metadata uses "name"; forecasts entries use "area".
+                        for fc in forecasts:
+                            if fc.get("area") == area_name and fc.get("forecast"):
+                                return f"The 2-hour forecast for {area_name} (closest to user) is: {fc['forecast']}."
 
-            # Fallback: summarise a few areas instead of returning None.
-            sample = [f"{fc['area']}: {fc['forecast']}"
-                      for fc in forecasts[:3] if fc.get("area") and fc.get("forecast")]
-            if sample:
-                return "2-hour forecast (sample areas): " + "; ".join(sample) + "."
-            else:
-                return "Unable to retrieve a usable two-hour forecast right now."
+                # Fallback: summarise a few areas instead of returning None.
+                sample = [f"{fc['area']}: {fc['forecast']}"
+                          for fc in forecasts[:3] if fc.get("area") and fc.get("forecast")]
+                if sample:
+                    return "2-hour forecast (sample areas): " + "; ".join(sample) + "."
+                else:
+                    return "Unable to retrieve a usable two-hour forecast right now."
+        except (httpx.HTTPError, ValueError, KeyError) as exc:
+            logger.warning("Two-hour forecast fetch failed: %s", exc)
+            return "Unable to retrieve the two-hour forecast right now. Advise general caution for outdoor exercise."
 
     return get_weather_forecast
