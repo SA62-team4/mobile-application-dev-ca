@@ -59,7 +59,11 @@ public class AppUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Keep roles explicit until premium auth is wired.
+        if (role == Role.PREMIUM_USER) {
+            return List.of(
+                    new SimpleGrantedAuthority(Role.USER.authority()),
+                    new SimpleGrantedAuthority(Role.PREMIUM_USER.authority()));
+        }
         return List.of(new SimpleGrantedAuthority(role.authority()));
     }
 

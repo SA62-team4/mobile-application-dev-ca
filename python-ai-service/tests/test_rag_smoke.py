@@ -42,6 +42,7 @@ async def test_reindex_builds_chroma_index(rag_service, fake_ollama):
     for metadata in stored["metadatas"]:
         assert metadata["title"]
         assert metadata["source_file"].endswith(".md")
+        assert isinstance(metadata["chunk_index"], int)
         assert "snippet" in metadata
 
 
@@ -66,6 +67,18 @@ async def test_retrieve_by_keyword_finds_expected_doc(rag_service):
 
     assert results
     assert any(chunk.source_file == "sleep-hygiene.md" for chunk in results)
+
+
+async def test_retrieve_by_bmi_keyword_finds_body_metrics_doc(rag_service):
+    await rag_service.reindex()
+
+    results = await rag_service.retrieve(
+        "what does my BMI mean from my height and weight",
+        top_k=4,
+    )
+
+    assert results
+    assert any(chunk.source_file == "bmi-and-body-metrics.md" for chunk in results)
 
 
 async def test_retrieve_lazily_reindexes_when_collection_empty(rag_service):

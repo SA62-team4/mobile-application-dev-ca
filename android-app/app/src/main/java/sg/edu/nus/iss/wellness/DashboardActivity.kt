@@ -114,6 +114,7 @@ class DashboardActivity : AppCompatActivity() {
         binding.dashboardListView.addHeaderView(recordsHeader)
 
         binding.dashboardListView.adapter = RecordsAdapter(this, emptyList(), ::openRecordForm) { confirmDelete(it.id) }
+        InsightNotificationScheduler.prepare(this)
 
         loadDashboard()
     }
@@ -151,11 +152,11 @@ class DashboardActivity : AppCompatActivity() {
 
             if (isAuthFailure(recordsResult.exceptionOrNull()) || isAuthFailure(recommendationsResult.exceptionOrNull()) || isAuthFailure(profileResult.exceptionOrNull())) {
                 tokenStore.clear()
-                goToLogin()
+                goToLogin(sessionExpired = true)
                 return@launch
             }
 
-            val records = recordsResult.getOrElse { err ->
+            val records = recordsResult.getOrElse { _ ->
                 showFetchError("Could not load dashboard.", "Check that the backend is reachable from the emulator.")
                 return@launch
             }
@@ -494,8 +495,8 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
-    private fun goToLogin() {
-        startActivity(Intent(this, LoginActivity::class.java))
+    private fun goToLogin(sessionExpired: Boolean = false) {
+        startActivity(LoginActivity.redirectIntent(this, sessionExpired))
         finish()
     }
 

@@ -7,40 +7,40 @@ package sg.edu.nus.iss.wellness
  */
 object ExerciseTypeOptions {
     private const val NONE = "No exercise"
+    private const val WALKING = "Walking"
+    private const val RUNNING = "Running"
+    private const val CYCLING = "Cycling"
+    private const val SWIMMING = "Swimming"
+    private const val STRENGTH = "Strength training"
+    private const val YOGA = "Yoga"
+    private const val SPORTS = "Sports"
+    private const val OTHER = "Other"
 
     val options = listOf(
-        NONE,
-        "Walking",
-        "Running",
-        "Cycling",
-        "Swimming",
-        "Strength training",
-        "Yoga",
-        "Sports",
-        "Other"
+        NONE, WALKING, RUNNING, CYCLING, SWIMMING, STRENGTH, YOGA, SPORTS, OTHER
     )
 
     private val aliases = mapOf(
-        "walk" to "Walking",
-        "walking" to "Walking",
-        "run" to "Running",
-        "running" to "Running",
-        "jog" to "Running",
-        "jogging" to "Running",
-        "cycle" to "Cycling",
-        "cycling" to "Cycling",
-        "bike" to "Cycling",
-        "biking" to "Cycling",
-        "swim" to "Swimming",
-        "swimming" to "Swimming",
-        "gym" to "Strength training",
-        "weights" to "Strength training",
-        "strength" to "Strength training",
-        "strength training" to "Strength training",
-        "yoga" to "Yoga",
-        "sport" to "Sports",
-        "sports" to "Sports",
-        "other" to "Other"
+        "walk" to WALKING,
+        "walking" to WALKING,
+        "run" to RUNNING,
+        "running" to RUNNING,
+        "jog" to RUNNING,
+        "jogging" to RUNNING,
+        "cycle" to CYCLING,
+        "cycling" to CYCLING,
+        "bike" to CYCLING,
+        "biking" to CYCLING,
+        "swim" to SWIMMING,
+        "swimming" to SWIMMING,
+        "gym" to STRENGTH,
+        "weights" to STRENGTH,
+        "strength" to STRENGTH,
+        "strength training" to STRENGTH,
+        "yoga" to YOGA,
+        "sport" to SPORTS,
+        "sports" to SPORTS,
+        "other" to OTHER
     )
 
     fun selectedIndexFor(storedValue: String?): Int {

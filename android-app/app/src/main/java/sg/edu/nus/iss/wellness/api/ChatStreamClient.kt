@@ -11,6 +11,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import sg.edu.nus.iss.wellness.BuildConfig
 import sg.edu.nus.iss.wellness.TokenStore
 import java.util.concurrent.TimeUnit
@@ -68,56 +69,87 @@ class ChatStreamClient(private val tokenStore: TokenStore) {
      * [ChatStreamEvent.Error]; the caller does not need a separate try/catch, though
      * cancelling the coroutine aborts the call.
      */
-    suspend fun stream(question: String, onEvent: suspend (ChatStreamEvent) -> Unit) {
-        val token = tokenStore.token()
-        val body = gson.toJson(ChatRequest(question)).toRequestBody(JSON_MEDIA_TYPE)
-        val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + "api/chat/messages/stream")
-            .apply { if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token") }
-            .addHeader("Accept", "text/event-stream")
-            .post(body)
-            .build()
-
+    suspend fun stream(
+        question: String,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        onEvent: suspend (ChatStreamEvent) -> Unit
+    ) {
+        val request = buildRequest(question, latitude, longitude)
         withContext(Dispatchers.IO) {
             val call = client.newCall(request)
             val cancellation = currentCoroutineContext()[Job]?.invokeOnCompletion {
                 call.cancel()
             }
             try {
-                call.execute().use { response ->
-                    if (response.code == 401 || response.code == 403) {
-                        tokenStore.clear()
-                        emit(onEvent, ChatStreamEvent.Error("Session expired. Please sign in again."))
-                        return@use
-                    }
-                    val source = response.body?.source()
-                    if (!response.isSuccessful || source == null) {
-                        emit(onEvent, ChatStreamEvent.Error("Chatbot unavailable. Please retry."))
-                        return@use
-                    }
-                    while (!source.exhausted()) {
-                        currentCoroutineContext().ensureActive()
-                        val line = source.readUtf8Line() ?: break
-                        if (!line.startsWith("data:")) continue
-                        val payload = line.substring("data:".length).trim()
-                        if (payload.isEmpty()) continue
-                        val event = parse(payload) ?: continue
-                        emit(onEvent, event)
-                        // Stop after terminal frames.
-                        if (event is ChatStreamEvent.Done || event is ChatStreamEvent.Error) break
-                    }
-                }
+                call.execute().use { response -> consumeResponse(response, onEvent) }
             } finally {
                 cancellation?.dispose()
             }
         }
     }
 
+    private fun buildRequest(question: String, latitude: Double?, longitude: Double?): Request {
+        val token = tokenStore.token()
+        val body = gson.toJson(ChatRequest(question, latitude, longitude)).toRequestBody(JSON_MEDIA_TYPE)
+        return Request.Builder()
+            .url(BuildConfig.API_BASE_URL + "api/chat/messages/stream")
+            .apply { if (!token.isNullOrBlank()) addHeader("Authorization", "Bearer $token") }
+            .addHeader("Accept", "text/event-stream")
+            .post(body)
+            .build()
+    }
+
+    private suspend fun consumeResponse(response: Response, onEvent: suspend (ChatStreamEvent) -> Unit) {
+        if (response.code == 401 || response.code == 403) {
+            tokenStore.clear()
+            emit(onEvent, ChatStreamEvent.Error("Session expired. Please sign in again."))
+            return
+        }
+        val source = response.body?.source()
+        if (!response.isSuccessful || source == null) {
+            emit(onEvent, ChatStreamEvent.Error("Chatbot unavailable. Please retry."))
+            return
+        }
+        while (!source.exhausted()) {
+            currentCoroutineContext().ensureActive()
+            val line = source.readUtf8Line() ?: break
+            val event = parseLine(line) ?: continue
+            emit(onEvent, event)
+            // Stop after terminal frames.
+            if (event is ChatStreamEvent.Done || event is ChatStreamEvent.Error) break
+        }
+    }
+
+    private fun parseLine(line: String): ChatStreamEvent? = ChatSseParser.parseLine(line)
+
     private suspend fun emit(onEvent: suspend (ChatStreamEvent) -> Unit, event: ChatStreamEvent) {
         withContext(Dispatchers.Main) { onEvent(event) }
     }
 
-    private fun parse(payload: String): ChatStreamEvent? {
+    private companion object {
+        val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+    }
+}
+
+/**
+ * Pure parser for the chat SSE wire format, split out from [ChatStreamClient] so the
+ * framing/JSON handling can be unit-tested without a network call or Android context.
+ *
+ * @author Tiong Zhong Cheng
+ */
+internal object ChatSseParser {
+    private val gson = Gson()
+
+    /** Parse one raw SSE line into an event, or null for keep-alive/non-data lines. */
+    fun parseLine(line: String): ChatStreamEvent? {
+        if (!line.startsWith("data:")) return null
+        val payload = line.substring("data:".length).trim()
+        if (payload.isEmpty()) return null
+        return parse(payload)
+    }
+
+    fun parse(payload: String): ChatStreamEvent? {
         val node = runCatching { gson.fromJson(payload, JsonObject::class.java) }.getOrNull() ?: return null
         return when (node.get("type")?.asString) {
             "sources" -> ChatStreamEvent.Sources(readSources(node))
@@ -144,9 +176,5 @@ class ChatStreamClient(private val tokenStore: TokenStore) {
                 snippet = obj.get("snippet")?.asString.orEmpty()
             )
         }
-    }
-
-    private companion object {
-        val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
     }
 }

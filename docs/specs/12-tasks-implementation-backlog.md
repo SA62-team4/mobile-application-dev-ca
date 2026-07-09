@@ -26,9 +26,9 @@ code, tests, or operations files in place.
 
 | Area | Status | Repository Evidence | Remaining Spec-Driven Checks |
 | --- | --- | --- | --- |
-| Spring backend core | Implemented, verification active | `spring-backend/src/main/java/sg/edu/nus/iss/wellness/` controllers, services, models, repositories, JWT security, Google SSO verifier, streaming chat service | Keep ownership/auth tests green; verify API docs after route changes |
-| Android app | Implemented, UI QA active | `DashboardActivity`, `RecordFormActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`, XML layouts, `ListView` adapters, streaming chat client, dashboard helper tests | Manual compact-screen QA against Figma; keep Dashboard as landing screen |
-| Python AI service | Implemented, live-model smoke optional | FastAPI routes for health, RAG chat, streaming chat, reindex, recommendation agent; Chroma/Ollama clients; five-file curated KB | Run non-integration pytest in CI; live Ollama smoke before demo |
+| Spring backend core | Implemented, verification active | `spring-backend/src/main/java/sg/edu/nus/iss/wellness/` controllers, services, models, repositories, JWT security, Google SSO verifier, streaming chat service, optional premium weather-agent routing | Keep ownership/auth tests green; verify API docs after route changes |
+| Android app | Implemented, UI QA active | `DashboardActivity`, `RecordFormActivity`, `ChatActivity`, `RecommendationsActivity`, `ProfileActivity`, XML layouts, `ListView` adapters, streaming chat client with optional coarse-location fields, dashboard helper tests | Manual compact-screen QA against Figma; keep Dashboard as landing screen |
+| Python AI service | Implemented, live-model smoke optional | FastAPI routes for health, RAG chat, streaming chat, reindex, recommendation agent; Chroma/Ollama clients; six-file curated KB including BMI/body metrics guidance | Run non-integration pytest in CI; live Ollama smoke before demo |
 | Docker/local runtime | Implemented | `docker-compose.yml`, `docker-compose.prod.yml`, `.env.example`, `docker-compose.dotnet-backup.yml`, `docker-compose.sonar.yml` | Clean-machine compose smoke and model pull/reindex check |
 | CI/quality/deployment | Implemented, evidence-gated | `.github/workflows/ci.yml`, `deploy.yml`, `infra.yml`, pinned actions, lockfile verification, SonarQube and Ansible jobs, Terraform/Ansible roots | Capture final Actions/SonarQube evidence; deployment remains optional for local demo |
 | Optional .NET backup backend | Implemented as bonus/cold standby | `dotnet-backend/` endpoints, services, tests, backup Compose override | Keep parity note explicit: Spring remains canonical for `REQ-08` |
@@ -104,8 +104,8 @@ Spring ..> Desktop : REST client parity
 | T-401 | REQ-11, REQ-12 | Scaffold Python RAG service | Member 6 | T-101 | AI health endpoint runs |
 | T-402 | REQ-11 | Create curated wellness KB | Member 6 | T-401 | KB files load and chunk |
 | T-403 | REQ-11, REQ-12 | Implement Chroma indexing and Ollama embedding | Member 6 | T-402 | RAG indexing test passes |
-| T-404 | REQ-10, REQ-11 | Implement backend chat orchestration | Member 5 | T-301, T-403 | Chat API stores answer and sources |
-| T-405 | REQ-10 | Implement Android chatbot screen (realigned to AppCompatActivity + View Binding + ListView/ArrayAdapter, T-701)| Member 3 | T-404 | Chat works from app |
+| T-404 | REQ-10, REQ-11, REQ-12 | Implement backend chat orchestration, including optional local premium weather-agent fallback routing | Member 5 | T-301, T-403 | Chat API stores answer and sources; premium route fails soft to standard RAG |
+| T-405 | REQ-10 | Implement Android chatbot screen (realigned to AppCompatActivity + View Binding + ListView/ArrayAdapter, T-701) with optional coarse-location fields for backend-mediated premium routing | Member 3 | T-404 | Chat works from app |
 
 ## Phase 5: Agentic AI
 
@@ -162,6 +162,17 @@ These tasks are optional stretch evidence (`REQ-23`) mapped to sprint card `S-03
 | T-901 | REQ-23, NFR-01, NFR-02 | Implement Spring account export and account deletion endpoints | Member 4 | T-204, T-301, T-404, T-501 | `GET /api/account/export` returns only the current user's profile, records, chats, and recommendations without secrets; `DELETE /api/account` transactionally removes the user's owned rows and user row |
 | T-902 | REQ-23, NFR-04 | Implement Android Privacy screen launched from Profile | Member 1 | T-302, T-303, T-901 | Screen explains local AI/data path, export opens a JSON share/save flow, delete requires confirmation, successful delete clears local auth and returns to Login |
 | T-903 | REQ-23, NFR-01, NFR-02 | Add privacy/export/delete validation evidence | Members 4 + 1 | T-901, T-902 | Backend tests cover export ownership and post-delete access; Android manual QA covers export, cancel delete, confirmed delete, offline failure, and expired-token handling |
+
+## Optional Phase 10: Security Hardening Stretch
+
+These tasks are optional stretch evidence mapped to sprint card `S-04` and governed by [DEC-016](03-clarify-decisions-and-edge-cases.md). They close the "no login rate-limit/lockout" gap recorded in the `16-kanban-sprint-board.md` self-assessment.
+
+| Task ID | Requirement IDs | Task | Owner | Depends On | Done When |
+| --- | --- | --- | --- | --- | --- |
+| T-1001 | S-04, REQ-02, NFR-02 | Add per-account login throttling to Spring (`LoginAttemptService`) and mirror it in the `.NET Backup API` | Member 4 | T-205 | More than `max-attempts` consecutive failures lock the account for `lockout-seconds`; `/api/auth/login` and `/api/auth/reactivate` answer `429` with `Retry-After` before any credential check; a successful password login, reactivation, or Google sign-in clears the counter |
+| T-1002 | S-04, REQ-02, NFR-04 | Surface throttling and token expiry in the Android login UX | Member 1 | T-1001, T-302 | A `429` shows a lockout banner built from the `Retry-After` window; an expired token returns to Login with a "session expired" banner and a cleared back stack |
+| T-1003 | S-04, REQ-16 | Keep clear-text HTTP out of non-demo builds | Member 1 | T-1002 | A `release` build type exists and applies `network_security_config.xml`, whose base config forbids clear text; the exception list stays limited to the documented local development hosts |
+| T-1004 | S-04, NFR-02 | Add throttling validation evidence | Members 4 + 1 | T-1001, T-1002 | Backend tests cover lock-after-threshold, `429`-before-credential-check, window expiry, and success-clears-counter; `LoginLockoutTest` covers the Android message formatting; manual QA covers the lockout and session-expired banners |
 
 ## Implementation Rule
 

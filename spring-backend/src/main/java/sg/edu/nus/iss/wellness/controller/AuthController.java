@@ -17,6 +17,7 @@ import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 import sg.edu.nus.iss.wellness.security.JwtService;
 import sg.edu.nus.iss.wellness.service.DtoMapper;
 import sg.edu.nus.iss.wellness.service.GoogleTokenVerifier;
+import sg.edu.nus.iss.wellness.service.LoginAttemptService;
 
 /**
  * Handles account registration and stateless JWT login/logout.
@@ -33,13 +34,16 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final LoginAttemptService loginAttempts;
 
     public AuthController(AppUserRepository users, PasswordEncoder passwordEncoder,
-                          JwtService jwtService, GoogleTokenVerifier googleTokenVerifier) {
+                          JwtService jwtService, GoogleTokenVerifier googleTokenVerifier,
+                          LoginAttemptService loginAttempts) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.googleTokenVerifier = googleTokenVerifier;
+        this.loginAttempts = loginAttempts;
     }
 
     @PostMapping("/register")
@@ -57,15 +61,38 @@ public class AuthController {
 
     @PostMapping("/login")
     public AuthDtos.LoginResponse login(@Valid @RequestBody AuthDtos.LoginRequest request) {
-        AppUser user = users.findByEmail(request.email().toLowerCase())
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        String email = request.email().toLowerCase();
+
+        // Locked accounts are refused before any credential check, so a correct
+        // password during the cooling-off window is still rejected.
+        long retryAfter = loginAttempts.secondsUntilUnlock(email);
+        if (retryAfter > 0) {
+            throw ApiException.tooManyRequests(
+                    "Too many failed attempts. Try again in " + retryAfter + " seconds.", retryAfter);
+        }
+
+        AppUser user = users.findByEmail(email).orElse(null);
+        // Unknown/deleted accounts are never recorded (deleted accounts are gone
+        // for good, so there is nothing to lock out).
+        if (user == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
+
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            // Only active accounts accrue lockout. A deactivated account cannot be
+            // logged into anyway, so its failed logins must not trigger a lockout.
+            if (user.isEnabled()) {
+                loginAttempts.recordFailure(email);
+            }
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        }
+
         if (!user.isEnabled()) {
             // Distinct 403 so the client can offer reactivation instead of a generic failure.
             throw new ApiException(HttpStatus.FORBIDDEN, "Account is deactivated. Reactivate to continue.");
         }
+
+        loginAttempts.recordSuccess(email);
         return new AuthDtos.LoginResponse(
                 jwtService.generateToken(user),
                 TOKEN_TYPE,
@@ -82,15 +109,29 @@ public class AuthController {
      */
     @PostMapping("/reactivate")
     public AuthDtos.LoginResponse reactivate(@Valid @RequestBody AuthDtos.LoginRequest request) {
-        AppUser user = users.findByEmail(request.email().toLowerCase())
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        String email = request.email().toLowerCase();
+
+        long retryAfter = loginAttempts.secondsUntilUnlock(email);
+        if (retryAfter > 0) {
+            throw ApiException.tooManyRequests(
+                    "Too many failed attempts. Try again in " + retryAfter + " seconds.", retryAfter);
+        }
+
+        AppUser user = users.findByEmail(email).orElse(null);
+        if (user == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            // Reactivation's password gate is a brute-force surface even though the
+            // account is deactivated, so it is rate-limited too. Only existing
+            // accounts are recorded (a deleted/unknown email is never tracked).
+            if (user != null) {
+                loginAttempts.recordFailure(email);
+            }
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
         if (!user.isEnabled()) {
             user.setEnabled(true);
             user = users.save(user);
         }
+        loginAttempts.recordSuccess(email);
         return new AuthDtos.LoginResponse(
                 jwtService.generateToken(user),
                 TOKEN_TYPE,
@@ -127,6 +168,9 @@ public class AuthController {
             user.setEnabled(true);
             user = users.save(user);
         }
+        // A verified Google identity clears any password-attempt lockout on this
+        // account: the lockout guards the password endpoint, not verified SSO.
+        loginAttempts.recordSuccess(email);
         return new AuthDtos.LoginResponse(
                 jwtService.generateToken(user),
                 TOKEN_TYPE,

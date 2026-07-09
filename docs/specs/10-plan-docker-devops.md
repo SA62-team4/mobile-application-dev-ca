@@ -24,6 +24,7 @@ Dockerise:
 - Spring Boot backend
 - Optional `.NET Backup API` cold-standby backend
 - Python FastAPI AI service
+- Optional premium FastAPI weather agent for backend-mediated premium chat routing
 - Ollama
 - Chroma/vector persistence, either embedded in Python process with a persistent volume or separate service if chosen later
 - Optional Adminer or phpMyAdmin
@@ -48,6 +49,7 @@ Quality tooling:
 | `spring-backend` | REST API and business logic | Depends on MySQL and Python AI service |
 | `dotnet-backend` | Optional cold-standby REST API mirror | Backup profile/service on host port `8082`; Spring remains canonical |
 | `python-ai-service` | RAG and agentic AI | Depends on Ollama and vector volume |
+| `premium-agent` | Optional premium outdoor-exercise/weather chat agent | Local FastAPI service; enabled only through explicit premium Compose file and `PREMIUM_AI_URL` |
 | `ollama` | Local model runtime | Named volume for models |
 | `adminer` | Optional DB inspection | Demo/debug convenience only |
 
@@ -107,6 +109,8 @@ JWT_EXPIRY_SECONDS=86400
 GOOGLE_CLIENT_ID=
 AI_SERVICE_URL=http://python-ai-service:8000
 AI_SERVICE_HOST_PORT=8000
+PREMIUM_AI_URL=
+PREMIUM_AI_SECRET=
 INTERNAL_SERVICE_TOKEN=replace_with_internal_token
 DOTNET_BACKEND_HOST_PORT=8082
 DOTNET_CONNECTION_STRING=Server=mysql;Port=3306;Database=wellness_app;User=wellness_user;Password=change_me;TreatTinyAsBoolean=true;
@@ -123,6 +127,22 @@ LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 ```
 
 LangSmith tracing is optional and disabled by default so the AI service runs fully local/offline. When `LANGSMITH_TRACING=true` and an API key is supplied, `python-ai-service` exports LangChain runs (the agentic recommendation chain) to LangSmith for observability.
+
+## Login Throttling Configuration (S-04)
+
+Login throttling ([DEC-016](03-clarify-decisions-and-edge-cases.md)) ships with working defaults, so no `.env` entry is required and Compose does not forward these keys today. Both backends must stay on the same numbers when either is tuned.
+
+| Setting | Spring | .NET Backup API | Default |
+| --- | --- | --- | --- |
+| Allowed consecutive failures | `app.security.login.max-attempts` (`LOGIN_MAX_ATTEMPTS`) | `Security:Login:MaxAttempts` | `5` |
+| Lockout window in seconds | `app.security.login.lockout-seconds` (`LOGIN_LOCKOUT_SECONDS`) | `Security:Login:LockoutSeconds` | `180` |
+
+Counters are held in process memory, so they reset on container restart and are never shared between the Spring and .NET containers. Scaling either backend past one replica would silently weaken the throttle and needs a shared store first.
+
+Premium weather-agent routing is optional and disabled by default. Developers may
+run `premium-server/docker-compose.premium.yml` and set `PREMIUM_AI_URL` plus
+`PREMIUM_AI_SECRET` for Spring Boot. The default demo remains the standard
+Spring Boot -> `python-ai-service` -> Ollama path.
 
 Host-facing ports must be configurable so local tools such as Homebrew MySQL do not block Docker Compose. The default MySQL host port is `3307`, while container-to-container traffic continues to use `mysql:3306`.
 
@@ -430,6 +450,7 @@ Non-secret config goes in **Variables**.
 | `DROPLET_HOST` | Secret (production) | Deploy target | `terraform output reserved_ip` after the infra apply (or the FQDN) |
 | `JWT_SECRET` | Secret (production) | Rendered into Droplet `.env` | Generate: `openssl rand -hex 32` |
 | `INTERNAL_SERVICE_TOKEN` | Secret (production) | Rendered into Droplet `.env` | Generate: `openssl rand -hex 24` |
+| `PREMIUM_AI_SECRET` | Secret (production) | Rendered into Droplet `.env`; Spring uses it when calling the optional premium weather agent | Optional; required only when `PREMIUM_AI_URL` is set. Must match the local premium-agent `AI_INTERNAL_SECRET`. Generate separately from `INTERNAL_SERVICE_TOKEN`, e.g. `openssl rand -hex 24` |
 | `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `SPRING_DATASOURCE_PASSWORD` | Secret (production) | Rendered into Droplet `.env` | Pick strong values, e.g. `openssl rand -base64 24`; `MYSQL_PASSWORD` must equal `SPRING_DATASOURCE_PASSWORD` |
 | `TF_STATE_BUCKET` | Variable | Terraform backend config | Name of the DO Space you created for state (e.g. `sa62-wellness-tfstate`) |
 | `TF_STATE_ENDPOINT` | Variable | Terraform backend config | `https://<region>.digitaloceanspaces.com` for your Space's region |
@@ -441,6 +462,7 @@ Non-secret config goes in **Variables**.
 | `SUBDOMAIN` | Variable | DNS | Chosen API host label, e.g. `api` |
 | `API_DOMAIN` | Variable | Caddy/`.env` | The full FQDN `SUBDOMAIN.DOMAIN`, e.g. `api.example.com` |
 | `GOOGLE_CLIENT_ID` | Variable | Rendered into Droplet `.env`; Spring and optional `.NET Backup API` Google ID token verification (REQ-22) | Google Cloud Console → APIs & Services → Credentials → the **Web** OAuth 2.0 client ID. Non-secret (also embedded in the Android APK). Leave unset to disable SSO in production. |
+| `PREMIUM_AI_URL` | Variable | Rendered into Droplet `.env`; Spring routes premium weather chat requests here | Optional; usually `http://127.0.0.1:8000` when an SSH reverse tunnel from the local premium machine is active. Leave unset/blank to disable premium routing. |
 | `LANGSMITH_API_KEY` | Secret (production) | Rendered into Droplet `.env`; LangChain run tracing | smith.langchain.com → Settings → API Keys. Optional — leave unset to keep tracing off. |
 | `LANGSMITH_TRACING` | Variable | Rendered into Droplet `.env` | `true` to export traces (requires `LANGSMITH_API_KEY`), else leave unset/`false`. |
 | `LANGSMITH_PROJECT` | Variable | Rendered into Droplet `.env` | LangSmith project name; defaults to `wellness-agentic-ai`. |
@@ -463,7 +485,8 @@ DROPLET_SIZE
 ```
 
 `DROPLET_HOST`, `GHCR_PAT`, database passwords, `JWT_SECRET`,
-`INTERNAL_SERVICE_TOKEN`, `API_DOMAIN`, and `GOOGLE_CLIENT_ID` remain app-only.
+`INTERNAL_SERVICE_TOKEN`, `PREMIUM_AI_SECRET`, `API_DOMAIN`, `GOOGLE_CLIENT_ID`,
+and `PREMIUM_AI_URL` remain app-only.
 With the current DuckDNS setup (`MANAGE_DNS=false`), `DOMAIN`, `SUBDOMAIN`, and
 `SONAR_SUBDOMAIN` are not used to create DNS records; create/update the DuckDNS
 hostnames manually and store the final hostnames in `API_DOMAIN` and

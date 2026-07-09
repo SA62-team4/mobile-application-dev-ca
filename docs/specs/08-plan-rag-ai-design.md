@@ -48,6 +48,7 @@ Suggested documents:
 - `stress-and-mood.md`
 - `hydration-and-nutrition.md`
 - `healthy-habits-faq.md`
+- `bmi-and-body-metrics.md`
 
 Each document should include:
 
@@ -55,6 +56,15 @@ Each document should include:
 - Short source note such as "team-curated educational summary"
 - Content written in simple, non-clinical language
 - Disclaimer that the app does not provide medical diagnosis
+
+The curated files should stay retrieval-friendly for the CPU-bound demo path:
+
+- Keep each topic concise enough to produce one or a small number of focused chunks.
+- Put common user query terms in the topic body, for example "BMI", "body mass
+  index", "height", and "weight" in the body metrics document.
+- Treat BMI as a screening and habit-support topic only. The chatbot may explain
+  the standard adult BMI formula and broad screening categories, but must state
+  that BMI is not a diagnosis and should be interpreted with other health factors.
 
 ## RAG Pipeline
 
@@ -94,6 +104,9 @@ Generate --> Answer
   - `source_file`
   - `chunk_index`
   - `snippet`
+- Snippets used in prompts and source summaries should skip repeated Markdown
+  boilerplate such as title lines, source notes, and the general medical
+  disclaimer so the limited prompt context carries actionable wellness guidance.
 - Generate embeddings locally through Ollama.
 - Use Ollama's current `POST /api/embed` endpoint with `nomic-embed-text:latest`
   for embeddings, with compatibility fallback to the older
@@ -212,6 +225,12 @@ they are generated. Retrieval runs first (sources are known up front), then Olla
 accumulates the fragments, persists the same fields listed above once the stream completes,
 and only then emits the terminal `done` frame — so streamed and non-streamed exchanges are
 stored identically. See `06-plan-api-contracts.md` for the SSE frame protocol.
+
+Spring Boot may route eligible premium outdoor-exercise/weather chat requests to
+an optional local premium weather agent before using this standard RAG stream.
+That route is still backend-mediated, uses the same persisted chat response
+shape, and must fall back to the standard RAG flow when the premium agent is not
+configured or fails.
 
 ```plantuml
 @startuml

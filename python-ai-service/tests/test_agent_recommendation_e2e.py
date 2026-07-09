@@ -109,6 +109,7 @@ class FakeRag:
                 id="sleep-0",
                 title="Sleep Hygiene",
                 source_file="sleep-hygiene.md",
+                chunk_index=0,
                 text="Keep a regular bedtime and wind down before sleep.",
                 snippet="Keep a regular bedtime and wind down before sleep.",
             )

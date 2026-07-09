@@ -1,29 +1,33 @@
 package sg.edu.nus.iss.wellness.service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.HttpStatus;
+
 import sg.edu.nus.iss.wellness.client.AiServiceClient;
+import sg.edu.nus.iss.wellness.client.PremiumAiClient;
 import sg.edu.nus.iss.wellness.dto.ChatDtos;
 import sg.edu.nus.iss.wellness.error.ApiException;
 import sg.edu.nus.iss.wellness.model.AppUser;
 import sg.edu.nus.iss.wellness.model.ChatMessage;
+import sg.edu.nus.iss.wellness.model.Role;
 import sg.edu.nus.iss.wellness.repository.AppUserRepository;
 import sg.edu.nus.iss.wellness.repository.ChatMessageRepository;
 import sg.edu.nus.iss.wellness.repository.WellnessRecordRepository;
-
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.List;
 
 /**
  * Business logic for chat orchestration with RAG service.
  * Handles question forwarding, wellness context retrieval, and response persistence.
  *
- * @author Tiong Zhong Cheng, Kumaraguru Surya
+ * @author Tiong Zhong Cheng, Kumaraguru Surya, Tang Chee Seng
  */
+
 @Service
 @Transactional
 public class ChatService {
@@ -35,31 +39,54 @@ public class ChatService {
     private final ChatMessageRepository chatMessages;
     private final WellnessRecordRepository wellnessRecords;
     private final AppUserRepository users;
+    private final PremiumAiClient premiumAiClient;
+    private final ExerciseIntentClassifier intentClassifier;
 
     public ChatService(AiServiceClient aiServiceClient,
                        ChatMessageRepository chatMessages,
                        WellnessRecordRepository wellnessRecords,
-                       AppUserRepository users) {
+                       AppUserRepository users,
+                       PremiumAiClient premiumAiClient,
+                       ExerciseIntentClassifier intentClassifier) {
         this.aiServiceClient = aiServiceClient;
         this.chatMessages = chatMessages;
         this.wellnessRecords = wellnessRecords;
         this.users = users;
+        this.premiumAiClient = premiumAiClient;
+        this.intentClassifier = intentClassifier;
     }
 
     /**
      * Ask a question and get a response from RAG with recent wellness context.
      *
+     * <p>Premium users asking an exercise/weather question (and only when the premium
+     * agent is configured) are routed to the local weather agent, passing the user's
+     * GPS coordinates so it can pick the nearest station. Any premium failure falls
+     * back to the standard RAG chatbot, so the caller always gets an answer.
+     *
      * @param user the authenticated user asking the question
      * @param question the wellness question
+     * @param latitude optional GPS latitude from the client (null ⇒ national average)
+     * @param longitude optional GPS longitude from the client
      * @return chat response with answer and sources
      */
-    public ChatDtos.ChatResponse askQuestion(AppUser user, String question) {
+    public ChatDtos.ChatResponse askQuestion(AppUser user, String question,
+                                             Double latitude, Double longitude) {
         LOGGER.debug("Processing chat question for user {} : {}", user.getId(), question);
 
-        List<ChatDtos.RecentRecord> recentRecords = loadRecentWellnessRecords(user);
-        ChatDtos.AiChatResponse aiResponse = aiServiceClient.chat(
-                new ChatDtos.AiChatRequest(user.getId(), question, recentRecords)
-        );
+        List<ChatDtos.RecentRecord> recentRecords = fetchRecentWellnessRecords(user);
+        ChatDtos.AiChatResponse aiResponse = null;
+
+        if (routeToPremium(user, question)) {
+            String context = buildContextString(recentRecords, question);
+            String records = formatRecords(recentRecords);
+            aiResponse = premiumAiClient.premiumChat(question, context, records, latitude, longitude);
+            // premiumChat returns null on any failure (PC unreachable) → fall through to standard.
+        }
+        if (aiResponse == null) {
+            aiResponse = aiServiceClient.chat(
+                    new ChatDtos.AiChatRequest(user.getId(), question, recentRecords));
+        }
 
         ChatMessage savedMessage = persistChatMessage(user, question, aiResponse);
         return DtoMapper.chat(savedMessage, aiResponse.sources());
@@ -166,5 +193,38 @@ public class ChatService {
                 .stream()
                 .reduce((left, right) -> left + SOURCE_SEPARATOR + right)
                 .orElse("");
+    }
+
+    boolean routeToPremium(AppUser user, String question) {
+        return user.getRole() == Role.PREMIUM_USER
+                && premiumAiClient.isEnabled()
+                && intentClassifier.isExerciseRelated(question);
+    }
+
+    String buildContextString(List<ChatDtos.RecentRecord> records, String question) {
+        try {
+            ChatDtos.AiChatResponse std = aiServiceClient.chat(
+                    new ChatDtos.AiChatRequest(0L, question, records));
+            if (std.sources() != null) {
+                return std.sources().stream()
+                        .map(s -> "Source: " + s.title() + "\n" + s.snippet())
+                        .reduce((a, b) -> a + "\n\n" + b).orElse("");
+            }
+        } catch (Exception ex) {
+            LOGGER.warn("Could not pre-fetch RAG context for premium: {}", ex.getMessage());
+        }
+        return "";
+    }
+
+    String formatRecords(List<ChatDtos.RecentRecord> records) {
+        if (records == null || records.isEmpty()) {
+            return "No recent wellness records.";
+        }
+        return records.stream()
+                .map(r -> String.format("- %s: sleep %.1fh, exercise %s %dmin, mood %d/5",
+                        r.recordDate(), r.sleepHours(),
+                        r.exerciseType() != null ? r.exerciseType() : "none",
+                        r.exerciseMinutes(), r.moodScore()))
+                .reduce((a, b) -> a + "\n" + b).orElse("No recent wellness records.");
     }
 }

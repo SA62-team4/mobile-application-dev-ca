@@ -7,7 +7,7 @@
 | Field            | Value                                                                         |
 | ---------------- | ----------------------------------------------------------------------------- |
 | Status           | Draft baseline                                                                |
-| Controls         | REQ-02 through REQ-13, REQ-23, NFR-01, NFR-02                                 |
+| Controls         | REQ-02 through REQ-13, REQ-23, S-04, NFR-01, NFR-02                           |
 | Primary audience | Backend, Android, Python AI service, test owners                              |
 | Upstream specs   | `04-plan-system-architecture.md`, `05-plan-backend-data-model-erd.md`         |
 | Downstream specs | Android implementation, backend implementation, Python service clients, tests |
@@ -19,9 +19,15 @@
 - All non-auth endpoints require `Authorization: Bearer <jwt>`.
 - Public status endpoints may be exposed for local browser and health checks.
 - Backend derives the current user from JWT claims, not from client-provided user ids.
-- Every protected endpoint requires the `USER` role (Spring `hasRole(USER)`; the .NET Backup API applies the same gate, defaulting to the `USER` role). Role is authoritative from the database-loaded user, not the token, so a stale token can never elevate privileges; the JWT `role` claim is informational only. A request from an authenticated user lacking the required role returns `403 Forbidden`. The `PREMIUM_USER` role exists but is not required by any endpoint yet.
+- Every protected endpoint requires authenticated base-user access. `PREMIUM_USER`
+  inherits the normal `USER` authority, so upgrading an account for premium chat
+  routing must not lock it out of standard protected endpoints. Role is
+  authoritative from the database-loaded user, not the token, so a stale token can
+  never elevate privileges; the JWT `role` claim is informational only. A request
+  from an authenticated user lacking the required role returns `403 Forbidden`.
 - JSON is the request and response format.
 - Error responses use one consistent shape.
+- The password endpoints (`POST /api/auth/login`, `POST /api/auth/reactivate`) are throttled per account. See [Login Throttling](#login-throttling) and [DEC-016](03-clarify-decisions-and-edge-cases.md).
 
 ## Optional .NET Backup Parity
 
@@ -32,6 +38,7 @@ If the `.NET Backup API` is implemented, it must preserve Spring Boot parity:
 - Same JWT secret, expiry setting, HS256 signing, bearer-token rules, and claims: `sub`, `uid`, `name`, `role`, `iat`, `exp`. The `role` claim carries the canonical enum name (e.g. `USER`).
 - BCrypt password hashes must be compatible with Spring Security so either backend can authenticate users stored by the other.
 - Optional Google SSO (`POST /api/auth/google`) uses the same Web Client ID and ID-token validation rules in Spring and the `.NET Backup API`; SSO-only users have `password_hash = NULL` in the shared schema.
+- Login throttling uses the same thresholds and the same `429` + `Retry-After` contract. Counters are per-instance, so Spring and the backup API each track their own failures; an account locked in one is not locked in the other.
 - Internal Python callbacks must use `X-Internal-Service-Token` and the same internal endpoint request/response shapes.
 - If optional `REQ-23` is implemented in the backup API, account export/delete routes must mirror Spring's request/response shapes and ownership behavior.
 - Spring remains the source of truth when a contract ambiguity appears.
@@ -151,6 +158,8 @@ Response `200 OK`:
 }
 ```
 
+A throttled `429` uses this same body and additionally sets a `Retry-After` header. No other response carries that header.
+
 ## Auth Endpoints
 
 ### Register
@@ -256,6 +265,65 @@ Response `200 OK`:
 }
 ```
 
+Errors:
+
+- `401` if the email is unknown or the password does not match.
+- `403` if the credentials are valid but the account is deactivated, so Android can offer reactivation instead of a generic failure.
+- `429` if the account is locked by [Login Throttling](#login-throttling).
+
+A successful login clears the account's failure counter.
+
+### Reactivate
+
+`POST /api/auth/reactivate`
+
+Re-enables a deactivated email/password account. It takes the same request body as `/api/auth/login`, re-checks the password, sets `enabled = true`, and returns the same `LoginResponse` with a fresh JWT. Calling it for an already-active account is a no-op that simply logs the user in.
+
+Errors:
+
+- `401` if the email is unknown or the password does not match.
+- `429` if the account is locked by [Login Throttling](#login-throttling).
+
+Google-only deactivated accounts do not use this route; they reactivate through `POST /api/auth/google` with `reactivate=true`.
+
+### Login Throttling
+
+Both password endpoints (`/api/auth/login` and `/api/auth/reactivate`) count consecutive failed attempts per account and lock the account once the count exceeds the threshold. Defaults are **5 allowed failures** and a **180-second** lockout; see [DEC-016](03-clarify-decisions-and-edge-cases.md) for the rationale and `10-plan-docker-devops.md` for the configuration keys.
+
+Contract:
+
+- The lockout is evaluated **before** any credential check, so a correct password submitted during the window still returns `429`.
+- A `429` response uses the standard error shape and adds a `Retry-After` header carrying the remaining seconds as an integer. The `message` field repeats the window in prose for clients that ignore the header.
+- Any successful authentication for the account — password login, reactivation, or a verified Google ID token — clears the counter.
+- Failures are recorded against the lowercased account email, never against the caller's IP address.
+
+Which failures are recorded:
+
+| Endpoint | Account state | Recorded? |
+| --- | --- | --- |
+| `/api/auth/login` | Active | Yes |
+| `/api/auth/login` | Deactivated | No — the account cannot be logged into anyway |
+| `/api/auth/reactivate` | Deactivated or active | Yes — its password gate is the brute-force surface |
+| Either | Unknown or deleted email | No — there is no account to lock |
+
+Response `429 Too Many Requests`:
+
+```text
+Retry-After: 174
+```
+
+```json
+{
+  "timestamp": "2026-07-01T10:30:00Z",
+  "status": 429,
+  "error": "Too Many Requests",
+  "message": "Too many failed attempts. Try again in 174 seconds.",
+  "path": "/api/auth/login"
+}
+```
+
+Counters live in memory in each backend process. They are lost on restart and are not shared between Spring and the optional `.NET Backup API`.
+
 ### Google SSO (optional — REQ-22)
 
 `POST /api/auth/google`
@@ -302,6 +370,8 @@ Errors:
 - `400` if `idToken` is missing or blank.
 - `401` if the token is invalid, expired, or has the wrong audience/issuer.
 - `403` if the matched account is deactivated and `reactivate` was not confirmed, or if a matched account cannot be reactivated by the verified Google identity.
+
+This endpoint is not throttled — it has no password to guess. A successful exchange clears any password-attempt lockout on the matched account, so Google SSO is a legitimate way out of a lockout.
 
 ### Logout
 
@@ -498,9 +568,16 @@ Request:
 
 ```json
 {
-  "question": "How can I improve my sleep if I exercise in the evening?"
+  "question": "How can I improve my sleep if I exercise in the evening?",
+  "latitude": 1.3521,
+  "longitude": 103.8198
 }
 ```
+
+`latitude` and `longitude` are optional. Android sends them only when a coarse
+last-known location is available for premium outdoor-exercise/weather questions;
+Spring Boot must still accept null coordinates and fall back to the standard RAG
+path or the premium agent's national-average behavior.
 
 Response `200 OK`:
 
@@ -524,6 +601,11 @@ Behavior:
 
 - Backend forwards the question and recent wellness context to Python.
 - Python retrieves relevant KB chunks and calls Ollama.
+- If the authenticated user has `PREMIUM_USER`, the premium weather agent is
+  configured, and the question is exercise/weather related, Spring Boot may call
+  the optional local premium agent first. The call remains backend-mediated;
+  Android never calls the premium agent directly. If the premium agent is
+  unavailable, Spring Boot falls back to the standard RAG path.
 - Backend saves the final question, answer, source summary, and model name.
 
 ### Ask Chatbot (Streaming)
@@ -664,6 +746,32 @@ Spring Boot consumes this stream, forwards `sources`/`token` frames to Android, 
 the full answer, persists it, and emits the enriched `done` frame (with saved id and
 timestamp). If Ollama is unreachable mid-stream, Python emits a terminal
 `{"type":"error","message":"..."}` frame.
+
+### Optional Premium Weather Agent
+
+The optional premium weather agent is a local FastAPI service owned by the
+backend runtime path, not an Android-facing API.
+
+- `POST /premium/chat`
+- `POST /premium/chat/stream`
+
+Spring Boot calls these endpoints only when `PREMIUM_AI_URL` is configured and
+adds `X-Internal-Secret: <PREMIUM_AI_SECRET>`. Request fields are:
+
+```json
+{
+  "question": "Is it safe to run outside today?",
+  "context": "RAG source snippets selected by Spring Boot",
+  "records": "Recent wellness records formatted as text",
+  "latitude": 1.3521,
+  "longitude": 103.8198
+}
+```
+
+The blocking endpoint returns the same `AiChatResponse` shape as `/rag/chat`.
+The streaming endpoint returns the same SSE frame types as `/rag/chat/stream`.
+It must use local/free LLM tooling and must fail soft so Spring Boot can fall
+back to the standard RAG chatbot.
 
 ### Agent Recommendation
 

@@ -13,7 +13,7 @@
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:text="Profile"
+        android:text="@string/title_profile"
         android:textColor="@color/text_primary"
         android:textSize="22sp"
         android:textStyle="bold" />
@@ -42,7 +42,7 @@
                     android:layout_height="96dp"
                     android:layout_gravity="center_horizontal"
                     android:layout_marginBottom="12dp"
-                    android:contentDescription="Profile picture"
+                    android:contentDescription="@string/cd_profile_picture"
                     android:scaleType="centerCrop"
                     android:src="@drawable/ic_profile_placeholder" />
 
@@ -72,7 +72,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="4dp"
-                    android:labelFor="@id/heightInput"
                     android:text="@string/label_height_cm"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
@@ -84,6 +83,7 @@
                     android:layout_marginBottom="12dp"
                     android:background="@drawable/bg_text_field"
                     android:hint="@string/hint_height_cm"
+                    android:importantForAutofill="no"
                     android:inputType="numberDecimal"
                     android:paddingStart="14dp"
                     android:paddingEnd="14dp"
@@ -101,14 +101,6 @@
                     android:textAllCaps="false"
                     android:textColor="@color/primary"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:text="SA62 Wellness App | Version 1.0"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_secondary" />
             </LinearLayout>
 
             <Button
@@ -117,7 +109,7 @@
                 android:layout_height="56dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_button_secondary"
-                android:text="Privacy &amp; data"
+                android:text="@string/title_privacy"
                 android:textAllCaps="false"
                 android:textColor="@color/primary"
                 android:textStyle="bold" />
@@ -127,10 +119,25 @@
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:background="@drawable/bg_button_destructive"
-                android:text="Logout"
+                android:text="@string/action_logout"
                 android:textAllCaps="false"
                 android:textColor="@color/text_on_primary"
                 android:textStyle="bold" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_horizontal"
+                android:text="SA62 Wellness App | Version 1.0"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary" />
         </LinearLayout>
     </ScrollView>
 

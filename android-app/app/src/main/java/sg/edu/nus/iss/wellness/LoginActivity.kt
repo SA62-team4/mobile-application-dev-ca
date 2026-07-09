@@ -1,6 +1,7 @@
 package sg.edu.nus.iss.wellness
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
@@ -41,7 +42,29 @@ class LoginActivity : AppCompatActivity() {
     companion object {
         private const val RC_GOOGLE_SIGN_IN = 9001
         private const val TAG = "LoginActivity"
+
+        /** Set when an authenticated screen bounces the user back after an expired token. */
+        const val EXTRA_SESSION_EXPIRED = "sg.edu.nus.iss.wellness.SESSION_EXPIRED"
+
+        /**
+         * Builds an intent that returns to the login screen and clears the back
+         * stack. Pass [sessionExpired] = true from a genuine token-expiry redirect
+         * (not the startup "no token yet" guard) so the login screen can explain
+         * why the user is back here.
+         */
+        fun redirectIntent(context: Context, sessionExpired: Boolean = false): Intent =
+            Intent(context, LoginActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra(EXTRA_SESSION_EXPIRED, sessionExpired)
+            }
     }
+
+    /** Reads the Retry-After header (seconds) from a throttled 429 response, if present. */
+    private fun retryAfterSeconds(error: HttpException): Long? =
+        error.response()?.headers()?.get("Retry-After")?.toLongOrNull()
+
+    /** Friendly lockout message, using the backend's retry window when available. */
+    private fun lockoutMessage(seconds: Long?): String = LoginLockout.message(seconds)
 
     private fun showStatus(message: String, error: Boolean = false) {
         binding.statusText.visibility = View.VISIBLE
@@ -64,6 +87,12 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
         EdgeToEdge.apply(this, binding.root)
+
+        // If we were sent here because a token expired mid-session, say so instead
+        // of leaving the user wondering why they were signed out.
+        if (intent.getBooleanExtra(EXTRA_SESSION_EXPIRED, false)) {
+            showStatus("Your session expired. Please sign in again.", error = true)
+        }
 
         // Only configure Google Sign-In when a Web Client ID is provided. requestIdToken("")
         // throws IllegalArgumentException and would crash the app on launch (e.g. builds without
@@ -99,17 +128,24 @@ class LoginActivity : AppCompatActivity() {
                 }.onSuccess { response ->
                     onLoginSuccess(response.token, response.user.displayName, response.user.email)
                 }.onFailure { error ->
-                    if (error is HttpException && error.code() == 403) {
-                        // Account is deactivated (not bad credentials). Unlock the standing
-                        // Reactivate button and point the user at it; active users never reach here.
-                        binding.reactivateButton.isEnabled = true
-                        binding.reactivateButton.alpha = 1f
-                        showStatus(
-                            "This account is deactivated. Tap \"Reactivate account\" to restore it.",
-                            error = true
-                        )
-                    } else {
-                        showStatus("Login failed. Check your credentials or backend connection.", error = true)
+                    when {
+                        error is HttpException && error.code() == 429 -> {
+                            // Too many failed attempts: account is temporarily locked.
+                            showStatus(lockoutMessage(retryAfterSeconds(error)), error = true)
+                        }
+                        error is HttpException && error.code() == 403 -> {
+                            // Account is deactivated (not bad credentials). Unlock the standing
+                            // Reactivate button and point the user at it; active users never reach here.
+                            binding.reactivateButton.isEnabled = true
+                            binding.reactivateButton.alpha = 1f
+                            showStatus(
+                                "This account is deactivated. Tap \"Reactivate account\" to restore it.",
+                                error = true
+                            )
+                        }
+                        else -> {
+                            showStatus("Login failed. Check your credentials or backend connection.", error = true)
+                        }
                     }
                 }
             }
@@ -236,8 +272,12 @@ class LoginActivity : AppCompatActivity() {
                 ApiClient.create(tokenStore).reactivate(LoginRequest(email, password))
             }.onSuccess { response ->
                 onLoginSuccess(response.token, response.user.displayName, response.user.email)
-            }.onFailure {
-                showStatus("Could not reactivate. Check your credentials and try again.", error = true)
+            }.onFailure { error ->
+                if (error is HttpException && error.code() == 429) {
+                    showStatus(lockoutMessage(retryAfterSeconds(error)), error = true)
+                } else {
+                    showStatus("Could not reactivate. Check your credentials and try again.", error = true)
+                }
             }
         }
     }

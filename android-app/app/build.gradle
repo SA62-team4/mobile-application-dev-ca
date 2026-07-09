@@ -1,6 +1,7 @@
 plugins {
     id "com.android.application"
     id "org.jetbrains.kotlin.android"
+    id "jacoco"
 }
 
 def localProps = new Properties()
@@ -60,6 +61,17 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            // Emit JaCoCo coverage from JVM unit tests so SonarQube can report
+            // line coverage (createDebugUnitTestCoverageReport -> report.xml).
+            enableUnitTestCoverage true
+        }
+        release {
+            // Non-demo build. It uses the strict src/main network security config,
+            // which forbids clear-text HTTP entirely (S-04). The local-HTTP exception
+            // exists only in the debug variant. minify stays off to avoid changing
+            // runtime behaviour of the Retrofit/Gson reflection paths in this CA.
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
@@ -80,6 +92,9 @@ android {
 
 dependencies {
     implementation "androidx.appcompat:appcompat:1.7.0"
+    // 21.3.0 (not 21.4.0): 21.4.0 ships Kotlin 2.3.0 metadata, incompatible with this
+    // project's Kotlin 2.0.21 compiler. 21.3.0 is the newest build against the older metadata.
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0"
     implementation "com.squareup.retrofit2:retrofit:2.11.0"
     implementation "com.squareup.retrofit2:converter-gson:2.11.0"

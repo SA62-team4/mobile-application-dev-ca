@@ -14,7 +14,7 @@
         android:layout_height="64dp"
         android:layout_weight="1"
         android:background="@drawable/bg_button_secondary"
-        android:text="Dashboard"
+        android:text="@string/nav_dashboard"
         android:textAllCaps="false"
         android:textColor="@color/primary"
         android:textSize="12sp" />
@@ -26,7 +26,7 @@
         android:layout_marginStart="4dp"
         android:layout_weight="1"
         android:background="@color/bg_surface"
-        android:text="Chat"
+        android:text="@string/nav_chat"
         android:textAllCaps="false"
         android:textColor="@color/text_secondary"
         android:textSize="12sp" />
@@ -38,7 +38,7 @@
         android:layout_marginStart="4dp"
         android:layout_weight="1"
         android:background="@color/bg_surface"
-        android:text="Tips"
+        android:text="@string/nav_tips"
         android:textAllCaps="false"
         android:textColor="@color/text_secondary"
         android:textSize="12sp" />
@@ -50,7 +50,7 @@
         android:layout_marginStart="4dp"
         android:layout_weight="1"
         android:background="@color/bg_surface"
-        android:text="Profile"
+        android:text="@string/nav_profile"
         android:textAllCaps="false"
         android:textColor="@color/text_secondary"
         android:textSize="12sp" />

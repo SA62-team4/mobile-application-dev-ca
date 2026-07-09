@@ -183,6 +183,8 @@ States:
 - Loading while login request is in progress.
 - Inline validation for missing email or password.
 - Error banner for invalid credentials or network failure.
+- Lockout banner when the backend answers `429` (see [Login Throttling](06-plan-api-contracts.md#login-throttling)). `LoginLockout.message()` formats the `Retry-After` seconds as `"Too many failed attempts. Try again in 2m 5s."`, falling back to `"…Please wait a few minutes and try again."` when the header is absent or non-positive. The same banner is shown for a throttled reactivation attempt.
+- Session-expired banner when the user was bounced back here by a token expiry, rather than a silent sign-out. Screens redirect through `LoginActivity.redirectIntent(context, sessionExpired = true)`, which clears the task so Back cannot reveal stale authenticated content. The startup "no token yet" guard passes `sessionExpired = false` and shows nothing.
 - For Google sign-in: a status banner covering "opening Google", "signing in", and failure messages (including the Google status code) so configuration errors are visible to the developer.
 
 Success:
@@ -230,6 +232,9 @@ alt success
   Backend --> Login: JWT (+ profile)
   Login -> Store: save(JWT, photoUrl)
   Login -> Login: navigate to Dashboard
+else account locked
+  Backend --> Login: 429 + Retry-After
+  Login -> User: lockout banner with retry window
 else failure
   Backend --> Login: error (invalid creds / network / Google code)
   Login -> User: error banner, preserve inputs
@@ -415,9 +420,21 @@ Behavior:
   grows in place (via `ChatStreamClient` consuming the `POST /api/chat/messages/stream` SSE
   endpoint) so long answers are never truncated. When the stream completes, history is
   reloaded so the bubble is replaced by the persisted server copy.
+- For premium outdoor-exercise/weather routing, ChatActivity may request coarse
+  location permission and include the last-known latitude/longitude in the
+  Spring Boot chat request. Denial or missing location must not block sending:
+  Android sends null coordinates and Spring Boot/premium agent falls back.
 - Keep the request alive long enough for local Ollama generation, which may take tens of seconds on student laptops.
 - Store and display previous messages loaded from backend.
 - If AI service or Ollama is unavailable, drop the partial bubble, show a friendly error, and keep the typed question available.
+- Minimising the app with an in-flight chat request must not cancel the backend
+  streaming call. If Android keeps the Activity instance alive, the visible
+  assistant bubble continues updating when the app is reopened. If Android
+  destroys the stopped Activity without an explicit user exit, the stream may
+  continue until the backend persists the message; the next Chat screen instance
+  reloads history from Spring Boot.
+- Explicit user cancellation through the Stop button, Back, or bottom-nav
+  navigation may cancel the visible chat request.
 
 Message display:
 
@@ -483,10 +500,102 @@ States:
 - Generating state should explain that local AI may take up to a minute.
 - Empty state before first recommendation.
 - Error if agent service is unavailable.
+- Minimising the app while a recommendation is being generated must not cancel
+  the Spring/Python/Ollama request.
+- If Android destroys the stopped Activity without an explicit user exit, the
+  request may continue and, on success, sends the same local generated-insight
+  broadcast used by the foreground screen. The next Recommendations screen
+  instance reloads the saved recommendation from Spring Boot.
+- Explicit user exit through Back or bottom-nav navigation may cancel the
+  visible generation request.
 
 Success:
 
 - New recommendation appears at top of list.
+
+Scheduled notification stretch:
+
+- After authentication, Android registers a local `AlarmManager` broadcast that
+  periodically checks the Spring Boot recommendations endpoint for a newly saved
+  insight.
+- Demo timing is intentionally short: first poll about 30 seconds after the
+  scheduler is prepared, then about every 2 minutes. Because this uses
+  `setInexactRepeating`, Android may batch the exact firing time for battery
+  efficiency.
+- When a new insight is detected, or when the user manually generates an insight
+  successfully, Android sends an explicit local broadcast handled by an app
+  receiver. The receiver posts a local notification titled "New wellness
+  insight" and opens the Recommendations screen when tapped.
+- Notifications remain local to the device; no FCM, paid service, or direct
+  Python/MySQL access is introduced.
+
+Notification component view:
+
+```plantuml
+@startuml
+left to right direction
+
+actor "Authenticated User" as User
+rectangle "DashboardActivity /\nRecommendationsActivity" as Screens
+rectangle "InsightNotificationScheduler" as Scheduler
+rectangle "AlarmManager" as Alarm
+rectangle "Explicit Local Broadcast" as Broadcast
+rectangle "InsightNotificationReceiver" as Receiver
+rectangle "NotificationManager" as NotificationManager
+rectangle "RecommendationsActivity" as Recommendations
+rectangle "Retrofit ApiService" as Api
+rectangle "Spring Boot API\nGET /api/recommendations" as Spring
+
+User --> Screens : opens authenticated app screen
+Screens --> Scheduler : prepare()
+Scheduler --> Alarm : setInexactRepeating()
+Alarm --> Broadcast : ACTION_POLL_INSIGHTS
+Scheduler --> Broadcast : ACTION_INSIGHT_GENERATED\nmanual generation success
+Broadcast --> Receiver
+Receiver --> Api : recommendations()\nJWT
+Api --> Spring
+Spring --> Api : newest-first recommendations
+Receiver --> NotificationManager : post local notification
+NotificationManager --> Recommendations : tap opens screen
+@enduml
+```
+
+Notification sequence:
+
+```plantuml
+@startuml
+actor "Android User" as User
+participant "DashboardActivity /\nRecommendationsActivity" as Screen
+participant "InsightNotificationScheduler" as Scheduler
+participant "AlarmManager" as Alarm
+participant "InsightNotificationReceiver" as Receiver
+participant "Spring Boot API" as Spring
+participant "NotificationManager" as NotificationManager
+participant "RecommendationsActivity" as Recommendations
+
+User -> Screen: Open authenticated screen
+Screen -> Scheduler: prepare(activity)
+Scheduler -> Screen: request POST_NOTIFICATIONS\non Android 13+
+Scheduler -> Alarm: schedule ACTION_POLL_INSIGHTS\ninexact repeating alarm
+
+alt Manual generated insight
+  User -> Recommendations: Tap Generate recommendation
+  Recommendations -> Spring: POST /api/recommendations/generate\nJWT
+  Spring --> Recommendations: 201 RecommendationResponse
+  Recommendations -> Scheduler: broadcastGeneratedInsight(response)
+  Scheduler -> Receiver: explicit broadcast\nACTION_INSIGHT_GENERATED
+else Scheduled check
+  Alarm -> Receiver: ACTION_POLL_INSIGHTS
+  Receiver -> Spring: GET /api/recommendations\nJWT
+  Spring --> Receiver: newest-first recommendations
+  Receiver -> Receiver: compare latest id with\nlast_notified_recommendation_id
+end
+
+Receiver -> NotificationManager: show "New wellness insight"\nif permitted and unseen
+User -> NotificationManager: Tap notification
+NotificationManager -> Recommendations: open Recommendations screen
+@enduml
+```
 
 ### Profile Screen
 
@@ -665,7 +774,7 @@ Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color
 - Show actionable error messages, not stack traces.
 - Preserve form inputs after validation errors.
 - Disable duplicate submissions while requests are in progress.
-- Keep all authenticated screens resilient to expired JWT by returning to login.
+- Keep all authenticated screens resilient to expired JWT by returning to login through `LoginActivity.redirectIntent(this, sessionExpired = true)`, so the user is told why they were signed out.
 - Match the Figma component hierarchy and spacing unless a small Android adjustment is needed for accessibility or platform behavior.
 - Keep all primary actions reachable in the 360dp compact portrait layout.
 - Prefer icon plus label for bottom navigation; avoid using top-row tab buttons in the authenticated shell.

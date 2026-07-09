@@ -47,6 +47,15 @@ Checklist:
   `.NET Backup API`.
 - Spring backend SonarQube evidence includes the JaCoCo XML report generated at
   `spring-backend/target/site/jacoco/jacoco.xml` from a Maven `verify` run.
+- Android SonarQube evidence includes the JaCoCo XML coverage report generated at
+  `android-app/app/build/reports/coverage/test/debug/report.xml` from the
+  `createDebugUnitTestCoverageReport` Gradle task (enabled via `enableUnitTestCoverage`),
+  referenced by `sonar.coverage.jacoco.xmlReportPaths` in
+  `android-app/sonar-project.properties`.
+- Android release traffic is TLS-only: the manifest applies
+  `res/xml/network_security_config.xml` with `cleartextTrafficPermitted="false"`
+  by default, permitting clear-text HTTP only for local development hosts
+  (`10.0.2.2`, `localhost`, `127.0.0.1`).
 - Security-sensitive PRs include Codex Security diff scan evidence according to `SECURITY.md`.
 - No paid/cloud LLM dependency is introduced.
 - No direct Android-to-MySQL or Android-to-Python path is introduced.
@@ -54,6 +63,7 @@ Checklist:
 - Valid high or critical Codex Security findings are fixed or explicitly deferred with rationale before merge.
 - Optional `.NET Backup API` changes state that Spring Boot remains canonical for `REQ-08`.
 - Optional privacy (`REQ-23`/`S-03`) PRs include account-export ownership tests, account-deletion transaction/post-delete-token tests, Android manual evidence for export/delete states, and a Codex Security diff scan because account deletion changes user-data handling.
+- Optional security-hardening (`S-04`) PRs keep Spring and the `.NET Backup API` on the same throttle thresholds and the same `429` + `Retry-After` contract, check the lockout before any credential comparison, never record failures for unknown or deleted emails, and include a Codex Security diff scan because they change authentication behavior.
 
 Pass condition:
 

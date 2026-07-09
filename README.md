@@ -2,6 +2,23 @@
 
 SA62 Mobile Application Development CA project implementing a Kotlin Android wellness app, Spring Boot backend, MySQL persistence, local RAG chatbot, and Python agentic AI workflow.
 
+## Repository Layout
+
+| Path | Description |
+| --- | --- |
+| `android-app/` | Kotlin Android client (XML layouts), JWT auth, wellness CRUD, chatbot, recommendations |
+| `spring-backend/` | Java Spring Boot REST API (canonical CA backend), MySQL persistence, JWT security |
+| `python-ai-service/` | Python agentic AI service — retrieves wellness records, analyses trends, generates and saves recommendations |
+| `rag-knowledge-base/` | Curated wellness knowledge base for the local RAG chatbot |
+| `dotnet-backend/` | Optional cold-standby .NET backup backend (contract-compatible, `:8082`) |
+| `desktop-app/` | Optional .NET (Avalonia) cross-platform desktop client (bonus, `REQ-21`) |
+| `premium-server/` | Optional premium agent with opt-in LangSmith tracing (off by default) |
+| `docs/specs/` | Spec Kit lifecycle documents — the source of truth |
+| `openwiki/` | Repository overview, architecture, workflows, and testing notes |
+| `infra/`, `docker-compose*.yml` | Docker services and deployment configuration |
+
+All AI runs locally and free: Ollama for the LLM, a local vector store for RAG. No paid or cloud-only AI is used at runtime.
+
 Start with the specs:
 
 - `docs/specs/00-spec-kit-index.md`
@@ -99,3 +116,55 @@ dotnet test dotnet-backend/tests/Wellness.Backup.Api.Tests/Wellness.Backup.Api.T
 dotnet test desktop-app/tests/WellnessDesktop.Tests/WellnessDesktop.Tests.csproj
 BASE_URL=http://localhost:8080 tools/scripts/backend-contract-smoke.sh
 ```
+
+## Evidence
+
+Screenshots captured from the live tooling that supports this project.
+
+### Code quality — SonarQube
+
+![SonarQube dashboard showing quality gate status and coverage for the four project codebases](docs/images/sonarqube-projects.png)
+
+### Agentic AI tracing — LangSmith
+
+Traces from the `wellness-agentic-ai` project showing the RAG pipeline end to end: `rag.retrieve` fetching from the knowledge base, `ollama.embed` producing local embeddings, and `rag.chat.stream` streaming grounded answers.
+
+LangSmith is **optional observability, disabled by default** (`LANGSMITH_TRACING=false`). It traces the pipeline; it performs no inference. All inference stays local on Ollama. Enabling it sends prompt and response content to LangChain's cloud, so it is left off unless a developer opts in.
+
+![LangSmith tracing view listing rag.chat.stream, ollama.embed, and rag.retrieve runs with latencies](docs/images/langsmith-tracing.png)
+
+### Deployment — DigitalOcean
+
+Two Singapore-region droplets: `wellness-prod` hosting the application stack, and `wellness-sonar` hosting the SonarQube instance above.
+
+![DigitalOcean project dashboard showing the wellness-prod and wellness-sonar droplets](docs/images/digitalocean-droplets.png)
+
+## AI Usage Declaration
+
+AI is used in this project in two distinct ways. Both are declared here for academic transparency.
+
+### 1. AI features shipped in the product
+
+The wellness app includes AI capabilities as part of its functionality. All of it runs **locally and free** — no paid or cloud-only AI services are used at runtime.
+
+- **Local LLM:** [Ollama](https://ollama.com) hosts `qwen2.5:1.5b` (chat) and `nomic-embed-text` (embeddings).
+- **RAG chatbot:** answers are grounded in the curated wellness knowledge base (`rag-knowledge-base/`) via a local vector store.
+- **Agentic AI:** the Python service (`python-ai-service/`) retrieves a user's wellness records, analyses trends, generates recommendations, and saves them back through the backend.
+
+### 2. AI assistance used during development
+
+AI coding assistants (Codex, Claude Code) were used to help produce specs, code, tests, and documentation under the guardrails defined in [`docs/specs/01-constitution-principles.md`](docs/specs/01-constitution-principles.md):
+
+- Development followed a Spec-Driven Development workflow; specs remained the source of truth and were reviewed and updated by the team.
+- AI-generated changes were kept small, reviewable, and validated (tests and quality gates) before being accepted.
+- The team understands and can explain all submitted work; AI was an assistant, not an author of record.
+
+### 3. Third-party services
+
+For completeness, the project uses these hosted services for infrastructure and tooling — none of them perform AI inference:
+
+- **DigitalOcean** — hosts the production stack and the SonarQube instance.
+- **SonarQube** (self-hosted) — static analysis and quality gates.
+- **LangSmith** — optional tracing of the RAG pipeline, disabled by default. When enabled it receives prompt and response content for debugging; it does not generate responses.
+
+All AI inference is performed locally by Ollama. No paid or cloud-only AI model provider is used at runtime.

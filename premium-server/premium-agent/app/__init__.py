@@ -1,0 +1,1 @@
+"""Premium agent service — providing weather information for users considering outdoor activities."""

@@ -1,18 +1,20 @@
 package sg.edu.nus.iss.wellness.error;
 
-import jakarta.servlet.http.HttpServletRequest;
+import java.time.Instant;
+
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.Instant;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Converts backend exceptions into stable JSON error responses.
  *
- * @author Tiong Zhong Cheng
+ * @author Tiong Zhong Cheng, Chua Wei Yi Justin
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,7 +23,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     ResponseEntity<ErrorResponse> handleApi(ApiException exception, HttpServletRequest request) {
-        return error(exception.getStatus(), exception.getMessage(), request);
+        HttpStatus status = exception.getStatus();
+        ResponseEntity.BodyBuilder builder = ResponseEntity.status(status);
+        if (exception.getRetryAfterSeconds() != null) {
+            builder.header(HttpHeaders.RETRY_AFTER, String.valueOf(exception.getRetryAfterSeconds()));
+        }
+        return builder.body(new ErrorResponse(Instant.now(), status.value(),
+                status.getReasonPhrase(), exception.getMessage(), request.getRequestURI()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
