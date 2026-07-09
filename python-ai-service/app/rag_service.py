@@ -61,6 +61,7 @@ class RagService:
                 metadatas=[{
                     "title": chunk.title,
                     "source_file": chunk.source_file,
+                    "chunk_index": chunk.chunk_index,
                     "snippet": chunk.snippet,
                 }],
             )
@@ -122,6 +123,7 @@ class RagService:
                     id=chunk_id,
                     title=str(metadata.get("title", "Wellness KB")),
                     source_file=str(metadata.get("source_file", "")),
+                    chunk_index=int(metadata.get("chunk_index", 0)),
                     text=document,
                     snippet=str(metadata.get("snippet", document[:240])),
                 )
