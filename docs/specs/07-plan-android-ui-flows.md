@@ -183,6 +183,8 @@ States:
 - Loading while login request is in progress.
 - Inline validation for missing email or password.
 - Error banner for invalid credentials or network failure.
+- Lockout banner when the backend answers `429` (see [Login Throttling](06-plan-api-contracts.md#login-throttling)). `LoginLockout.message()` formats the `Retry-After` seconds as `"Too many failed attempts. Try again in 2m 5s."`, falling back to `"…Please wait a few minutes and try again."` when the header is absent or non-positive. The same banner is shown for a throttled reactivation attempt.
+- Session-expired banner when the user was bounced back here by a token expiry, rather than a silent sign-out. Screens redirect through `LoginActivity.redirectIntent(context, sessionExpired = true)`, which clears the task so Back cannot reveal stale authenticated content. The startup "no token yet" guard passes `sessionExpired = false` and shows nothing.
 - For Google sign-in: a status banner covering "opening Google", "signing in", and failure messages (including the Google status code) so configuration errors are visible to the developer.
 
 Success:
@@ -230,6 +232,9 @@ alt success
   Backend --> Login: JWT (+ profile)
   Login -> Store: save(JWT, photoUrl)
   Login -> Login: navigate to Dashboard
+else account locked
+  Backend --> Login: 429 + Retry-After
+  Login -> User: lockout banner with retry window
 else failure
   Backend --> Login: error (invalid creds / network / Google code)
   Login -> User: error banner, preserve inputs
@@ -769,7 +774,7 @@ Badge colors map to the tokens in [Color Roles](#color-roles): Excellent `@color
 - Show actionable error messages, not stack traces.
 - Preserve form inputs after validation errors.
 - Disable duplicate submissions while requests are in progress.
-- Keep all authenticated screens resilient to expired JWT by returning to login.
+- Keep all authenticated screens resilient to expired JWT by returning to login through `LoginActivity.redirectIntent(this, sessionExpired = true)`, so the user is told why they were signed out.
 - Match the Figma component hierarchy and spacing unless a small Android adjustment is needed for accessibility or platform behavior.
 - Keep all primary actions reachable in the 360dp compact portrait layout.
 - Prefer icon plus label for bottom navigation; avoid using top-row tab buttons in the authenticated shell.

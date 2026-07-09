@@ -27,7 +27,7 @@ public sealed class ApiErrorMiddleware
         }
         catch (ApiException exception)
         {
-            await WriteErrorAsync(context, exception.StatusCode, exception.Message);
+            await WriteErrorAsync(context, exception.StatusCode, exception.Message, exception.RetryAfterSeconds);
         }
         catch (BadHttpRequestException exception)
         {
@@ -41,7 +41,7 @@ public sealed class ApiErrorMiddleware
         }
     }
 
-    private static async Task WriteErrorAsync(HttpContext context, int statusCode, string message)
+    private static async Task WriteErrorAsync(HttpContext context, int statusCode, string message, long? retryAfterSeconds = null)
     {
         if (context.Response.HasStarted)
         {
@@ -51,6 +51,10 @@ public sealed class ApiErrorMiddleware
         context.Response.Clear();
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
+        if (retryAfterSeconds is not null)
+        {
+            context.Response.Headers.RetryAfter = retryAfterSeconds.Value.ToString();
+        }
 
         var response = new ApiErrorResponse(
             DateTimeOffset.UtcNow,
@@ -69,6 +73,7 @@ public sealed class ApiErrorMiddleware
         StatusCodes.Status403Forbidden => "Forbidden",
         StatusCodes.Status404NotFound => "Not Found",
         StatusCodes.Status409Conflict => "Conflict",
+        StatusCodes.Status429TooManyRequests => "Too Many Requests",
         StatusCodes.Status503ServiceUnavailable => "Service Unavailable",
         StatusCodes.Status500InternalServerError => "Internal Server Error",
         _ => "Error"

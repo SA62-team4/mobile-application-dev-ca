@@ -152,7 +152,7 @@ class DashboardActivity : AppCompatActivity() {
 
             if (isAuthFailure(recordsResult.exceptionOrNull()) || isAuthFailure(recommendationsResult.exceptionOrNull()) || isAuthFailure(profileResult.exceptionOrNull())) {
                 tokenStore.clear()
-                goToLogin()
+                goToLogin(sessionExpired = true)
                 return@launch
             }
 
@@ -495,8 +495,8 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
-    private fun goToLogin() {
-        startActivity(Intent(this, LoginActivity::class.java))
+    private fun goToLogin(sessionExpired: Boolean = false) {
+        startActivity(LoginActivity.redirectIntent(this, sessionExpired))
         finish()
     }
 

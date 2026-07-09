@@ -113,7 +113,7 @@ Does the current spec + code meet the five key business features?
 
 | # | Feature | Verdict | Evidence | Gap |
 | --- | --- | --- | --- | --- |
-| 1 | **Secure** — are my login details protected? | Meets | BCrypt hashing (`SecurityConfig`), JWT filter, REQ-02/03, ownership NFR-01, internal service token, no committed secrets | No login rate-limit/lockout; cleartext HTTP (acceptable for local demo only); stateless logout relies on client-side token clear |
+| 1 | **Secure** — are my login details protected? | Meets | BCrypt hashing (`SecurityConfig`), JWT filter, REQ-02/03, ownership NFR-01, internal service token, no committed secrets, per-account login throttling with `429` + `Retry-After` (S-04), TLS-only base network config with a local-host exception | Lockout counters are in-memory and per-instance, so a restart or a second replica clears them; stateless logout relies on client-side token clear |
 | 2 | **Private** — what leaves my control? | Meets — strongest asset | 100% local AI: Ollama + Chroma + curated KB (DEC-004, REQ-12); data path Android → Spring → Python → Ollama stays on-machine; nothing sent to external servers | Not surfaced to the user; no data export/delete; health-data consent/retention not stated |
 | 3 | **Timely** — informed as soon as it happens? | Does not meet (weakest) | Scheduled agent is *optional* in `09-plan-agentic-ai-workflow.md` and not implemented; no `@Scheduled`, no push/local notifications | User only learns of a new recommendation by opening the app and tapping *Generate* |
 | 4 | **Comprehensive** — what value do I get? | Partial | CRUD + RAG chat + agentic recommendations = real value | Only flat lists; the agent computes trends but the user never *sees* them — no insights/dashboard, goals, or streaks |
@@ -130,7 +130,7 @@ All stretch cards stay **local-only and demo-safe** per the constitution (no pai
 | S-01 | Timely | Spring `@EnableScheduling` + `@Scheduled` agent run when backend-side scheduling is added; Android local notification via simple `AlarmManager`/broadcast polling for a "new recommendation". Makes the agent *proactive* — fixes the weakest feature and elevates Standout | M7 + M1 | 5 |
 | S-02 | Comprehensive | Android trends dashboard: sleep/exercise/mood summary tiles or simple charts over recent records (reuses data the agent already analyses) | M2 | 5 |
 | S-03 | Private + Standout | In-app "your data stays on this device — AI runs locally" Privacy screen plus Spring-owned account export/delete endpoints (`REQ-23`, `T-901`..`T-903`). Converts the privacy architecture into visible marks | M4 + M1 | 3 |
-| S-04 | Secure | Login attempt throttling/lockout, token-expiry UX, disable cleartext for non-demo builds | M4 | 3 |
+| S-04 | Secure | Per-account login throttling/lockout returning `429` + `Retry-After` in Spring and the .NET backup (`T-1001`), Android lockout and session-expired banners (`T-1002`..`T-1003`), release build type on the strict network security config. **In review** — Spring `LoginAttemptService` unit test still outstanding (`T-1004`) | M4 + M1 | 3 |
 | S-05 | Standout | Frame the local-AI + agentic combo in the demo intro + a one-screen "how it works (private, local AI coach)". Low effort, high marking value under System Design / Bonus | all | 1 |
 
 ## Other Considerations (notes, not cards)

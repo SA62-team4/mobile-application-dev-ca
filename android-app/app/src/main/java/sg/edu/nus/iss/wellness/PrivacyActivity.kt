@@ -60,7 +60,7 @@ class PrivacyActivity : AppCompatActivity() {
 
     /** Authenticated client; a genuine 401 (expired token) returns to login. */
     private fun api(): ApiService = ApiClient.create(tokenStore) {
-        runOnUiThread { goToLogin() }
+        runOnUiThread { goToLogin(sessionExpired = true) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -175,12 +175,10 @@ class PrivacyActivity : AppCompatActivity() {
         binding.statusText.text = message
     }
 
-    private fun goToLogin() {
+    private fun goToLogin(sessionExpired: Boolean = false) {
         // Clear the whole task so Back cannot reveal the now-stale Dashboard/Profile
         // of a deactivated or deleted account.
-        val intent = Intent(this, LoginActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        startActivity(intent)
+        startActivity(LoginActivity.redirectIntent(this, sessionExpired))
         finish()
     }
 
