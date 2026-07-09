@@ -9,6 +9,7 @@
     <color name="bg_subtle">#ECFDF5</color>
     <color name="surface">#FFFFFF</color>
     <color name="border_default">#E2E8F0</color>
+    <color name="button_shadow">#160F172A</color>
     <color name="text_primary">#0F172A</color>
     <color name="text_secondary">#64748B</color>
     <color name="text_on_primary">#FFFFFF</color>
