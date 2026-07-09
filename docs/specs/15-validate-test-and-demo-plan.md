@@ -216,6 +216,73 @@ Suggested timing:
 | 13:30-14:30 | GitHub collaboration and CI | PR workflow, Actions summary |
 | 14:30-15:00 | Wrap up | Requirements mapping and team contributions |
 
+## Video Demo Flow Plan
+
+Target runtime: **13:30 to 14:45**, leaving a safety buffer under the 15-minute limit. This is a **submission video**, not a live presentation script. The recording may use short edited clips, prepared seed data, completed AI responses, and cutaways to code/tests so the team can show the broadest feature set clearly. Any edited wait time should be truthful: show the action starting, then cut to the completed result or state that the generation wait was shortened.
+
+### Pre-Recording Setup
+
+- Start the local demo stack before recording: MySQL, Spring Boot, Python AI service, Ollama, and any required vector persistence.
+- Pull/verify Ollama models before recording: `qwen2.5:1.5b` and `nomic-embed-text`.
+- Reset and seed demo data through backend-controlled seed logic or the documented API script.
+- Prepare Android emulator or physical device with the app installed and backend base URL confirmed.
+- Prepare one browser/terminal tab showing Docker Compose service health, one tab for GitHub Actions/PR evidence, and optional Adminer/database inspection.
+- Prepare short clips/screenshots for optional showcase features such as Privacy export/delete, Google SSO, .NET desktop client, .NET Backup API, SonarQube, DigitalOcean deployment, or Figma UI evidence if they are stable.
+- Use a throwaway user only for destructive account-delete demonstration if optional `REQ-23` is shown.
+
+### Recording Storyboard
+
+| Timebox | Shot / Screen | Presenter Action | Narration Focus | Requirement Evidence |
+| --- | --- | --- | --- | --- |
+| 0:00-0:35 | Title slide plus finished app montage | Show 3-4 quick cuts: Dashboard, Chatbot, Recommendation, Privacy/Profile | Start with the value proposition: private local AI wellness tracking with Android, Spring Boot, MySQL, RAG, and an agentic recommendation workflow. | REQ-01, REQ-08, REQ-09, REQ-11, REQ-13 |
+| 0:35-1:25 | Architecture diagram | Highlight Android -> Spring Boot -> MySQL/Python -> Ollama | Establish component boundaries and local/free AI design before showing features. | REQ-08, REQ-09, REQ-12, REQ-14 |
+| 1:25-2:20 | Android auth clips | Show register/login success, JWT-protected redirect or logout, optional Google SSO if stable | Authentication, JWT security, and optional SSO polish. | REQ-02, REQ-03, REQ-22, NFR-02 |
+| 2:20-4:20 | Dashboard and wellness CRUD montage | Show dashboard metrics, add, edit, delete confirmation, empty/error/loading snippets if captured | Core mobile CRUD and polished Android XML UI states. | REQ-01, REQ-04, REQ-05, REQ-06, REQ-07, NFR-04 |
+| 4:20-5:05 | Persistence/ownership evidence | Cut to MySQL/Adminer or API response showing the saved record belongs to the user | Backend-owned persistence and user data isolation; Android does not access MySQL directly. | REQ-09, NFR-01 |
+| 5:05-6:55 | RAG chatbot showcase | Show a prepared question, retrieved sources/response, and optionally a streaming token clip | Local RAG turns wellness KB plus recent context into a grounded answer. | REQ-10, REQ-11, REQ-12 |
+| 6:55-8:40 | Agentic recommendation showcase | Show Generate, then cut to completed recommendation with trend summary/action items; optionally show deterministic rule test output | Python agent retrieves records, analyses trends, generates, and saves a recommendation. | REQ-13 |
+| 8:40-9:55 | Privacy and data controls | Show Privacy screen, export JSON flow, and delete confirmation using a throwaway account or cancelled confirmation | Makes local/private architecture visible and gives account data controls. | REQ-23, S-03 |
+| 9:55-10:55 | Docker/local runtime evidence | Show Compose services, health endpoints, Ollama models, and Chroma/vector persistence if visible | Demo stack is reproducible and local/free. | REQ-12, REQ-14, NFR-03 |
+| 10:55-11:55 | Quality and CI evidence | Show GitHub Actions, test commands/results, SonarQube or Codex Security evidence if available | Collaboration and validation evidence; CI avoids heavyweight LLM generation. | REQ-16, NFR-05 |
+| 11:55-12:55 | Optional bonus showcase | Use fast cuts for stable bonus features: .NET desktop client, .NET Backup API health, DigitalOcean HTTPS health, Figma UI spec, or Google SSO | Show extra polish without replacing mandatory Android/Spring/Python evidence. | REQ-21, REQ-22, REQ-16 |
+| 12:55-14:15 | Requirement mapping and team contribution close | Show traceability matrix, submission checklist, and team ownership summary | Tie the video back to assignment requirements, author comments, and final zip readiness. | REQ-17, REQ-18, REQ-19 |
+
+### Presenter Script Cues
+
+- Keep each segment anchored to the marking criteria: Android UI, backend integration, database persistence, AI/RAG, agentic workflow, Dockerisation, and collaboration evidence.
+- Say "Android calls Spring Boot" during every data/AI segment where boundaries matter.
+- Say "local/free Ollama" when showing chatbot and recommendations.
+- Say "prepared seed data makes the video reliable; the recording still shows the feature behavior and backend evidence" before or during the CRUD segment.
+- Use fast cuts for repeated screens; spend narration time on features, integration, and evidence rather than waiting for loading screens.
+- When showing optional features, label them as optional or stretch so they do not appear to replace mandatory scope.
+
+### Edited-Video Guidelines
+
+- Use cuts to remove typing, model waits, Docker startup time, Gradle/Maven build time, and repeated navigation.
+- Do not fake feature output. If a response or recommendation was pre-generated, say it is a saved result from the same local stack.
+- Prefer split-screen or picture-in-picture only when it improves clarity, for example Android action on one side and backend/log evidence on the other.
+- Avoid showing secrets, raw JWTs, `.env` contents, private keys, or real personal data.
+- Keep optional features to short proof clips unless they are unusually polished and stable.
+
+### Recording Fallbacks
+
+- If Ollama generation is slow, show the request starting, then cut to the completed response and mention that the generation wait was shortened for the recording.
+- If live chat fails during recording, use a saved chat response from the seeded account after showing service health or test evidence; do not present it as a fresh live result.
+- If the recommendation agent times out, show a saved recommendation plus deterministic trend-rule test evidence, then state the live limitation.
+- If database inspection is slow, use app refresh/persistence plus a short API response as persistence evidence.
+- If optional privacy export/delete is unstable, show the Privacy screen statement and export/delete UI only; skip destructive actions.
+- If a bonus feature is unstable, replace it with a short spec/traceability or test-evidence shot rather than letting it consume the video.
+
+### Final Recording Checklist
+
+- Video is under 15 minutes.
+- Login, CRUD, chatbot, recommendation, Docker/local AI, and CI evidence are all visible.
+- At least one stretch/bonus feature is shown if stable, with priority order: Privacy controls, Google SSO, .NET desktop client, .NET Backup API, SonarQube/DigitalOcean evidence.
+- No real secrets, JWTs, passwords, API keys, or private `.env` contents are shown.
+- Destructive delete, if shown, uses a throwaway account.
+- Narration includes the requirement IDs or a final mapping slide/table.
+- Final clip is reviewed once at normal speed before submission.
+
 Optional backup demo note:
 
 - If time permits, briefly show `.NET Backup API` health on port `8082` as cold-standby evidence. Do not spend core demo time on backup routing unless the mandatory Spring, Android, MySQL, RAG, and Python agent flows are already complete.
