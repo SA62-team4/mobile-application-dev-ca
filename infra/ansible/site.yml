@@ -28,6 +28,8 @@
     spring_datasource_password: "{{ lookup('env', 'SPRING_DATASOURCE_PASSWORD') }}"
     jwt_secret: "{{ lookup('env', 'JWT_SECRET') }}"
     internal_service_token: "{{ lookup('env', 'INTERNAL_SERVICE_TOKEN') }}"
+    premium_ai_url: "{{ lookup('env', 'PREMIUM_AI_URL') | default('', true) }}"
+    premium_ai_secret: "{{ lookup('env', 'PREMIUM_AI_SECRET') | default('', true) }}"
 
     # LangSmith tracing (optional). Stays off unless LANGSMITH_TRACING=true and an
     # API key are supplied, so a missing secret never breaks the deploy.

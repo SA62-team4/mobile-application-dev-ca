@@ -108,6 +108,11 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           INTERNAL_SERVICE_TOKEN: ${{ secrets.INTERNAL_SERVICE_TOKEN }}
+          # Optional premium weather-agent routing. PREMIUM_AI_URL is usually
+          # http://127.0.0.1:8000 when an SSH reverse tunnel is active on the
+          # Droplet; leave both unset to keep premium routing disabled.
+          PREMIUM_AI_URL: ${{ vars.PREMIUM_AI_URL }}
+          PREMIUM_AI_SECRET: ${{ secrets.PREMIUM_AI_SECRET }}
           # LangSmith tracing: the API key is a secret; the rest are non-sensitive
           # config with safe defaults, so tracing stays off unless both are set.
           LANGSMITH_TRACING: ${{ vars.LANGSMITH_TRACING }}
