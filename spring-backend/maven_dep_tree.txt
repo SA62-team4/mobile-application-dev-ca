@@ -68,9 +68,9 @@ sg.edu.nus.iss:wellness-backend:jar:0.0.1-SNAPSHOT
 |  +- org.springframework:spring-web:jar:6.1.14:compile
 |  \- org.springframework:spring-webmvc:jar:6.1.14:compile
 +- com.mysql:mysql-connector-j:jar:8.3.0:runtime
-+- io.jsonwebtoken:jjwt-api:jar:0.12.6:compile
-+- io.jsonwebtoken:jjwt-impl:jar:0.12.6:runtime
-+- io.jsonwebtoken:jjwt-jackson:jar:0.12.6:runtime
++- io.jsonwebtoken:jjwt-api:jar:0.13.0:compile
++- io.jsonwebtoken:jjwt-impl:jar:0.13.0:runtime
++- io.jsonwebtoken:jjwt-jackson:jar:0.13.0:runtime
 |  \- com.fasterxml.jackson.core:jackson-databind:jar:2.17.2:compile
 |     +- com.fasterxml.jackson.core:jackson-annotations:jar:2.17.2:compile
 |     \- com.fasterxml.jackson.core:jackson-core:jar:2.17.2:compile
